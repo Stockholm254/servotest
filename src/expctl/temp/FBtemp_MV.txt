@@ -1,0 +1,7 @@
+# Script name: SuperSeq_v2.37_debug
+#   Generated: Aug 10, 2020 21:43:47.533985
+
+DetMode = 1.0
+PRB_repetitions = 10.0
+PC_save_switch = 1.0
+Floquet_AOM_TTL = 0.0

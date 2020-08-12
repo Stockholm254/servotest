@@ -1,0 +1,5 @@
+# Script name: SuperSeq_v2.37_debug
+#   Generated: Dec 03, 2019 20:02:11.313194
+
+DetMode = 1.0
+PC_save_switch = 1.0

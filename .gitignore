@@ -13,13 +13,15 @@ __pycache__/*
 .*.swp
 */.ipynb_checkpoints/*
 .DS_Store
+.eggs
 
 # Project files
 .ropeproject
 .project
 .pydevproject
 .settings
-.idea
+.idea\
+.vscode
 tags
 
 # Package files
