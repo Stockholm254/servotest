@@ -1,5 +1,5 @@
 # Script name: SuperSeq_v2.37_debug
-#   Generated: Aug 10, 2020 21:43:47.533985
+#   Generated: Aug 12, 2020 16:35:49.144533
 
 DetMode = 1.0
 PRB_repetitions = 10.0

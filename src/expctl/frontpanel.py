@@ -20,21 +20,24 @@ import wx.lib.agw.floatspin as FS
 from wx.lib.buttons import *
 
 # GUI helper functions
-import expctl.utilities.PlotSeq as PlotSeq
-import expctl.utilities.BkpData as BkpData
-from expctl.utilities.ReadMV import ReadMV as ReadMV, CompareMV
-from expctl.utilities.ReadMV import ChkScriptName
-from expctl.utilities.LoadSequence import seq_parser
-from expctl.utilities.LoadSequence import MetaVariable
-from expctl.utilities.SetSSV import GenSSVSeq
-from expctl.utilities.RemoteCtrl import RemoteServer, StopRemoteServer
-from expctl.utilities.Feedback import FBControlMV
+from .utilities import PlotSeq
+from .utilities import BkpData
+#import .utilities.PlotSeq as PlotSeq
+#import .utilities.BkpData as BkpData
+from .utilities.ReadMV import ReadMV as ReadMV, CompareMV
+from .utilities.ReadMV import ChkScriptName
+from .utilities.LoadSequence import seq_parser
+from .utilities.LoadSequence import MetaVariable
+from .utilities.SetSSV import GenSSVSeq
+from .utilities.RemoteCtrl import RemoteServer, StopRemoteServer
+from .utilities.Feedback import FBControlMV
 
-import expctl.utilities.jGlobals as jGlobals
-from expctl.utilities.jGlobals import *
-from expctl.utilities.util import *
-from expctl.utilities.FilenameGenerator import *
-from expctl.servers.util.server import *
+#import .utilities.jGlobals as jGlobals
+from .utilities import jGlobals
+from .utilities.jGlobals import *
+from .utilities.util import *
+from .utilities.FilenameGenerator import *
+from .servers.util.server import *
 
 from .dat.all_channels import * #THIS IS WHERE WE DEFINE SEQUENCES AND CHANNELS WITHIN THEM!!
 from .sequencer.sequence import *

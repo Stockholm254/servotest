@@ -5,13 +5,13 @@ from pathlib import Path
 #########################
 ## Default Directories ##
 #########################
-DIR_SEQ  = Path("./usr/sequences") # defaulst sequences files
-DIR_MV   = Path("./usr/snippets") # default MV files
-DIR_TEMP = Path("./temp/") # front panel temperary file directory
-DIR_DATA = Path("../TestOutput/Data/")#r"E:/Data/" # experiment data
-DIR_LOG  = Path("../TestOutput/Logs/")#r"E:/Logs/FrontPanel"    # experiment run log
+DIR_SEQ  = Path(__file__).parent/"../usr/sequences" #Path("./usr/sequences") # defaulst sequences files
+DIR_MV   = Path(__file__).parent/"../usr/snippets"  #Path("./usr/snippets") # default MV files
+DIR_TEMP = Path(__file__).parent/"../temp"  #Path("./temp/") # front panel temperary file directory
+DIR_DATA = Path(__file__).parent/"../../../TestOutput/Data/" #Path("../TestOutput/Data/")#r"E:/Data/" # experiment data
+DIR_LOG  = Path(__file__).parent/"../../../TestOutput/Logs/"  #Path("../TestOutput/Logs/")#r"E:/Logs/FrontPanel"    # experiment run log
 # DIR_INFO = r"C:/Users/Simonlab/Documents/Info"   # experiment info
-DIR_REM  = Path("./usr/Remote") # Remote uploaded file
+DIR_REM  = Path(__file__).parent/"../usr/Remote"  #Path("./usr/Remote") # Remote uploaded file
 
 # FNAME_SSV = r'/temp_MV.txt'
 FNAME_SSV     = 'SetSSV.py'  # Set steady state value sequence

@@ -13,6 +13,7 @@ import shutil
 from pathlib import Path
 import pdb
 import traceback
+import random
 
 from ..utilities import jGlobals # Unit module
 from ..sequencer.sequence import SetError # Sequence set error
@@ -45,7 +46,7 @@ RUNMODE_DEBUG  = 5 # Sequence debug mode
 
 
 # # # TEMPORARY SOLUTION
-DIR_DATA = Path("../../TestOutput/Data/") #"E:/Data/"
+#DIR_DATA = Path("../../TestOutput/Data/") #"E:/Data/"
 
 
 ############################

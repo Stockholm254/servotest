@@ -11,7 +11,6 @@ import time
 import numpy as np
 import coloredlogs, logging
 
-
 # Create ZeroMQ context
 context = zmq.Context()
 
@@ -63,15 +62,15 @@ class Server:
 
 	def cmd_unknown(self, cmd=''):
 		logger.warning(f"Unknown command {cmd}!")
-		self.send_msg(server.ReplyHeader() + f"Unknown command {cmd}")
+		self.send_msg(self.ReplyHeader() + f"Unknown command {cmd}")
 
 	def cmd_ping(self):
 		logger.info("Got Ping'd!")
-		self.send_msg(server.ReplyHeader() + "Got PING'd!")
+		self.send_msg(self.ReplyHeader() + "Got PING'd!")
 
 	def cmd_plotdata(self):
 		logger.debug("Get Plotdata")
-		plt_data = DataForPlot(server.seq)
+		plt_data = DataForPlot(self.seq)
 		self.send_msg("DATA", plt_data)
 	
 	def cmd_seq(self, data):
@@ -79,19 +78,31 @@ class Server:
 		numChannels = 0
 		for chan in self.seq.allChannels:
 			if chan != None: numChannels += 1
-		logger.debug(f"Received sequence ({numChannels} channels): {server.seq.name}")
+		logger.debug(f"Received sequence ({numChannels} channels): {self.seq.name}")
 		reply = f"Received {self.seq.name}, {numChannels} channels defined."
-		self.send_msg(server.ReplyHeader() + reply)
+		self.send_msg(self.ReplyHeader() + reply)
+	
+	def cmd_queue(self):
+
+		if self.seq == None:
+			logger.error('QUEUE failed. Sequence has not been imported!')
+			#self.send_msg(self.ReplyHeader() + 'QUEUE failed. Sequence has not been imported!')
+		else:
+			success = RunServer(self.seq, autostart=0)
+			time_taken = '%.2f' % success
+			logger.debug(f'Successfully ran sequence ({time_taken} seconds)')
+			#DO not reply for QUEUE
+			self.send_msg(self.ReplyHeader() + f'Successfully ran sequence ({time_taken} seconds)')
 
 	def cmd_run(self):
 		if self.seq == None:
 			logger.error('Run() failed. Sequence has not been imported!')
-			self.send_msg(server.sock, server.ReplyHeader() + 'Run() failed. Sequence has not been imported!')
+			self.send_msg(self.ReplyHeader() + 'Run() failed. Sequence has not been imported!')
 		else:
 			success = RunServer(self.seq)
 			time_taken = '%.2f' % success
 			logger.debug(f'Successfully ran sequence ({time_taken} seconds)')
-			self.send_msg(server.ReplyHeader() + f'Successfully ran sequence ({time_taken} seconds)')
+			self.send_msg(self.ReplyHeader() + f'Successfully ran sequence ({time_taken} seconds)')
 
 	def main_loop(self):
 		while True:
@@ -107,6 +118,9 @@ class Server:
 				
 				elif command == "SEQ": # Load in a sequence
 					self.cmd_seq(data)
+
+				elif command == "QUEUE": # Queue/arm for trigger
+					self.cmd_queue()
 
 				elif command == 'GETPLOTDATA': # Get plot data from server
 					self.cmd_plotdata()
