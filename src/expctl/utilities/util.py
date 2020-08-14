@@ -29,26 +29,6 @@ s = 1000000
 ms = 1000
 us = 1
 ns = .01
-
-#=============================== Networking ==================================#
-def send_msg(sock, msg, payload=None):
-    # Send a message (command) to the client with an optional payload
-    if payload is None:
-      #only send a string as a command
-      sock.send_multipart([msg.encode(),])
-    else:
-      #send command and python object
-      sock.send_multipart([msg.encode(), dumps(payload)])
-
-def recv_msg(sock):
-    # Receive message, return string and (optional) payload (python object)
-    multipart = sock.recv_multipart()
-    msg = multipart[0].decode()
-    if len(multipart)>1:
-      payload = loads(multipart[1])
-      return msg, payload
-    else:
-      return msg, None
    
 #========================== Display / Color  ==================================#
 def ClearTerminal():

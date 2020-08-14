@@ -57,12 +57,15 @@ class Device:
         #  Socket to talk to server
         sock = context.socket(zmq.REQ)
         sock.setsockopt(zmq.CONNECT_TIMEOUT, int(self.timeout*1e3))
+        sock.setsockopt(zmq.RCVTIMEO, int(self.timeout*1e3))
+        sock.setsockopt(zmq.SNDTIMEO, int(self.timeout*1e3))
         try:
             sock.connect(f"tcp://{self.host}:{self.port}")
         except:
             logger.error(f"Error connecting to {self.host}:{self.port}. Is the server listening?")
         else:
             self.sock = sock
+
     @property
     def connected(self):
         return False if self.sock is None else True
@@ -136,7 +139,7 @@ class Device:
             response, _ = self.recv_msg()
             print(response)
         except:
-            logger.error("Ping from server timed out")
+            logger.error(f"Ping from server {self.name} timed out")
             return False
         else:
             return True
@@ -168,7 +171,7 @@ class DeviceManager:
 
     def __init__(self, all_seqs, act_seqs):
         self.seq_all = all_seqs # all available sequences defined in all_channels.py
-        self.seq_act = act_seqs # sequences being used
+        self.seq_act = [] # sequences being used
 
         # Get sequence to graph
         self.seq_plot = []
@@ -176,22 +179,46 @@ class DeviceManager:
             if _seq.graph == 1:
                 self.seq_plot.append(_seq)
 
-        self.devices = {s.name: Device(host=s.IP, port=s.port, name=s.name) for s in self.seq_act}
-
-    def connect(self):
-        
-        # Initialize poll set
+        #self.devices = {s.name: Device(host=s.IP, port=s.port, name=s.name) for s in self.seq_act}
+        self.devices = {}
         self.poller = zmq.Poller()
+        self.SetActiveSeq(new_seqs=act_seqs)
 
+    def _connect(self):
+        #DEPRECATED
+        # Initialize poll set
         socks = {}
         for dev in self.devices.values():
-            dev.Connect()
+            if not dev.connected:
+                dev.Connect()
             sock = dev.sock
             self.poller.register(sock, zmq.POLLIN)
             socks[dev.name] = sock
             logger.debug(f"Connected to device {dev.name}")
 
         self.socks = socks
+
+    def SetActiveSeq(self, new_seqs):
+        #modify the active sequences and launch/stop devices accordingly
+        old_seqs = self.seq_act
+        update = set(old_seqs).symmetric_difference(set(new_seqs))
+        for u in update:
+            #decide if stop/start Device
+            if u in old_seqs:
+                #stop the device, remove from act seqs
+                logger.debug(f"Removing device {u.name}")
+                self.poller.unregister(self.devices[u.name].sock)
+                self.devices.pop(u.name)
+            elif u in new_seqs:
+                #stop the device, remove from act seqs
+                logger.debug(f"Adding device {u.name}")
+                self.devices.update({u.name: Device(host=u.IP, port=u.port, name=u.name)})
+                self.devices[u.name].Connect()
+                self.poller.register(self.devices[u.name].sock)
+            else:
+                logger.error(f"Don't know what to do with {u.name}")
+
+        self.seq_act = new_seqs
 
     def AwaitResposes(self, devices=None, timeout=1.0):
         if devices is None:
@@ -222,17 +249,22 @@ class DeviceManager:
                 logger.error("AwaitResposes timed out, following servers left: " + str(devices_recv))
                 return None
 
-    def SendAndQueueSequences(self, master_sequence, timeout=1.):
-        SlaveDevices = {}
-        tqueuestart = time.time()
+    def SendSequences(self):
+        tsendstart = time.time()
         for seq in self.seq_act:
-            print(seq.name+" (Length: "+str(seq.TIME_STOP/1e6)+"s):")
-            print('\tSending...')
+            logger.debug(seq.name+" (Length: "+str(seq.TIME_STOP/1e6)+"s):")
             #for now, find device through name, TODO: make more robust way
             dev = self.devices[seq.name]
             dev.Send(seq)
+        tsendend = time.time()
+        return tsendend-tsendstart
 
+    def QueueSequences(self, master_sequence, timeout=1.):
+        SlaveDevices = {}
+        tqueuestart = time.time()
+        for seq in self.seq_act:
             if seq != master_sequence: # Queue the sequence unless is master sequence
+                dev = self.devices[seq.name]
                 SlaveDevices[seq.name] = dev
                 dev.Queue()
                 logger.debug(seq.name + " queued")
@@ -241,11 +273,16 @@ class DeviceManager:
         tqueueend = time.time()
 
         responses = self.AwaitResposes(devices=SlaveDevices, timeout=timeout)
-        for k, v in responses.items():
-            logger.debug(f"Device {k} finished preparation: {v}")
+
+        if responses is None:
+            status = False
+        else:
+            status = True
+            for k, v in responses.items():
+                logger.debug(f"Device {k} finished preparation: {v}")
         tcheckprepend = time.time()
 
-        return tqueueend-tqueuestart , tcheckprepend-tqueueend
+        return status, tqueueend-tqueuestart , tcheckprepend-tqueueend
 
     def Run(self, master_sequence):
         dev = self.devices[master_sequence.name]

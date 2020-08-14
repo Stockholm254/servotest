@@ -15,13 +15,11 @@ if __name__ == '__main__':
     s3 = Sequence("DDS", "127.0.0.1", 50003)
     MasterSequence = s1
 
-    dm = DeviceManager(all_seqs=[s1, s2, s3], act_seqs=[s1, s2, s3])
+    dm = DeviceManager(all_seqs=[s1, s2, s3], act_seqs=[s1, s2])
 
-
-    dm.connect()
+    #dm.connect()
     tstart = time.time()
-
-    tqueue, tprep = dm.SendAndQueueSequences(MasterSequence, timeout=100)
+    e_prep, tqueue, tprep = dm.SendAndQueueSequences(MasterSequence, timeout=100)
     dm.Run(MasterSequence)
     dm.WaitForAllToFinish(timeout=100)
     tend = time.time()
@@ -29,3 +27,17 @@ if __name__ == '__main__':
     print("RunExperiment took "+str(tend-tstart)+" seconds")
     print("Sending data to servers took "+str(1000.0*(tqueue))+" milliseconds")
     print("Checking that servers have parsed took "+str(1000.0*(tprep))+" milliseconds")
+
+    time.sleep(1)
+    dm.SetActiveSeq([s1, s3])
+
+    tstart = time.time()
+    e_prep, tqueue, tprep = dm.SendAndQueueSequences(MasterSequence, timeout=100)
+    dm.Run(MasterSequence)
+    dm.WaitForAllToFinish(timeout=100)
+    tend = time.time()
+
+    print("RunExperiment took "+str(tend-tstart)+" seconds")
+    print("Sending data to servers took "+str(1000.0*(tqueue))+" milliseconds")
+    print("Checking that servers have parsed took "+str(1000.0*(tprep))+" milliseconds")
+

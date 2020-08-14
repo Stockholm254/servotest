@@ -17,59 +17,6 @@ uInt32  = ctypes.c_ulong
 uInt64  = ctypes.c_ulonglong
 float64 = ctypes.c_double
 task_handle_type = uInt32
-
-context = zmq.Context()
-
-#=============================== Server Class ==================================#
-class Server:
-  # def __init__(self, name, port):
-  def __init__(self, name, port):
-    self.message = ''
-    self.name = name
-    self.port = port
-    self.task_id = 0
-    self.seq = None
-    self.sock = None
-    
-
-  def Listen(self):
-    ClearTerminal()
-    if self.message:
-      print((self.message))
-    self.sock = context.socket(zmq.REP)
-    port = self.port
-    try:
-      #self.sock.bind((host, port))
-      self.sock.bind(f"tcp://*:{port}")
-      printYellow(self.name + ' started listening on ' + str(port) + ".") #TODO fix print address
-    except socket.error as msg:
-      printError('Bind failed. Error code: ' + str(msg[0]) + '. Error message: ' + msg[1])
-      sys.exit()
-    #self.sock.listen(5)
-    
-  def ReplyHeader(self):
-    return time.strftime('['+self.name+': %b %d %H:%M:%S]') + " "
-    
-
-#=============================== Networking ==================================#
-def send_msg(sock, msg, payload=None):
-    # Send a message (command) to the client with an optional payload
-    if payload is None:
-      #only send a string as a command
-      sock.send_multipart([msg.encode(),])
-    else:
-      #send command and python object
-      sock.send_multipart([msg.encode(), dumps(payload)])
-
-def recv_msg(sock):
-    # Receive message, return string and (optional) payload (python object)
-    multipart = sock.recv_multipart()
-    msg = multipart[0].decode()
-    if len(multipart)>1:
-      payload = loads(multipart[1])
-      return msg, payload
-    else:
-      return msg, None
    
 #========================== Display / Color  ==================================#
 def ClearTerminal():

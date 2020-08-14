@@ -33,7 +33,8 @@ def PlotSeq_DeviceValue(dm):
   for _seq in seqs:
     # ALL RETURNED TIME SHOULD BE IN us SCALE
     try: # Try to get device data from servers
-      time_list, pltDatas = dm.AcquirePlotData(_seq)
+      resp = dm.devices[_seq.name].AcquirePlotData() 
+      time_list, pltDatas = resp
     except:
       printError('Failed to acquire device data from the '+_seq.name+' server.')
       return

@@ -70,9 +70,12 @@ class Server:
 
 	def cmd_plotdata(self):
 		logger.debug("Get Plotdata")
-		plt_data = DataForPlot(self.seq)
+		plt_data = self.plotdata()
 		self.send_msg("DATA", plt_data)
-	
+
+	def plotdata(self):
+		return DataForPlot(self.seq)
+
 	def cmd_seq(self, data):
 		self.seq = data # unpack the sequence
 		numChannels = 0
@@ -83,53 +86,60 @@ class Server:
 		self.send_msg(self.ReplyHeader() + reply)
 	
 	def cmd_queue(self):
-
 		if self.seq == None:
 			logger.error('QUEUE failed. Sequence has not been imported!')
 			#self.send_msg(self.ReplyHeader() + 'QUEUE failed. Sequence has not been imported!')
 		else:
-			success = RunServer(self.seq, autostart=0)
+			success = self.queue()
 			time_taken = '%.2f' % success
 			logger.debug(f'Successfully ran sequence ({time_taken} seconds)')
 			#DO not reply for QUEUE
 			self.send_msg(self.ReplyHeader() + f'Successfully ran sequence ({time_taken} seconds)')
+
+	def queue(self):
+		return RunServer(self.seq, autostart=0)
 
 	def cmd_run(self):
 		if self.seq == None:
 			logger.error('Run() failed. Sequence has not been imported!')
 			self.send_msg(self.ReplyHeader() + 'Run() failed. Sequence has not been imported!')
 		else:
-			success = RunServer(self.seq)
+			success = self.run()
 			time_taken = '%.2f' % success
 			logger.debug(f'Successfully ran sequence ({time_taken} seconds)')
 			self.send_msg(self.ReplyHeader() + f'Successfully ran sequence ({time_taken} seconds)')
 
+	def run(self):
+		return RunServer(self.seq)
+
 	def main_loop(self):
 		while True:
-			try:
-				command, data = self.recv_msg() # Receive a command
-				print(command)
-			except KeyboardInterrupt:
-				logger.info("W: interrupt received, stopping…")
-				break
-			else:
-				if command == "RUN":  # Run the sequence (if we've already received it)
-					self.cmd_run()
-				
-				elif command == "SEQ": # Load in a sequence
-					self.cmd_seq(data)
-
-				elif command == "QUEUE": # Queue/arm for trigger
-					self.cmd_queue()
-
-				elif command == 'GETPLOTDATA': # Get plot data from server
-					self.cmd_plotdata()
-				
-				elif command == 'PING':
-					self.cmd_ping()
-					
+			ev = self.sock.poll(100)
+			if ev != 0:
+				try:
+					command, data = self.recv_msg() # Receive a command
+					print(command)
+				except KeyboardInterrupt:
+					logger.info("W: interrupt received, stopping…")
+					break
 				else:
-					self.cmd_unknown(command)
+					if command == "RUN":  # Run the sequence (if we've already received it)
+						self.cmd_run()
+					
+					elif command == "SEQ": # Load in a sequence
+						self.cmd_seq(data)
+
+					elif command == "QUEUE": # Queue/arm for trigger
+						self.cmd_queue()
+
+					elif command == 'GETPLOTDATA': # Get plot data from server
+						self.cmd_plotdata()
+					
+					elif command == 'PING':
+						self.cmd_ping()
+						
+					else:
+						self.cmd_unknown(command)
 
 		# clean up
 		self.sock.close()

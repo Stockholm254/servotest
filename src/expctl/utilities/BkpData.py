@@ -6,9 +6,10 @@ import glob
 import win32wnet
 import win32netcon
 from pathlib import Path
-
+from ..config.config import *
 # Default home directory and date
-datadir = Path("../../TestOutput/Data/") #"E:/Data"
+#datadir = Path("../../TestOutput/Data/") #"E:/Data"
+datadir = DIR_DATA
 datenow = datetime.datetime.now()
 
 class dataBackup:
@@ -16,10 +17,10 @@ class dataBackup:
     self.home_dir = Path(HomeDir)    # Data home directory
     self.date_dir = bkpDate.strftime('/%Y/%m/%d')          # Data date directory
     self.file_dir = self.home_dir/self.date_dir               # Full data directory
-    self.log_dir  = Path("../../TestOutput/Log/DataBkp")#"E:/Log/DataBkp"  # Backup log folder
+    self.log_dir  = DIR_LOG #Path("../../TestOutput/Log/DataBkp")#"E:/Log/DataBkp"  # Backup log folder
     
-    self.host     = Path("../../TestOutput/backup")#"//SIMONLABSERVER/backup"              # Bakkup server host name
-    self.drive    = Path("../../TestOutput/backup")                                     # Net work drive
+    self.host     = DIR_DATA.parent/"backup" #Path("../../TestOutput/backup")#"//SIMONLABSERVER/backup"              # Bakkup server host name
+    self.drive    = DIR_DATA.parent/"backup" #Path("../../TestOutput/backup")                                     # Net work drive
     self.bkpPath  = "/Rydberg Experiment Data"+self.date_dir # Backup folder on server
     
     self.folders = []

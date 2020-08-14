@@ -94,7 +94,7 @@ class FrontPanel(wx.Frame):
     # Solfware info
     self.VERSION = "X_v1.0" # in the about menu
     # Device manager
-    self.dm = DeviceManager(all_seqs=all_sequences, act_seqs=all_sequences)
+    self.dm = DeviceManager(all_seqs=all_sequences, act_seqs=[]) #all_sequences
     # Sequence code and modifiable variables
     self.preamble       = '' # stores code which will be appended before modified variables
     self.metavariables  = [] # stores modifiable variables in the sequence file
@@ -908,7 +908,8 @@ class FrontPanel(wx.Frame):
         CtrlMV.updateFromGUI() # make sure MV values reflect GUI
         CtrlMV.clearGUI()
 
-    pickle.dump(self.metavariables_controlled, f)
+    if len(self.metavariables_controlled)>0:
+      pickle.dump(self.metavariables_controlled, f)
     self.UpdateFeedbackControlPanel() # rebuilds GUI objects
     f.close()
 
@@ -1002,16 +1003,17 @@ class FrontPanel(wx.Frame):
     self.sizer_server.Clear(True) # Clear server status sizers
     fails = 0 # Number of servers failed to respond
 
-    for seq in self.dm.seq_act: # Check all selected servers
-        e = self.dm.Ping(seq)
-
+    #for seq in self.dm.seq_act: # Check all selected servers
+    #    e = self.dm.Ping(seq)
+    for name, dev in self.dm.devices.items():
+        e = dev.Ping() #ping all devices
         if e == 0:
             fails += 1
-            statusText1 = wx.StaticText(self.panel, wx.ID_ANY, seq.name+": Not Listening")
+            statusText1 = wx.StaticText(self.panel, wx.ID_ANY, name+": Not Listening")
             statusText1.SetForegroundColour((255, 0, 0))
             self.sizer_server.Add(statusText1, 0, wx.TOP, border=5)
         elif e == 1:
-            statusText1 = wx.StaticText(self.panel, wx.ID_ANY, seq.name+": Listening")
+            statusText1 = wx.StaticText(self.panel, wx.ID_ANY, name+": Listening")
             statusText1.SetForegroundColour((170, 170, 170))
             self.sizer_server.Add(statusText1, 0, wx.TOP, border=5)
 
@@ -1028,11 +1030,13 @@ class FrontPanel(wx.Frame):
   def OnCheckServers(self, event):
     self.sizer_server.Clear(True) # Clear server status sizers
 
-    self.dm.seq_act = [] # Clear the active sequence list
-
+    #self.dm.seq_act = [] # Clear the active sequence list
+    seq_new = []
     for ii, seq in enumerate(self.dm.seq_all): # Loop over all available sequence in the device manager
         if self.m_seq[ii].IsChecked():
-            self.dm.seq_act.append(seq)
+            #self.dm.seq_act.append(seq)
+            seq_new.append(seq)
+    self.dm.SetActiveSeq(seq_new)
 
     # Refresh the GUI
     self.panel.Layout()
