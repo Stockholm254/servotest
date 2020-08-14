@@ -1,9 +1,17 @@
 #!/usr/bin/python
-
 import numpy
-
-from utilities.util import *
-from servers.util.server import *
+import ctypes
+import os
+#from utilities.util import *
+#from servers.util.server import *
+uInt8   = ctypes.c_ubyte
+int16   = ctypes.c_short
+uInt16  = ctypes.c_ushort
+int32   = ctypes.c_long
+uInt32  = ctypes.c_ulong
+uInt64  = ctypes.c_ulonglong
+float64 = ctypes.c_double
+task_handle_type = uInt32
 
 
 def LoadDLL() :    # load the DLL with linux or windows specific invocations.
@@ -65,15 +73,17 @@ class NIDevice:
   def _check(self, err):
     if err < 0:
         buf_size = 1000
-        buf = ctypes.create_string_buffer('\000' * buf_size)
-        self.dll.DAQmxGetErrorString(err, ctypes.byref(buf), buf_size)
+        buf = ctypes.create_string_buffer(b'\000' * buf_size)
+        #self.dll.DAQmxGetErrorString(err, ctypes.byref(buf), buf_size)
+        self.dll.DAQmxGetErrorString(err, ctypes.pointer(buf), buf_size)
         raise RuntimeError('Call failed with error %d: %s'%(err, repr(buf.value)))
     return err
  
   ''' Task Configuration/Control '''
   def CreateTask(self, task_id):
     task_handle = task_handle_type(task_id)
-    self._check(self.dll.DAQmxCreateTask("", ctypes.byref(task_handle)))
+    #self._check(self.dll.DAQmxCreateTask("", ctypes.byref(task_handle)))
+    self._check(self.dll.DAQmxCreateTask(b"", ctypes.byref(task_handle)))
     return task_handle
 
   def StartTask(self, task_handle):

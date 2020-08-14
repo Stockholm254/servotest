@@ -138,7 +138,7 @@ def RunServer(server, seq, autostart = 1):
 	sample_rate = 10.0  # number of samples per microsecond (clock speed in MHz)
 	samps_per_channel = int(math.ceil(sample_rate*seq_duration)+1) # MHz * us (+1 for steady_state_value)
 	buffer_size = samps_per_channel # number of samples
-	params = NIParameters(autostart, timeout, buffer_size, sample_rate*localMHz, samps_per_channel, 'PCI6537/line0:31', 'OnboardClock')
+	params = NIParameters(autostart, timeout, buffer_size, sample_rate*localMHz, samps_per_channel, b'PCI6537/line0:31', b'OnboardClock')
 	device = NIDevice(params)
 	
 	#invert logical values because of line driver
@@ -152,11 +152,11 @@ def RunServer(server, seq, autostart = 1):
 	
 	# Send sequence data to the device
 	task_handle = device.CreateTask(server.task_id) # Create task
-	device.CreateDOChan(task_handle, "all_channels") # Create all channels
+	device.CreateDOChan(task_handle, b"all_channels") # Create all channels
 	device.ConfigureTiming(task_handle, params)
 	# device.ExportSampleClockSignal(task_handle, line="PFI4")
-	device.ExportStartTrigger(task_handle, line="PFI4") # Trigger output for other devices
-	device.ExternalSampleClock(task_handle, "RTSI7", 10e6) # Define external clock frequency
+	device.ExportStartTrigger(task_handle, line=b"PFI4") # Trigger output for other devices
+	device.ExternalSampleClock(task_handle, b"RTSI7", 10e6) # Define external clock frequency
 	device.DigitalWriteU32(task_handle, params, seq_data) # Upload sequence data
 	print("  Starting task ID "+str(server.task_id)+" (task_handle: "+str(task_handle.value)+")...")
 	device.StartTask(task_handle) # Start the experiment
@@ -174,7 +174,7 @@ class NIDigitalServer(Server):
 
 	def __init__(self, name, port, message):
 		super().__init__(name, port, message)
-		self.taskid = 0
+		self.task_id = 0
 
 	def queue(self):
 		return RunServer(self, self.seq, autostart=0)

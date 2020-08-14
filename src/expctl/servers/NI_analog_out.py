@@ -106,7 +106,7 @@ def RunServer(server, seq, autostart = 1):
 	print("samps rate: ", sample_rate*localMHz)
 	buffer_size = samps_per_channel # number of samples
 	print("samples per channel: ",samps_per_channel)
-	params = NIParameters(autostart, timeout, buffer_size, sample_rate*localMHz, samps_per_channel, 'PCI6723/ao0:31', 'OnboardClock')
+	params = NIParameters(autostart, timeout, buffer_size, sample_rate*localMHz, samps_per_channel, b'PCI6723/ao0:31', b'OnboardClock')
 	#params = NIParameters(autostart, timeout, buffer_size, sample_rate*localMHz, samps_per_channel, 'PCI6723/ao0:31', 'PFI2')
 	device = NIDevice(params)
 	
@@ -117,14 +117,14 @@ def RunServer(server, seq, autostart = 1):
 	# Send sequence data to the device
 	task_handle = device.CreateTask(server.task_id)    # Create task #0
 	#task_handle1 = device.CreateTask(1)    # Create task #1 ############################### NEW
-	device.CreateAOVoltageChan(task_handle, "all_channels")
+	device.CreateAOVoltageChan(task_handle, b"all_channels")
 	#device.CreateCounterChan(task_handle1, "PCI6723/Ctr1", "counter")############################### NEW
 	device.ConfigureTiming(task_handle, params)
 	#device.ConfPauseTrig(task_handle, src="PFI5")
 	#device.CounterInput(task_handle, "PCI6723/Ctr1", "PFI5")############################### NEW
-	device.ExportSampleClockSignal(task_handle, line="PFI5") # happens by default?
+	device.ExportSampleClockSignal(task_handle, line=b"PFI5") # happens by default?
 	#device.ExternalSampleTimbase(task_handle, "PFI2", 10e6) # Use this for 10 MHz input synchronization
-	device.ExternalSampleTimbase(task_handle, "RTSI6", 10e6) # Use this for 10 MHz input synchronization #########################
+	device.ExternalSampleTimbase(task_handle, b"RTSI6", 10e6) # Use this for 10 MHz input synchronization #########################
 	#device.ExternalSampleTimbase(task_handle, "20MHzTimebase", 20e6)
 	device.AnalogWriteF64(task_handle, params, seq_data)
 	#device.StartTask(task_handle1) ############################### NEW
@@ -132,11 +132,11 @@ def RunServer(server, seq, autostart = 1):
 	t3 = time.time()######################################
 	
 	if params.autostart == 0: # Set up triggering
-		device.ConfigureTrigger(task_handle, params, trigger_src="PFI0")
+		device.ConfigureTrigger(task_handle, params, trigger_src=b"PFI0")
 		t34 = time.time()
 		device.StartTask(task_handle)
 		t4 = time.time()######################################
-		send_msg(clientSocket, server.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
+		#send_msg(clientSocket, server.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
 		t5 = time.time()######################################
 	else:
 		print("  Starting task ID " + str(server.task_id) + " (task_handle: " + str(task_handle.value) + ")...")
@@ -154,7 +154,7 @@ class NIAnalogServer(Server):
 
 	def __init__(self, name, port, message):
 		super().__init__(name, port, message)
-		self.taskid = 0
+		self.task_id = 0
 
 	def queue(self):
 		return RunServer(self, self.seq, autostart=0)
