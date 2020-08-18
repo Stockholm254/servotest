@@ -470,7 +470,7 @@ def RunExperiment(dm):
   #         e_prep = False
   # tcheckprepend = time.time()
   tsend = dm.SendSequences()
-  e_prep, tqueue, tprep = dm.QueueSequences(MasterSequence, timeout=3)
+  e_prep, tqueue, tprep = dm.QueueSequences(MasterSequence, timeout=3.)
 
   UpdatePreviousValue(seqs) # UPDATE THE PREVIOUS VALUE WITH STEADY STATE VALUE AFTER THE SEQUENCE
   print('Running the Master Sequence')

@@ -1,5 +1,5 @@
 # Script name: SuperSeq_v2.40
-#   Generated: Aug 17, 2020 19:31:44.066203
+#   Generated: Aug 14, 2020 11:14:42.883000
 
 PRB_repetitions = 10.0
 Floquet_AOM_TTL = 0.0

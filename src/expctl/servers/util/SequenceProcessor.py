@@ -5,7 +5,7 @@ import time
 import math
 import cmath
 from math import sqrt
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from scipy.sparse import coo_matrix
 from scipy.sparse.linalg import spsolve
 
@@ -59,7 +59,7 @@ def FixExplicitSteps(seqin):
 	for ii in range(len(seqin)):
 		tmpseq.extend(list(seqin[ii])) #list might not be necessary but I'm not taking any chances! Hopefully this isn't too slow :)
 
-	for ii in range(1,len(tmpseq)/2):
+	for ii in range(1,len(tmpseq)//2):
 		if tmpseq[2*ii]<tmpseq[2*ii-2]+((ii)%2):
 			tmpseq[2*ii]=tmpseq[2*ii-2]+((ii)%2)
 	outseq=[];

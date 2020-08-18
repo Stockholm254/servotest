@@ -1,5 +1,5 @@
 # Script name: SuperSeq_v2.40
-#   Generated: Aug 17, 2020 19:31:44.065205
+#   Generated: Aug 14, 2020 11:14:42.882000
 
 Init_time_ms = 0.0
 InitDrop = 0.0

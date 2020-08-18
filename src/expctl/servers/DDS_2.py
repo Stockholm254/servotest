@@ -25,11 +25,8 @@ logger.info(f"Using bitfile {code1}")
 
 jdebug=0
 FPGAclock = 100.0 #MHz is the default, but we'll get the actual frequency from the FPGA pll itself!
-#FPGAsn = '12520004R7' #This must match the S/N of the FPGA inside the PDH DDS box. Can find the serial number via the Opal Kelly FrontPanel interface.
-#Development test FPGA board
-FPGAsn = '12520004R7' #This must match the S/N of the FPGA inside the PDH DDS box. Can find the serial number via the Opal Kelly FrontPanel interface.
-FPGA_TMPCLOCKIN = 40.0 #this is the fix for the DDS going nuts from sync errors with FPGA IGNORES PLL
-FPGAclock = FPGA_TMPCLOCKIN
+FPGAsn = '1840000NS8' #'1452000AQ4' #This must match the S/N of the FPGA inside the PDH DDS box. Can find the serial number via the Opal Kelly FrontPanel interface.
+
 
 def RunServer(server, seq, dev, loadorrun, autostart=1):
 
@@ -330,6 +327,6 @@ if __name__ == '__main__':
 	===============================================
 	"""
 
-	server = DDSServer("DDS_1", 60617, message=message)
+	server = DDSServer("DDS_2", 60624, message=message)
 	server.main_loop()
 

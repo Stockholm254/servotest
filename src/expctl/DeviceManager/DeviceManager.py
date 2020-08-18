@@ -35,7 +35,7 @@ def _recv_msg(sock):
 
 class Device:
 
-    def __init__(self, host, port, name = 'Seq', timeout=1.0):
+    def __init__(self, host, port, name = 'Seq', timeout=10.0):
         self.host = host
         self.port = port
         self.name = name
@@ -220,7 +220,7 @@ class DeviceManager:
 
         self.seq_act = new_seqs
 
-    def AwaitResposes(self, devices=None, timeout=1.0):
+    def AwaitResposes(self, devices=None, timeout=10.0):
         if devices is None:
             devices = self.devices
 
@@ -259,7 +259,7 @@ class DeviceManager:
         tsendend = time.time()
         return tsendend-tsendstart
 
-    def QueueSequences(self, master_sequence, timeout=1.):
+    def QueueSequences(self, master_sequence, timeout=10.0):
         SlaveDevices = {}
         tqueuestart = time.time()
         for seq in self.seq_act:
@@ -288,7 +288,7 @@ class DeviceManager:
         dev = self.devices[master_sequence.name]
         dev.Run()
 
-    def WaitForAllToFinish(self, timeout=1.0):
+    def WaitForAllToFinish(self, timeout=10.0):
         for dev in self.devices.values():
             dev.send_msg("PING") #ping all devices
 

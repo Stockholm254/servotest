@@ -67,129 +67,6 @@ except AttributeError:
     _newclass = 0
 
 
-class SwigPyIterator(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, SwigPyIterator, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, SwigPyIterator, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined - class is abstract")
-    __repr__ = _swig_repr
-    __swig_destroy__ = _ok.delete_SwigPyIterator
-    __del__ = lambda self : None;
-    def value(self): return _ok.SwigPyIterator_value(self)
-    def incr(self, n=1): return _ok.SwigPyIterator_incr(self, n)
-    def decr(self, n=1): return _ok.SwigPyIterator_decr(self, n)
-    def distance(self, *args): return _ok.SwigPyIterator_distance(self, *args)
-    def equal(self, *args): return _ok.SwigPyIterator_equal(self, *args)
-    def copy(self): return _ok.SwigPyIterator_copy(self)
-    def next(self): return _ok.SwigPyIterator_next(self)
-    def __next__(self): return _ok.SwigPyIterator___next__(self)
-    def previous(self): return _ok.SwigPyIterator_previous(self)
-    def advance(self, *args): return _ok.SwigPyIterator_advance(self, *args)
-    def __eq__(self, *args): return _ok.SwigPyIterator___eq__(self, *args)
-    def __ne__(self, *args): return _ok.SwigPyIterator___ne__(self, *args)
-    def __iadd__(self, *args): return _ok.SwigPyIterator___iadd__(self, *args)
-    def __isub__(self, *args): return _ok.SwigPyIterator___isub__(self, *args)
-    def __add__(self, *args): return _ok.SwigPyIterator___add__(self, *args)
-    def __sub__(self, *args): return _ok.SwigPyIterator___sub__(self, *args)
-    def __iter__(self): return self
-SwigPyIterator_swigregister = _ok.SwigPyIterator_swigregister
-SwigPyIterator_swigregister(SwigPyIterator)
-
-class okStrings(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, okStrings, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, okStrings, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _ok.okStrings_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _ok.okStrings___nonzero__(self)
-    def __bool__(self): return _ok.okStrings___bool__(self)
-    def __len__(self): return _ok.okStrings___len__(self)
-    def pop(self): return _ok.okStrings_pop(self)
-    def __getslice__(self, *args): return _ok.okStrings___getslice__(self, *args)
-    def __setslice__(self, *args): return _ok.okStrings___setslice__(self, *args)
-    def __delslice__(self, *args): return _ok.okStrings___delslice__(self, *args)
-    def __delitem__(self, *args): return _ok.okStrings___delitem__(self, *args)
-    def __getitem__(self, *args): return _ok.okStrings___getitem__(self, *args)
-    def __setitem__(self, *args): return _ok.okStrings___setitem__(self, *args)
-    def append(self, *args): return _ok.okStrings_append(self, *args)
-    def empty(self): return _ok.okStrings_empty(self)
-    def size(self): return _ok.okStrings_size(self)
-    def clear(self): return _ok.okStrings_clear(self)
-    def swap(self, *args): return _ok.okStrings_swap(self, *args)
-    def get_allocator(self): return _ok.okStrings_get_allocator(self)
-    def begin(self): return _ok.okStrings_begin(self)
-    def end(self): return _ok.okStrings_end(self)
-    def rbegin(self): return _ok.okStrings_rbegin(self)
-    def rend(self): return _ok.okStrings_rend(self)
-    def pop_back(self): return _ok.okStrings_pop_back(self)
-    def erase(self, *args): return _ok.okStrings_erase(self, *args)
-    def __init__(self, *args): 
-        this = _ok.new_okStrings(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _ok.okStrings_push_back(self, *args)
-    def front(self): return _ok.okStrings_front(self)
-    def back(self): return _ok.okStrings_back(self)
-    def assign(self, *args): return _ok.okStrings_assign(self, *args)
-    def resize(self, *args): return _ok.okStrings_resize(self, *args)
-    def insert(self, *args): return _ok.okStrings_insert(self, *args)
-    def reserve(self, *args): return _ok.okStrings_reserve(self, *args)
-    def capacity(self): return _ok.okStrings_capacity(self)
-    __swig_destroy__ = _ok.delete_okStrings
-    __del__ = lambda self : None;
-okStrings_swigregister = _ok.okStrings_swigregister
-okStrings_swigregister(okStrings)
-
-class okTRegisterEntries(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, okTRegisterEntries, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, okTRegisterEntries, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _ok.okTRegisterEntries_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _ok.okTRegisterEntries___nonzero__(self)
-    def __bool__(self): return _ok.okTRegisterEntries___bool__(self)
-    def __len__(self): return _ok.okTRegisterEntries___len__(self)
-    def pop(self): return _ok.okTRegisterEntries_pop(self)
-    def __getslice__(self, *args): return _ok.okTRegisterEntries___getslice__(self, *args)
-    def __setslice__(self, *args): return _ok.okTRegisterEntries___setslice__(self, *args)
-    def __delslice__(self, *args): return _ok.okTRegisterEntries___delslice__(self, *args)
-    def __delitem__(self, *args): return _ok.okTRegisterEntries___delitem__(self, *args)
-    def __getitem__(self, *args): return _ok.okTRegisterEntries___getitem__(self, *args)
-    def __setitem__(self, *args): return _ok.okTRegisterEntries___setitem__(self, *args)
-    def append(self, *args): return _ok.okTRegisterEntries_append(self, *args)
-    def empty(self): return _ok.okTRegisterEntries_empty(self)
-    def size(self): return _ok.okTRegisterEntries_size(self)
-    def clear(self): return _ok.okTRegisterEntries_clear(self)
-    def swap(self, *args): return _ok.okTRegisterEntries_swap(self, *args)
-    def get_allocator(self): return _ok.okTRegisterEntries_get_allocator(self)
-    def begin(self): return _ok.okTRegisterEntries_begin(self)
-    def end(self): return _ok.okTRegisterEntries_end(self)
-    def rbegin(self): return _ok.okTRegisterEntries_rbegin(self)
-    def rend(self): return _ok.okTRegisterEntries_rend(self)
-    def pop_back(self): return _ok.okTRegisterEntries_pop_back(self)
-    def erase(self, *args): return _ok.okTRegisterEntries_erase(self, *args)
-    def __init__(self, *args): 
-        this = _ok.new_okTRegisterEntries(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _ok.okTRegisterEntries_push_back(self, *args)
-    def front(self): return _ok.okTRegisterEntries_front(self)
-    def back(self): return _ok.okTRegisterEntries_back(self)
-    def assign(self, *args): return _ok.okTRegisterEntries_assign(self, *args)
-    def resize(self, *args): return _ok.okTRegisterEntries_resize(self, *args)
-    def insert(self, *args): return _ok.okTRegisterEntries_insert(self, *args)
-    def reserve(self, *args): return _ok.okTRegisterEntries_reserve(self, *args)
-    def capacity(self): return _ok.okTRegisterEntries_capacity(self)
-    __swig_destroy__ = _ok.delete_okTRegisterEntries
-    __del__ = lambda self : None;
-okTRegisterEntries_swigregister = _ok.okTRegisterEntries_swigregister
-okTRegisterEntries_swigregister(okTRegisterEntries)
-
 OK_MAX_DEVICEID_LENGTH = _ok.OK_MAX_DEVICEID_LENGTH
 OK_MAX_SERIALNUMBER_LENGTH = _ok.OK_MAX_SERIALNUMBER_LENGTH
 OK_MAX_PRODUCT_NAME_LENGTH = _ok.OK_MAX_PRODUCT_NAME_LENGTH
@@ -303,6 +180,16 @@ OK_PRODUCT_XEM7010A50 = _ok.OK_PRODUCT_XEM7010A50
 OK_PRODUCT_XEM7010A200 = _ok.OK_PRODUCT_XEM7010A200
 OK_PRODUCT_XEM7310A75 = _ok.OK_PRODUCT_XEM7310A75
 OK_PRODUCT_XEM7310A200 = _ok.OK_PRODUCT_XEM7310A200
+OK_PRODUCT_XEM7320A75T = _ok.OK_PRODUCT_XEM7320A75T
+OK_PRODUCT_XEM7320A200T = _ok.OK_PRODUCT_XEM7320A200T
+OK_PRODUCT_XEM7305 = _ok.OK_PRODUCT_XEM7305
+OK_PRODUCT_FPXBARE = _ok.OK_PRODUCT_FPXBARE
+OK_PRODUCT_XEM8350KU060 = _ok.OK_PRODUCT_XEM8350KU060
+OK_PRODUCT_XEM8350KU085 = _ok.OK_PRODUCT_XEM8350KU085
+OK_PRODUCT_XEM8350KU115 = _ok.OK_PRODUCT_XEM8350KU115
+OK_PRODUCT_XEM8350SECONDARY = _ok.OK_PRODUCT_XEM8350SECONDARY
+OK_PRODUCT_XEM7310MTA75 = _ok.OK_PRODUCT_XEM7310MTA75
+OK_PRODUCT_XEM7310MTA200 = _ok.OK_PRODUCT_XEM7310MTA200
 OK_PRODUCT_OEM_START = _ok.OK_PRODUCT_OEM_START
 okPRODUCT_UNKNOWN = _ok.okPRODUCT_UNKNOWN
 okPRODUCT_XEM3001V1 = _ok.okPRODUCT_XEM3001V1
@@ -349,6 +236,16 @@ okPRODUCT_XEM7010A50 = _ok.okPRODUCT_XEM7010A50
 okPRODUCT_XEM7010A200 = _ok.okPRODUCT_XEM7010A200
 okPRODUCT_XEM7310A75 = _ok.okPRODUCT_XEM7310A75
 okPRODUCT_XEM7310A200 = _ok.okPRODUCT_XEM7310A200
+okPRODUCT_XEM7320A75T = _ok.okPRODUCT_XEM7320A75T
+okPRODUCT_XEM7320A200T = _ok.okPRODUCT_XEM7320A200T
+okPRODUCT_XEM7305 = _ok.okPRODUCT_XEM7305
+okPRODUCT_FPXBARE = _ok.okPRODUCT_FPXBARE
+okPRODUCT_XEM8350KU060 = _ok.okPRODUCT_XEM8350KU060
+okPRODUCT_XEM8350KU085 = _ok.okPRODUCT_XEM8350KU085
+okPRODUCT_XEM8350KU115 = _ok.okPRODUCT_XEM8350KU115
+okPRODUCT_XEM8350SECONDARY = _ok.okPRODUCT_XEM8350SECONDARY
+okPRODUCT_XEM7310MTA75 = _ok.okPRODUCT_XEM7310MTA75
+okPRODUCT_XEM7310MTA200 = _ok.okPRODUCT_XEM7310MTA200
 okPRODUCT_OEM_START = _ok.okPRODUCT_OEM_START
 class okTRegisterEntry(_object):
     __swig_setmethods__ = {}
@@ -595,6 +492,150 @@ class okTDeviceInfo(_object):
 okTDeviceInfo_swigregister = _ok.okTDeviceInfo_swigregister
 okTDeviceInfo_swigregister(okTDeviceInfo)
 
+class okBuffer(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, okBuffer, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, okBuffer, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        this = _ok.new_okBuffer(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _ok.delete_okBuffer
+    __del__ = lambda self : None;
+    def IsEmpty(self): return _ok.okBuffer_IsEmpty(self)
+    def GetSize(self): return _ok.okBuffer_GetSize(self)
+    def __getitem__(self, *args): return _ok.okBuffer___getitem__(self, *args)
+    def __setitem__(self, *args): return _ok.okBuffer___setitem__(self, *args)
+okBuffer_swigregister = _ok.okBuffer_swigregister
+okBuffer_swigregister(okBuffer)
+
+class SwigPyIterator(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, SwigPyIterator, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, SwigPyIterator, name)
+    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined - class is abstract")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _ok.delete_SwigPyIterator
+    __del__ = lambda self : None;
+    def value(self): return _ok.SwigPyIterator_value(self)
+    def incr(self, n=1): return _ok.SwigPyIterator_incr(self, n)
+    def decr(self, n=1): return _ok.SwigPyIterator_decr(self, n)
+    def distance(self, *args): return _ok.SwigPyIterator_distance(self, *args)
+    def equal(self, *args): return _ok.SwigPyIterator_equal(self, *args)
+    def copy(self): return _ok.SwigPyIterator_copy(self)
+    def next(self): return _ok.SwigPyIterator_next(self)
+    def __next__(self): return _ok.SwigPyIterator___next__(self)
+    def previous(self): return _ok.SwigPyIterator_previous(self)
+    def advance(self, *args): return _ok.SwigPyIterator_advance(self, *args)
+    def __eq__(self, *args): return _ok.SwigPyIterator___eq__(self, *args)
+    def __ne__(self, *args): return _ok.SwigPyIterator___ne__(self, *args)
+    def __iadd__(self, *args): return _ok.SwigPyIterator___iadd__(self, *args)
+    def __isub__(self, *args): return _ok.SwigPyIterator___isub__(self, *args)
+    def __add__(self, *args): return _ok.SwigPyIterator___add__(self, *args)
+    def __sub__(self, *args): return _ok.SwigPyIterator___sub__(self, *args)
+    def __iter__(self): return self
+SwigPyIterator_swigregister = _ok.SwigPyIterator_swigregister
+SwigPyIterator_swigregister(SwigPyIterator)
+
+class okStrings(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, okStrings, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, okStrings, name)
+    __repr__ = _swig_repr
+    def iterator(self): return _ok.okStrings_iterator(self)
+    def __iter__(self): return self.iterator()
+    def __nonzero__(self): return _ok.okStrings___nonzero__(self)
+    def __bool__(self): return _ok.okStrings___bool__(self)
+    def __len__(self): return _ok.okStrings___len__(self)
+    def pop(self): return _ok.okStrings_pop(self)
+    def __getslice__(self, *args): return _ok.okStrings___getslice__(self, *args)
+    def __setslice__(self, *args): return _ok.okStrings___setslice__(self, *args)
+    def __delslice__(self, *args): return _ok.okStrings___delslice__(self, *args)
+    def __delitem__(self, *args): return _ok.okStrings___delitem__(self, *args)
+    def __getitem__(self, *args): return _ok.okStrings___getitem__(self, *args)
+    def __setitem__(self, *args): return _ok.okStrings___setitem__(self, *args)
+    def append(self, *args): return _ok.okStrings_append(self, *args)
+    def empty(self): return _ok.okStrings_empty(self)
+    def size(self): return _ok.okStrings_size(self)
+    def clear(self): return _ok.okStrings_clear(self)
+    def swap(self, *args): return _ok.okStrings_swap(self, *args)
+    def get_allocator(self): return _ok.okStrings_get_allocator(self)
+    def begin(self): return _ok.okStrings_begin(self)
+    def end(self): return _ok.okStrings_end(self)
+    def rbegin(self): return _ok.okStrings_rbegin(self)
+    def rend(self): return _ok.okStrings_rend(self)
+    def pop_back(self): return _ok.okStrings_pop_back(self)
+    def erase(self, *args): return _ok.okStrings_erase(self, *args)
+    def __init__(self, *args): 
+        this = _ok.new_okStrings(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    def push_back(self, *args): return _ok.okStrings_push_back(self, *args)
+    def front(self): return _ok.okStrings_front(self)
+    def back(self): return _ok.okStrings_back(self)
+    def assign(self, *args): return _ok.okStrings_assign(self, *args)
+    def resize(self, *args): return _ok.okStrings_resize(self, *args)
+    def insert(self, *args): return _ok.okStrings_insert(self, *args)
+    def reserve(self, *args): return _ok.okStrings_reserve(self, *args)
+    def capacity(self): return _ok.okStrings_capacity(self)
+    __swig_destroy__ = _ok.delete_okStrings
+    __del__ = lambda self : None;
+okStrings_swigregister = _ok.okStrings_swigregister
+okStrings_swigregister(okStrings)
+
+__version__ = "5.1.2"
+
+class okTRegisterEntries(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, okTRegisterEntries, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, okTRegisterEntries, name)
+    __repr__ = _swig_repr
+    def iterator(self): return _ok.okTRegisterEntries_iterator(self)
+    def __iter__(self): return self.iterator()
+    def __nonzero__(self): return _ok.okTRegisterEntries___nonzero__(self)
+    def __bool__(self): return _ok.okTRegisterEntries___bool__(self)
+    def __len__(self): return _ok.okTRegisterEntries___len__(self)
+    def pop(self): return _ok.okTRegisterEntries_pop(self)
+    def __getslice__(self, *args): return _ok.okTRegisterEntries___getslice__(self, *args)
+    def __setslice__(self, *args): return _ok.okTRegisterEntries___setslice__(self, *args)
+    def __delslice__(self, *args): return _ok.okTRegisterEntries___delslice__(self, *args)
+    def __delitem__(self, *args): return _ok.okTRegisterEntries___delitem__(self, *args)
+    def __getitem__(self, *args): return _ok.okTRegisterEntries___getitem__(self, *args)
+    def __setitem__(self, *args): return _ok.okTRegisterEntries___setitem__(self, *args)
+    def append(self, *args): return _ok.okTRegisterEntries_append(self, *args)
+    def empty(self): return _ok.okTRegisterEntries_empty(self)
+    def size(self): return _ok.okTRegisterEntries_size(self)
+    def clear(self): return _ok.okTRegisterEntries_clear(self)
+    def swap(self, *args): return _ok.okTRegisterEntries_swap(self, *args)
+    def get_allocator(self): return _ok.okTRegisterEntries_get_allocator(self)
+    def begin(self): return _ok.okTRegisterEntries_begin(self)
+    def end(self): return _ok.okTRegisterEntries_end(self)
+    def rbegin(self): return _ok.okTRegisterEntries_rbegin(self)
+    def rend(self): return _ok.okTRegisterEntries_rend(self)
+    def pop_back(self): return _ok.okTRegisterEntries_pop_back(self)
+    def erase(self, *args): return _ok.okTRegisterEntries_erase(self, *args)
+    def __init__(self, *args): 
+        this = _ok.new_okTRegisterEntries(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    def push_back(self, *args): return _ok.okTRegisterEntries_push_back(self, *args)
+    def front(self): return _ok.okTRegisterEntries_front(self)
+    def back(self): return _ok.okTRegisterEntries_back(self)
+    def assign(self, *args): return _ok.okTRegisterEntries_assign(self, *args)
+    def resize(self, *args): return _ok.okTRegisterEntries_resize(self, *args)
+    def insert(self, *args): return _ok.okTRegisterEntries_insert(self, *args)
+    def reserve(self, *args): return _ok.okTRegisterEntries_reserve(self, *args)
+    def capacity(self): return _ok.okTRegisterEntries_capacity(self)
+    __swig_destroy__ = _ok.delete_okTRegisterEntries
+    __del__ = lambda self : None;
+okTRegisterEntries_swigregister = _ok.okTRegisterEntries_swigregister
+okTRegisterEntries_swigregister(okTRegisterEntries)
+
 class okDeviceSensors(_object):
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, okDeviceSensors, name, value)
@@ -744,36 +785,90 @@ class okCDeviceSettings(_object):
 okCDeviceSettings_swigregister = _ok.okCDeviceSettings_swigregister
 okCDeviceSettings_swigregister(okCDeviceSettings)
 
-class okCFirmware(_object):
+class okCScriptValue(_object):
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, okCFirmware, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(self, okCScriptValue, name, value)
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, okCFirmware, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
+    __getattr__ = lambda self, name: _swig_getattr(self, okCScriptValue, name)
     __repr__ = _swig_repr
-    def PerformTasks(self, *args): return _ok.okCFirmware_PerformTasks(self, *args)
-    __swig_destroy__ = _ok.delete_okCFirmware
-    __del__ = lambda self : None;
-okCFirmware_swigregister = _ok.okCFirmware_swigregister
-okCFirmware_swigregister(okCFirmware)
-
-class okCFirmwarePackage(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, okCFirmwarePackage, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, okCFirmwarePackage, name)
-    __repr__ = _swig_repr
-    def __init__(self): 
-        this = _ok.new_okCFirmwarePackage()
+    def __init__(self, *args): 
+        this = _ok.new_okCScriptValue(*args)
         try: self.this.append(this)
         except: self.this = this
-    def Load(self, *args): return _ok.okCFirmwarePackage_Load(self, *args)
-    def GetFirmwareCount(self): return _ok.okCFirmwarePackage_GetFirmwareCount(self)
-    def GetFirmware(self, num=0): return _ok.okCFirmwarePackage_GetFirmware(self, num)
-    __swig_destroy__ = _ok.delete_okCFirmwarePackage
+    def IsNumber(self): return _ok.okCScriptValue_IsNumber(self)
+    def GetNumber(self): return _ok.okCScriptValue_GetNumber(self)
+    def IsBool(self): return _ok.okCScriptValue_IsBool(self)
+    def GetBool(self): return _ok.okCScriptValue_GetBool(self)
+    def IsString(self): return _ok.okCScriptValue_IsString(self)
+    def GetString(self): return _ok.okCScriptValue_GetString(self)
+    def IsBuffer(self): return _ok.okCScriptValue_IsBuffer(self)
+    def GetBuffer(self): return _ok.okCScriptValue_GetBuffer(self)
+    __swig_destroy__ = _ok.delete_okCScriptValue
     __del__ = lambda self : None;
-okCFirmwarePackage_swigregister = _ok.okCFirmwarePackage_swigregister
-okCFirmwarePackage_swigregister(okCFirmwarePackage)
+okCScriptValue_swigregister = _ok.okCScriptValue_swigregister
+okCScriptValue_swigregister(okCScriptValue)
+
+class okCScriptValues(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, okCScriptValues, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, okCScriptValues, name)
+    __repr__ = _swig_repr
+    def iterator(self): return _ok.okCScriptValues_iterator(self)
+    def __iter__(self): return self.iterator()
+    def __nonzero__(self): return _ok.okCScriptValues___nonzero__(self)
+    def __bool__(self): return _ok.okCScriptValues___bool__(self)
+    def __len__(self): return _ok.okCScriptValues___len__(self)
+    def pop(self): return _ok.okCScriptValues_pop(self)
+    def __getslice__(self, *args): return _ok.okCScriptValues___getslice__(self, *args)
+    def __setslice__(self, *args): return _ok.okCScriptValues___setslice__(self, *args)
+    def __delslice__(self, *args): return _ok.okCScriptValues___delslice__(self, *args)
+    def __delitem__(self, *args): return _ok.okCScriptValues___delitem__(self, *args)
+    def __getitem__(self, *args): return _ok.okCScriptValues___getitem__(self, *args)
+    def __setitem__(self, *args): return _ok.okCScriptValues___setitem__(self, *args)
+    def append(self, *args): return _ok.okCScriptValues_append(self, *args)
+    def empty(self): return _ok.okCScriptValues_empty(self)
+    def size(self): return _ok.okCScriptValues_size(self)
+    def clear(self): return _ok.okCScriptValues_clear(self)
+    def swap(self, *args): return _ok.okCScriptValues_swap(self, *args)
+    def get_allocator(self): return _ok.okCScriptValues_get_allocator(self)
+    def begin(self): return _ok.okCScriptValues_begin(self)
+    def end(self): return _ok.okCScriptValues_end(self)
+    def rbegin(self): return _ok.okCScriptValues_rbegin(self)
+    def rend(self): return _ok.okCScriptValues_rend(self)
+    def pop_back(self): return _ok.okCScriptValues_pop_back(self)
+    def erase(self, *args): return _ok.okCScriptValues_erase(self, *args)
+    def __init__(self, *args): 
+        this = _ok.new_okCScriptValues(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    def push_back(self, *args): return _ok.okCScriptValues_push_back(self, *args)
+    def front(self): return _ok.okCScriptValues_front(self)
+    def back(self): return _ok.okCScriptValues_back(self)
+    def assign(self, *args): return _ok.okCScriptValues_assign(self, *args)
+    def resize(self, *args): return _ok.okCScriptValues_resize(self, *args)
+    def insert(self, *args): return _ok.okCScriptValues_insert(self, *args)
+    def reserve(self, *args): return _ok.okCScriptValues_reserve(self, *args)
+    def capacity(self): return _ok.okCScriptValues_capacity(self)
+    __swig_destroy__ = _ok.delete_okCScriptValues
+    __del__ = lambda self : None;
+okCScriptValues_swigregister = _ok.okCScriptValues_swigregister
+okCScriptValues_swigregister(okCScriptValues)
+
+class okCScriptEngine(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, okCScriptEngine, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, okCScriptEngine, name)
+    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    def LoadScript(self, *args): return _ok.okCScriptEngine_LoadScript(self, *args)
+    def LoadFile(self, *args): return _ok.okCScriptEngine_LoadFile(self, *args)
+    def RunScriptFunction(self, *args): return _ok.okCScriptEngine_RunScriptFunction(self, *args)
+    __swig_destroy__ = _ok.delete_okCScriptEngine
+    __del__ = lambda self : None;
+okCScriptEngine_swigregister = _ok.okCScriptEngine_swigregister
+okCScriptEngine_swigregister(okCScriptEngine)
 
 class okCFrontPanel(_object):
     __swig_setmethods__ = {}
@@ -781,6 +876,16 @@ class okCFrontPanel(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, okCFrontPanel, name)
     __repr__ = _swig_repr
+    __swig_getmethods__["GetAPIVersionMajor"] = lambda x: _ok.okCFrontPanel_GetAPIVersionMajor
+    if _newclass:GetAPIVersionMajor = staticmethod(_ok.okCFrontPanel_GetAPIVersionMajor)
+    __swig_getmethods__["GetAPIVersionMinor"] = lambda x: _ok.okCFrontPanel_GetAPIVersionMinor
+    if _newclass:GetAPIVersionMinor = staticmethod(_ok.okCFrontPanel_GetAPIVersionMinor)
+    __swig_getmethods__["GetAPIVersionMicro"] = lambda x: _ok.okCFrontPanel_GetAPIVersionMicro
+    if _newclass:GetAPIVersionMicro = staticmethod(_ok.okCFrontPanel_GetAPIVersionMicro)
+    __swig_getmethods__["GetAPIVersionString"] = lambda x: _ok.okCFrontPanel_GetAPIVersionString
+    if _newclass:GetAPIVersionString = staticmethod(_ok.okCFrontPanel_GetAPIVersionString)
+    __swig_getmethods__["CheckAPIVersion"] = lambda x: _ok.okCFrontPanel_CheckAPIVersion
+    if _newclass:CheckAPIVersion = staticmethod(_ok.okCFrontPanel_CheckAPIVersion)
     brdUnknown = _ok.okCFrontPanel_brdUnknown
     brdXEM3001v1 = _ok.okCFrontPanel_brdXEM3001v1
     brdXEM3001v2 = _ok.okCFrontPanel_brdXEM3001v2
@@ -826,6 +931,16 @@ class okCFrontPanel(_object):
     brdXEM7010A200 = _ok.okCFrontPanel_brdXEM7010A200
     brdXEM7310A75 = _ok.okCFrontPanel_brdXEM7310A75
     brdXEM7310A200 = _ok.okCFrontPanel_brdXEM7310A200
+    brdXEM7320A75T = _ok.okCFrontPanel_brdXEM7320A75T
+    brdXEM7320A200T = _ok.okCFrontPanel_brdXEM7320A200T
+    brdXEM7305 = _ok.okCFrontPanel_brdXEM7305
+    brdFPXBARE = _ok.okCFrontPanel_brdFPXBARE
+    brdXEM8350KU060 = _ok.okCFrontPanel_brdXEM8350KU060
+    brdXEM8350KU085 = _ok.okCFrontPanel_brdXEM8350KU085
+    brdXEM8350KU115 = _ok.okCFrontPanel_brdXEM8350KU115
+    brdXEM8350SECONDARY = _ok.okCFrontPanel_brdXEM8350SECONDARY
+    brdXEM7310MTA75 = _ok.okCFrontPanel_brdXEM7310MTA75
+    brdXEM7310MTA200 = _ok.okCFrontPanel_brdXEM7310MTA200
     NoError = _ok.okCFrontPanel_NoError
     Failed = _ok.okCFrontPanel_Failed
     Timeout = _ok.okCFrontPanel_Timeout
@@ -853,21 +968,15 @@ class okCFrontPanel(_object):
         except: self.this = this
     __swig_destroy__ = _ok.delete_okCFrontPanel
     __del__ = lambda self : None;
-    def Close(self): return _ok.okCFrontPanel_Close(self)
-    __swig_getmethods__["GetErrorString"] = lambda x: _ok.okCFrontPanel_GetErrorString
-    if _newclass:GetErrorString = staticmethod(_ok.okCFrontPanel_GetErrorString)
-    def ActivateTriggerIn(self, *args): return _ok.okCFrontPanel_ActivateTriggerIn(self, *args)
     __swig_getmethods__["AddCustomDevice"] = lambda x: _ok.okCFrontPanel_AddCustomDevice
     if _newclass:AddCustomDevice = staticmethod(_ok.okCFrontPanel_AddCustomDevice)
     __swig_getmethods__["RemoveCustomDevice"] = lambda x: _ok.okCFrontPanel_RemoveCustomDevice
     if _newclass:RemoveCustomDevice = staticmethod(_ok.okCFrontPanel_RemoveCustomDevice)
     def ConfigureFPGA(self, *args): return _ok.okCFrontPanel_ConfigureFPGA(self, *args)
+    def ConfigureFPGAFromMemory(self, *args): return _ok.okCFrontPanel_ConfigureFPGAFromMemory(self, *args)
+    def CreateLuaScriptEngine(self): return _ok.okCFrontPanel_CreateLuaScriptEngine(self)
     def EnableAsynchronousTransfers(self, *args): return _ok.okCFrontPanel_EnableAsynchronousTransfers(self, *args)
-    def GetBoardModel(self): return _ok.okCFrontPanel_GetBoardModel(self)
-    __swig_getmethods__["GetBoardModelString"] = lambda x: _ok.okCFrontPanel_GetBoardModelString
-    if _newclass:GetBoardModelString = staticmethod(_ok.okCFrontPanel_GetBoardModelString)
     def GetDeviceCount(self): return _ok.okCFrontPanel_GetDeviceCount(self)
-    def GetDeviceInfo(self, *args): return _ok.okCFrontPanel_GetDeviceInfo(self, *args)
     def GetFPGAResetProfile(self, *args): return _ok.okCFrontPanel_GetFPGAResetProfile(self, *args)
     def SetFPGAResetProfile(self, *args): return _ok.okCFrontPanel_SetFPGAResetProfile(self, *args)
     def FlashEraseSector(self, *args): return _ok.okCFrontPanel_FlashEraseSector(self, *args)
@@ -888,13 +997,12 @@ class okCFrontPanel(_object):
     def GetPLL22150Configuration(self, *args): return _ok.okCFrontPanel_GetPLL22150Configuration(self, *args)
     def GetPLL22393Configuration(self, *args): return _ok.okCFrontPanel_GetPLL22393Configuration(self, *args)
     def GetSerialNumber(self): return _ok.okCFrontPanel_GetSerialNumber(self)
-    def GetWireOutValue(self, *args): return _ok.okCFrontPanel_GetWireOutValue(self, *args)
     def GetHostInterfaceWidth(self): return _ok.okCFrontPanel_GetHostInterfaceWidth(self)
     def IsHighSpeed(self): return _ok.okCFrontPanel_IsHighSpeed(self)
     def IsFrontPanel3Supported(self): return _ok.okCFrontPanel_IsFrontPanel3Supported(self)
     def IsFrontPanelEnabled(self): return _ok.okCFrontPanel_IsFrontPanelEnabled(self)
     def IsOpen(self): return _ok.okCFrontPanel_IsOpen(self)
-    def IsTriggered(self, *args): return _ok.okCFrontPanel_IsTriggered(self, *args)
+    def IsRemote(self): return _ok.okCFrontPanel_IsRemote(self)
     def LoadDefaultPLLConfiguration(self): return _ok.okCFrontPanel_LoadDefaultPLLConfiguration(self)
     def OpenBySerial(self, *args): return _ok.okCFrontPanel_OpenBySerial(self, *args)
     def ResetFPGA(self): return _ok.okCFrontPanel_ResetFPGA(self)
@@ -905,10 +1013,24 @@ class okCFrontPanel(_object):
     def SetPLL22150Configuration(self, *args): return _ok.okCFrontPanel_SetPLL22150Configuration(self, *args)
     def SetPLL22393Configuration(self, *args): return _ok.okCFrontPanel_SetPLL22393Configuration(self, *args)
     def SetTimeout(self, *args): return _ok.okCFrontPanel_SetTimeout(self, *args)
-    def SetWireInValue(self, *args): return _ok.okCFrontPanel_SetWireInValue(self, *args)
+    __swig_getmethods__["GetErrorString"] = lambda x: _ok.okCFrontPanel_GetErrorString
+    if _newclass:GetErrorString = staticmethod(_ok.okCFrontPanel_GetErrorString)
+    def GetLastErrorMessage(self): return _ok.okCFrontPanel_GetLastErrorMessage(self)
+    def GetDeviceInfo(self, *args): return _ok.okCFrontPanel_GetDeviceInfo(self, *args)
+    def GetBoardModel(self): return _ok.okCFrontPanel_GetBoardModel(self)
+    __swig_getmethods__["FindUSBDeviceModel"] = lambda x: _ok.okCFrontPanel_FindUSBDeviceModel
+    if _newclass:FindUSBDeviceModel = staticmethod(_ok.okCFrontPanel_FindUSBDeviceModel)
+    __swig_getmethods__["GetBoardModelString"] = lambda x: _ok.okCFrontPanel_GetBoardModelString
+    if _newclass:GetBoardModelString = staticmethod(_ok.okCFrontPanel_GetBoardModelString)
+    def ActivateTriggerIn(self, *args): return _ok.okCFrontPanel_ActivateTriggerIn(self, *args)
+    def IsTriggered(self, *args): return _ok.okCFrontPanel_IsTriggered(self, *args)
+    def GetTriggerOutVector(self, *args): return _ok.okCFrontPanel_GetTriggerOutVector(self, *args)
     def UpdateTriggerOuts(self): return _ok.okCFrontPanel_UpdateTriggerOuts(self)
+    def SetWireInValue(self, *args): return _ok.okCFrontPanel_SetWireInValue(self, *args)
     def UpdateWireIns(self): return _ok.okCFrontPanel_UpdateWireIns(self)
+    def GetWireOutValue(self, *args): return _ok.okCFrontPanel_GetWireOutValue(self, *args)
     def UpdateWireOuts(self): return _ok.okCFrontPanel_UpdateWireOuts(self)
+    def Close(self): return _ok.okCFrontPanel_Close(self)
     def FlashWrite(self, *args): return _ok.okCFrontPanel_FlashWrite(self, *args)
     def FlashRead(self, *args): return _ok.okCFrontPanel_FlashRead(self, *args)
     def WriteToPipeIn(self, *args): return _ok.okCFrontPanel_WriteToPipeIn(self, *args)
@@ -924,9 +1046,25 @@ class okCFrontPanel(_object):
 okCFrontPanel_swigregister = _ok.okCFrontPanel_swigregister
 okCFrontPanel_swigregister(okCFrontPanel)
 
-def okCFrontPanel_GetErrorString(*args):
-  return _ok.okCFrontPanel_GetErrorString(*args)
-okCFrontPanel_GetErrorString = _ok.okCFrontPanel_GetErrorString
+def okCFrontPanel_GetAPIVersionMajor():
+  return _ok.okCFrontPanel_GetAPIVersionMajor()
+okCFrontPanel_GetAPIVersionMajor = _ok.okCFrontPanel_GetAPIVersionMajor
+
+def okCFrontPanel_GetAPIVersionMinor():
+  return _ok.okCFrontPanel_GetAPIVersionMinor()
+okCFrontPanel_GetAPIVersionMinor = _ok.okCFrontPanel_GetAPIVersionMinor
+
+def okCFrontPanel_GetAPIVersionMicro():
+  return _ok.okCFrontPanel_GetAPIVersionMicro()
+okCFrontPanel_GetAPIVersionMicro = _ok.okCFrontPanel_GetAPIVersionMicro
+
+def okCFrontPanel_GetAPIVersionString():
+  return _ok.okCFrontPanel_GetAPIVersionString()
+okCFrontPanel_GetAPIVersionString = _ok.okCFrontPanel_GetAPIVersionString
+
+def okCFrontPanel_CheckAPIVersion(*args):
+  return _ok.okCFrontPanel_CheckAPIVersion(*args)
+okCFrontPanel_CheckAPIVersion = _ok.okCFrontPanel_CheckAPIVersion
 
 def okCFrontPanel_AddCustomDevice(*args):
   return _ok.okCFrontPanel_AddCustomDevice(*args)
@@ -935,6 +1073,14 @@ okCFrontPanel_AddCustomDevice = _ok.okCFrontPanel_AddCustomDevice
 def okCFrontPanel_RemoveCustomDevice(*args):
   return _ok.okCFrontPanel_RemoveCustomDevice(*args)
 okCFrontPanel_RemoveCustomDevice = _ok.okCFrontPanel_RemoveCustomDevice
+
+def okCFrontPanel_GetErrorString(*args):
+  return _ok.okCFrontPanel_GetErrorString(*args)
+okCFrontPanel_GetErrorString = _ok.okCFrontPanel_GetErrorString
+
+def okCFrontPanel_FindUSBDeviceModel(*args):
+  return _ok.okCFrontPanel_FindUSBDeviceModel(*args)
+okCFrontPanel_FindUSBDeviceModel = _ok.okCFrontPanel_FindUSBDeviceModel
 
 def okCFrontPanel_GetBoardModelString(*args):
   return _ok.okCFrontPanel_GetBoardModelString(*args)
@@ -991,57 +1137,43 @@ class PLL22393(okCPLL22393):
 PLL22393_swigregister = _ok.PLL22393_swigregister
 PLL22393_swigregister(PLL22393)
 
-class Firmware(okCFirmware):
+class okCFrontPanelDevices(_object):
     __swig_setmethods__ = {}
-    for _s in [okCFirmware]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, Firmware, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(self, okCFrontPanelDevices, name, value)
     __swig_getmethods__ = {}
-    for _s in [okCFirmware]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
-    __getattr__ = lambda self, name: _swig_getattr(self, Firmware, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
-    __repr__ = _swig_repr
-    __swig_destroy__ = _ok.delete_Firmware
-    __del__ = lambda self : None;
-Firmware_swigregister = _ok.Firmware_swigregister
-Firmware_swigregister(Firmware)
-
-class FirmwarePackage(okCFirmwarePackage):
-    __swig_setmethods__ = {}
-    for _s in [okCFirmwarePackage]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, FirmwarePackage, name, value)
-    __swig_getmethods__ = {}
-    for _s in [okCFirmwarePackage]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
-    __getattr__ = lambda self, name: _swig_getattr(self, FirmwarePackage, name)
-    __repr__ = _swig_repr
-    def __init__(self): 
-        this = _ok.new_FirmwarePackage()
-        try: self.this.append(this)
-        except: self.this = this
-    __swig_destroy__ = _ok.delete_FirmwarePackage
-    __del__ = lambda self : None;
-FirmwarePackage_swigregister = _ok.FirmwarePackage_swigregister
-FirmwarePackage_swigregister(FirmwarePackage)
-
-class okCFrontPanelManager(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, okCFrontPanelManager, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, okCFrontPanelManager, name)
+    __getattr__ = lambda self, name: _swig_getattr(self, okCFrontPanelDevices, name)
     __repr__ = _swig_repr
     def __init__(self, *args): 
-        this = _ok.new_okCFrontPanelManager(*args)
+        this = _ok.new_okCFrontPanelDevices(*args)
         try: self.this.append(this)
         except: self.this = this
-    def Open(self, *args): return _ok.okCFrontPanelManager_Open(self, *args)
-    def OnDeviceAdded(self, *args): return _ok.okCFrontPanelManager_OnDeviceAdded(self, *args)
-    def OnDeviceRemoved(self, *args): return _ok.okCFrontPanelManager_OnDeviceRemoved(self, *args)
-    __swig_destroy__ = _ok.delete_okCFrontPanelManager
+    def GetCount(self): return _ok.okCFrontPanelDevices_GetCount(self)
+    def GetSerial(self, *args): return _ok.okCFrontPanelDevices_GetSerial(self, *args)
+    def Open(self, *args): return _ok.okCFrontPanelDevices_Open(self, *args)
+    __swig_destroy__ = _ok.delete_okCFrontPanelDevices
     __del__ = lambda self : None;
-okCFrontPanelManager_swigregister = _ok.okCFrontPanelManager_swigregister
-okCFrontPanelManager_swigregister(okCFrontPanelManager)
+okCFrontPanelDevices_swigregister = _ok.okCFrontPanelDevices_swigregister
+okCFrontPanelDevices_swigregister(okCFrontPanelDevices)
 cvar = _ok.cvar
 okREALM_LOCAL = cvar.okREALM_LOCAL
 okREALM_TEST = cvar.okREALM_TEST
+
+class FrontPanelDevices(okCFrontPanelDevices):
+    __swig_setmethods__ = {}
+    for _s in [okCFrontPanelDevices]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
+    __setattr__ = lambda self, name, value: _swig_setattr(self, FrontPanelDevices, name, value)
+    __swig_getmethods__ = {}
+    for _s in [okCFrontPanelDevices]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    __getattr__ = lambda self, name: _swig_getattr(self, FrontPanelDevices, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        this = _ok.new_FrontPanelDevices(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _ok.delete_FrontPanelDevices
+    __del__ = lambda self : None;
+FrontPanelDevices_swigregister = _ok.FrontPanelDevices_swigregister
+FrontPanelDevices_swigregister(FrontPanelDevices)
 
 # This file is compatible with both classic and new-style classes.
 

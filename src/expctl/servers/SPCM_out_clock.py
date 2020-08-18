@@ -35,7 +35,7 @@ def dec_to_bytearray(no):
 		if not i%2: # even indeces --> new bytearray digit;
 			array.append(hex_no[i])
 		else: # otherwise add onto newest existing digit
-			array[i/2] += hex_no[i]
+			array[i//2] += hex_no[i] #PY3 fix
 	byte_array = [int(array[i], 16) for i in range(len(array)-1,-1,-1)]
 	return byte_array
 
@@ -76,7 +76,7 @@ def Config_FPGA():
 	dev.SetPLL22150Configuration(pll)
 	
 	# Configure (clk rate and setup of) FPGA, reset it and start waiting for 'laser' to go on
-	print(dev.ConfigureFPGA(code), " ~ Connected to FPGA!")
+	print(dev.ConfigureFPGA(str(code)), " ~ Connected to FPGA!")
 	pll.SetDiv1(pll.GetDiv1Source(), int(ceil(200 / fpga_clk))) # Set FPGA clk rate 200/n MHz; here n = 2
 	
 
@@ -143,7 +143,7 @@ def Acquire():
 		dev.UpdateWireIns()
 		dev.SetWireInValue(0x06, 0)
 		dev.UpdateWireIns()
-		N = len(data_byte) / 2
+		N = len(data_byte) // 2 #FIX py3
 		data_bi, data = [], []
 		for j in range(N):
 			data_bi.append(byte_to_bi(data_byte[2*j+1]) + byte_to_bi(data_byte[2*j]))
@@ -287,7 +287,7 @@ class FPGAServer(Server):
 				acquire_data, save_data = RunServer(self.seq, 0)
 				logger.debug('Sequence has been queued... Trigger it whenever!')
 				self.send_msg(self.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
-
+				logger.debug(f'Acquire: {acquire_data}, Save: {save_data}')
 				if acquire_data == 1:
 					data = Acquire()
 					if data == -1:
@@ -297,7 +297,7 @@ class FPGAServer(Server):
 						#SaveData(server.seq.foldername, server.seq.runname, data[0])
 						SaveDataWithCLK(self.seq.foldername, self.seq.runname, data)
 			except:
-				logger.error("Failed to acquire data from FPGA.")
+				logger.exception("Failed to acquire data from FPGA.")
 
 	def run(self):
 		return RunServer(self.seq, 1)

@@ -5,17 +5,11 @@ import time
 import numpy as np
 from .ServerClass import Server, logger
 from ..utilities.util import formatTimeUnits
-import ctypes
-from .util.NI_server import *
+import nidaqmx
+from nidaqmx.constants import LineGrouping
+from nidaqmx.constants import Signal
 
-uInt8   = ctypes.c_ubyte
-int16   = ctypes.c_short
-uInt16  = ctypes.c_ushort
-int32   = ctypes.c_long
-uInt32  = ctypes.c_ulong
-uInt64  = ctypes.c_ulonglong
-float64 = ctypes.c_double
-task_handle_type = uInt32
+float64 = np.float64
 
 ''' For the PCI6723, sample rate depends on the number of channels: It should not exceed 800 kS/s
 		 per channel for one channel, or 45 kS/s per channel for 32 channels '''
@@ -23,7 +17,7 @@ sample_rate = 4.0/100  # number of samples per microsecond (clock speed in MHz) 
 
 def ParseData(seq, samps_per_channel):
 	print("  Converting "+ formatTimeUnits(seq.TIME_STOP) +" sequence to NI-readable data.")
-	seq_data = numpy.zeros((seq.max_channels*samps_per_channel,), dtype=float64)
+	seq_data = np.zeros((seq.max_channels*samps_per_channel,), dtype=float64)
 	
 	for chan in seq.allChannels:
 		if chan == None:
@@ -41,7 +35,7 @@ def ParseData(seq, samps_per_channel):
 				if start == stop: # For zero length interval, the value will be set to the end value of the zero interval
 					seq_data[offset + start] = interval.end_V()
 				else: # For non-zero interval, create a ramp between the start and stop value
-					seq_data[offset+start:offset+stop] = numpy.linspace(interval.start_V(), interval.end_V(), num=stop-start)
+					seq_data[offset+start:offset+stop] = np.linspace(interval.start_V(), interval.end_V(), num=stop-start)
 				lastVal = float64(interval[3]) # Remember the last previous value.
 			# Repeat stamps. Format: (start_time, start_value, stop_time, stop_value, stamp, stamp_length, modulation_number)
 			elif len(interval) == 7:
@@ -56,14 +50,14 @@ def ParseData(seq, samps_per_channel):
 						if start == stop:
 							seq_data[offset+start] = stamp[3]
 						else:
-							seq_data[offset+start:offset+stop] = numpy.linspace(stamp[1], stamp[3], num=stop-start)
+							seq_data[offset+start:offset+stop] = np.linspace(stamp[1], stamp[3], num=stop-start)
 						lastVal = float64(stamp[3])
 		seq_data[offset+samps_per_channel-1] = chan.GetHardwareSSV() # set steady state val
 		
 	return seq_data
 
 # def ParseData(seq, samps_per_channel):
-#   return numpy.zeros((seq.max_channels*samps_per_channel,), dtype=float64)
+#   return np.zeros((seq.max_channels*samps_per_channel,), dtype=float64)
 	
 def DataForPlot(seq):
 	# IMPORTANT: EVERY TIME THE DATA PARSING PROCESS IS MODIFIED (NEW CARD OR DRIVER INSTALLED), THIS MODULE 
@@ -106,47 +100,69 @@ def RunServer(server, seq, autostart = 1):
 	print("samps rate: ", sample_rate*localMHz)
 	buffer_size = samps_per_channel # number of samples
 	print("samples per channel: ",samps_per_channel)
-	params = NIParameters(autostart, timeout, buffer_size, sample_rate*localMHz, samps_per_channel, b'PCI6723/ao0:31', b'OnboardClock')
+	#params = NIParameters(autostart, timeout, buffer_size, sample_rate*localMHz, samps_per_channel, b'PCI6723/ao0:31', b'OnboardClock')
 	#params = NIParameters(autostart, timeout, buffer_size, sample_rate*localMHz, samps_per_channel, 'PCI6723/ao0:31', 'PFI2')
-	device = NIDevice(params)
+	#device = NIDevice(params)
 	
-	t1 = time.time()######################################
-	seq_data = ParseData(seq, samps_per_channel)
-	t2 = time.time()######################################
+	t1 = time.time()
+	seq_data_1d = ParseData(seq, samps_per_channel)
+	seq_data = seq_data_1d.reshape((32, samps_per_channel))
+	print(seq_data.shape)
+	t2 = time.time()
 	
 	# Send sequence data to the device
-	task_handle = device.CreateTask(server.task_id)    # Create task #0
-	#task_handle1 = device.CreateTask(1)    # Create task #1 ############################### NEW
-	device.CreateAOVoltageChan(task_handle, b"all_channels")
-	#device.CreateCounterChan(task_handle1, "PCI6723/Ctr1", "counter")############################### NEW
-	device.ConfigureTiming(task_handle, params)
-	#device.ConfPauseTrig(task_handle, src="PFI5")
-	#device.CounterInput(task_handle, "PCI6723/Ctr1", "PFI5")############################### NEW
-	device.ExportSampleClockSignal(task_handle, line=b"PFI5") # happens by default?
-	#device.ExternalSampleTimbase(task_handle, "PFI2", 10e6) # Use this for 10 MHz input synchronization
-	device.ExternalSampleTimbase(task_handle, b"RTSI6", 10e6) # Use this for 10 MHz input synchronization #########################
-	#device.ExternalSampleTimbase(task_handle, "20MHzTimebase", 20e6)
-	device.AnalogWriteF64(task_handle, params, seq_data)
-	#device.StartTask(task_handle1) ############################### NEW
+	#task_handle = device.CreateTask(server.task_id)    # Create task #0
+	# device.CreateAOVoltageChan(task_handle, b"all_channels")
+	# device.ConfigureTiming(task_handle, params)
+	# device.ExportSampleClockSignal(task_handle, line=b"PFI5") # happens by default?
+	# device.ExternalSampleTimbase(task_handle, b"RTSI6", 10e6) # Use this for 10 MHz input synchronization #########################
+	# device.AnalogWriteF64(task_handle, params, seq_data)
 
-	t3 = time.time()######################################
+	with nidaqmx.Task() as task:
+		task.ao_channels.add_ao_voltage_chan('PCI6723/ao0:31')
+		#rate=sample_rate*localMHz ??
+		task.timing.cfg_samp_clk_timing(rate=sample_rate*localMHz, source="OnboardClock", samps_per_chan=samps_per_channel)
+		#task.timing.cfg_samp_clk_timing(rate=10e6, source="RTSI6", samps_per_chan=samps_per_channel)
+		task.export_signals.export_signal(Signal.SAMPLE_CLOCK, output_terminal="PFI5")
+		#task.timing.samp_clk_src = "RTSI6"
+		#task.timing.samp_clk_rate = 10e6
+		print(task.timing.samp_clk_src)
+		print(task.timing.samp_clk_rate)
+		
+		task.write(seq_data, auto_start=False)
+		task.wait_until_done(timeout=8.0)
+		logger.debug("Task done writing data")
+		if autostart==0: # Set up triggering
+			#cfg_dig_edge_start_trig(self, trigger_source, trigger_edge=Edge.RISING)
+			task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source="PFI0")
+			task.start()
+			logger.info("Analog out waiting for trigger on PFI0")
+			server.send_msg(server.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
+		else:
+			task.start()
+			server.send_msg(server.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
+
+		task.wait_until_done(timeout=10.0)
+		logger.info("Analog out task done!")
+	t3 = time.time()
 	
-	if params.autostart == 0: # Set up triggering
-		device.ConfigureTrigger(task_handle, params, trigger_src=b"PFI0")
-		t34 = time.time()
-		device.StartTask(task_handle)
-		t4 = time.time()######################################
-		#send_msg(clientSocket, server.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
-		t5 = time.time()######################################
-	else:
-		print("  Starting task ID " + str(server.task_id) + " (task_handle: " + str(task_handle.value) + ")...")
+	# if params.autostart == 0: # Set up triggering
+	# 	device.ConfigureTrigger(task_handle, params, trigger_src=b"PFI0")
+	# 	t34 = time.time()
+	# 	device.StartTask(task_handle)
+	# 	t4 = time.time()######################################
+	# 	#send_msg(clientSocket, server.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
+	# 	t5 = time.time()######################################
+	# else:
+	# 	print("  Starting task ID " + str(server.task_id) + " (task_handle: " + str(task_handle.value) + ")...")
 		
 	# device.WaitUntilTaskDoneOrBreak(task_handle)
-	device.WaitUntilTaskDone(task_handle)
-	device.cleanupTask(task_handle)
+	# device.WaitUntilTaskDone(task_handle)
+	# device.cleanupTask(task_handle)
 
 	server.task_id += 1
 	TIME_STOP = time.time()
+	logger.debug(f"Task destroyed, sending analog data took {TIME_STOP-TIME_START}s")
 	return TIME_STOP-TIME_START
 
 	
@@ -156,8 +172,13 @@ class NIAnalogServer(Server):
 		super().__init__(name, port, message)
 		self.task_id = 0
 
-	def queue(self):
-		return RunServer(self, self.seq, autostart=0)
+	def cmd_queue(self):
+		if self.seq is None:
+			logger.error('QUEUE failed. Sequence has not been imported!')
+			#self.send_msg(self.ReplyHeader() + 'QUEUE failed. Sequence has not been imported!')
+		else:
+			ret = RunServer(self, self.seq, autostart=0)
+			logger.debug(f'Successfully ran sequence ({ret} seconds)')
 
 	def run(self):
 		return RunServer(self, self.seq)

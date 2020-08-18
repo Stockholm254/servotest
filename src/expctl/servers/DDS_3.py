@@ -24,12 +24,9 @@ code1 = str(DIR_BITFILE/"DDS_freq_out_ExtCLK.bit")
 logger.info(f"Using bitfile {code1}")
 
 jdebug=0
-FPGAclock = 100.0 #MHz is the default, but we'll get the actual frequency from the FPGA pll itself!
-#FPGAsn = '12520004R7' #This must match the S/N of the FPGA inside the PDH DDS box. Can find the serial number via the Opal Kelly FrontPanel interface.
-#Development test FPGA board
-FPGAsn = '12520004R7' #This must match the S/N of the FPGA inside the PDH DDS box. Can find the serial number via the Opal Kelly FrontPanel interface.
-FPGA_TMPCLOCKIN = 40.0 #this is the fix for the DDS going nuts from sync errors with FPGA IGNORES PLL
-FPGAclock = FPGA_TMPCLOCKIN
+FPGAclock = 25.0 #MHz is the default, but we'll get the actual frequency from the FPGA pll itself!
+FPGAsn = '14290008UX' #This must match the S/N of the FPGA inside the PDH DDS box. Can find the serial number via the Opal Kelly FrontPanel interface.
+
 
 def RunServer(server, seq, dev, loadorrun, autostart=1):
 
@@ -297,7 +294,7 @@ class DDSServer(Server):
 	def run(self):
 		RunServer(self, self.seq, dev, LOADMODE)
 		logger.debug("DDS Loaded")
-		self.send_msg(self.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
+		server.send_msg(server.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
 		ret = RunServer(self, self.seq, dev, RUNMODE)
 		logger.debug("DDS ran")
 		return ret
@@ -330,6 +327,6 @@ if __name__ == '__main__':
 	===============================================
 	"""
 
-	server = DDSServer("DDS_1", 60617, message=message)
+	server = DDSServer("DDS_PDH", 60618, message=message)
 	server.main_loop()
 
