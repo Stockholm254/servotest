@@ -8,8 +8,10 @@ from pathlib import Path
 DIR_SEQ  = Path(__file__).parent.parent/"usr/sequences" #Path("./usr/sequences") # defaulst sequences files
 DIR_MV   = Path(__file__).parent.parent/"usr/snippets"  #Path("./usr/snippets") # default MV files
 DIR_TEMP = Path(__file__).parent.parent/"temp"  #Path("./temp/") # front panel temperary file directory
-DIR_DATA = Path(__file__).parent.parent.parent.parent/"TestOutput/Data/" #Path("../TestOutput/Data/")#r"E:/Data/" # experiment data
-DIR_LOG  = Path(__file__).parent.parent.parent.parent/"TestOutput/Logs/"  #Path("../TestOutput/Logs/")#r"E:/Logs/FrontPanel"    # experiment run log
+#DIR_DATA = Path(__file__).parent.parent.parent.parent/"TestOutput/Data/" #Path("../TestOutput/Data/")#r"E:/Data/" # experiment data
+#DIR_LOG  = Path(__file__).parent.parent.parent.parent/"TestOutput/Logs/"  #Path("../TestOutput/Logs/")#r"E:/Logs/FrontPanel"    # experiment run log
+DIR_DATA = Path("E:/Data")
+DIR_LOG = Path("E:/Log/FrontPanel")
 # DIR_INFO = r"C:/Users/Simonlab/Documents/Info"   # experiment info
 DIR_REM  = Path(__file__).parent.parent/"usr/Remote"  #Path("./usr/Remote") # Remote uploaded file
 
@@ -21,18 +23,18 @@ FNAME_TEMP_MV = 'temp_MV.txt' # File name for temporary mvs
 ## TCP/IP Information for the Lab ##
 ####################################
 ## IP address
-# IP_RYDBURGER = '192.168.1.105' # Experimental control computer (control room)
-# IP_RYDFRIES  = '192.168.1.106' # Data collection computer (laser room top racks)
-# IP_RYDCOKES  = '192.168.1.107' # Laptop (mobile, usually in the vacuum room cart)
-# IP_LABSERVER = '192.168.1.101' # Simonlab data backup server (lab office behind the sofa)
-# IP_RYDNUGGET = '192.168.1.120' # New rydberg polariton experiment control computer (control room)
+IP_RYDBURGER = '192.168.1.105' # Experimental control computer (control room)
+IP_RYDFRIES  = '192.168.1.106' # Data collection computer (laser room top racks)
+IP_RYDCOKES  = '192.168.1.107' # Laptop (mobile, usually in the vacuum room cart)
+IP_LABSERVER = '192.168.1.101' # Simonlab data backup server (lab office behind the sofa)
+IP_RYDNUGGET = '192.168.1.120' # New rydberg polariton experiment control computer (control room)
 
 ### REDICRECT TO LOCAL PC FOR TESTING
-IP_RYDBURGER = '127.0.0.1' # Experimental control computer (control room)
-IP_RYDFRIES  = '127.0.0.1' # Data collection computer (laser room top racks)
-IP_RYDCOKES  = '127.0.0.1' # Laptop (mobile, usually in the vacuum room cart)
-IP_LABSERVER = '127.0.0.1' # Simonlab data backup server (lab office behind the sofa)
-IP_RYDNUGGET = '127.0.0.1' # New rydberg polariton experiment control computer (control room)
+# IP_RYDBURGER = '127.0.0.1' # Experimental control computer (control room)
+# IP_RYDFRIES  = '127.0.0.1' # Data collection computer (laser room top racks)
+# IP_RYDCOKES  = '127.0.0.1' # Laptop (mobile, usually in the vacuum room cart)
+# IP_LABSERVER = '127.0.0.1' # Simonlab data backup server (lab office behind the sofa)
+# IP_RYDNUGGET = '127.0.0.1' # New rydberg polariton experiment control computer (control room)
 
 # RYDBURGER PORTS
 PORT_REMOTECTRL = 60000 # Remote front panel control (disabled)

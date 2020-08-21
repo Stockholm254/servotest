@@ -15,13 +15,13 @@ datenow = datetime.datetime.now()
 class dataBackup:
   def __init__(self, HomeDir=datadir, bkpDate=datenow):
     self.home_dir = Path(HomeDir)    # Data home directory
-    self.date_dir = bkpDate.strftime('/%Y/%m/%d')          # Data date directory
+    self.date_dir = bkpDate.strftime('%Y/%m/%d')          # Data date directory
     self.file_dir = self.home_dir/self.date_dir               # Full data directory
     self.log_dir  = DIR_LOG #Path("../../TestOutput/Log/DataBkp")#"E:/Log/DataBkp"  # Backup log folder
     
-    self.host     = DIR_DATA.parent/"backup" #Path("../../TestOutput/backup")#"//SIMONLABSERVER/backup"              # Bakkup server host name
-    self.drive    = DIR_DATA.parent/"backup" #Path("../../TestOutput/backup")                                     # Net work drive
-    self.bkpPath  = "/Rydberg Experiment Data"+self.date_dir # Backup folder on server
+    self.host     = "//SIMONLABSERVER/backup"              # Bakkup server host name
+    self.drive    = Path("Z:/")  #Path("../../TestOutput/backup")                                     # Net work drive
+    self.bkpPath  = "Rydberg Experiment Data/"+self.date_dir # Backup folder on server
     
     self.folders = []
     self.fileNum = 0
