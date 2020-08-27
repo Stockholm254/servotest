@@ -84,7 +84,7 @@ class FrontPanel(wx.Frame):
     jGlobals.init() # Initialize global variables
 
     # Front panel GUI
-    wx.Frame.__init__(self, None, wx.ID_ANY, title='SimonLab Control Suite', size=(1300, 750)) 
+    wx.Frame.__init__(self, None, wx.ID_ANY, title='SimonLab Control Suite 3', size=(1300, 750)) 
     self.panel = wx.Panel(self, wx.ID_ANY)
     # self.window_size = self.GetSize()
     
@@ -285,7 +285,7 @@ class FrontPanel(wx.Frame):
     bmp = wx.BitmapFromImage(wx.Image(str(ICON_FOLDER/"38740-200.png"), wx.BITMAP_TYPE_ANY).Scale(30, 30, wx.IMAGE_QUALITY_HIGH))
     titleIco1 = wx.StaticBitmap(self.panel, wx.ID_ANY, bmp, size=(30, 30))
     titleIco2 = wx.StaticBitmap(self.panel, wx.ID_ANY, bmp, size=(30, 30))
-    title = wx.StaticText(self.panel, wx.ID_ANY, 'Simon Lab Software Suite Front Panel')
+    title = wx.StaticText(self.panel, wx.ID_ANY, 'Simon Lab Software Suite Front Panel 3')
     title.SetFont(wx.Font(12, wx.MODERN, wx.NORMAL, wx.NORMAL, False, 'Calibri'))
     # Buttons
     self.btn_remote      = wx.Button(self.panel,     wx.ID_ANY, 'Remote')
