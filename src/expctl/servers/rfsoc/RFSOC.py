@@ -11,7 +11,7 @@ DIR_BITFILE = Path(__file__).parent
 bitfile_path = str(DIR_BITFILE/"ddsfinal10k_tm_3.bit")
 logger.info(f"Using bitfile {bitfile_path}")
 
-chan_shuffler = [2,1,0,3,4,5,6,7]
+chan_shuffler =  [0,1,2,3,4,5,6,7]#[2,1,0,3,4,5,6,7]
 #list index is the sequence channel and corresponding element is the DDS channel.
 
 #These values are defined in rfsocdriver, override here.

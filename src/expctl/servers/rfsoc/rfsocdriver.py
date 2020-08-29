@@ -30,11 +30,11 @@ def setLastBit(N,x):
 		
 def getFTW(freq):
 	#freq in Hz
-	return (np.int64)((freq)/(10**6*SAMPLE_CLK)*(2**64))
+	return np.int64(((freq)/(10**6*SAMPLE_CLK)*(2**64)))
 
 def getCycles(t):
 	#t in us
-	return (np.int64) (SEQUENCER_CLK*t)
+	return np.int64((SEQUENCER_CLK*t))
 
 def ConvertTupletoCountsandFTWs(tuplein): #converts ramp tuple (T0,f0,T1,f1) in microseconds and Hz to counts and FTWs for FPGA and DDS respectively
 	return [getCycles(tuplein[0]),getFTW(tuplein[1]),getCycles(tuplein[2]),getFTW(tuplein[3])]
@@ -177,7 +177,10 @@ class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager
 			freqsbuffer[i] = setLastBit(fstart,phase_reset_bits[i])
 			cycles = tend-tstart
 			cyclesbuffer[i] = cycles
-			dfreq  = (np.int64)((fend-fstart)/(cycles-1))
+			if cycles<=1:
+				dfreq = np.int64(0)
+			else:
+				dfreq  = (np.int64)((fend-fstart)/(cycles-1))
 			dfreqsbuffer[i] = setLastBit(dfreq,trigger_bits[i])
 			seqout.append([fstart,dfreq,cycles])
 			
