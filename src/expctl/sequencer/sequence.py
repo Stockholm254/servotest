@@ -1,5 +1,5 @@
 from ..utilities.util import *
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import colorsys
 import socket
 import pickle as pickle
@@ -188,7 +188,7 @@ class Sequence:
     ax.yaxis.label.set_color(almost_black)
     ytick_labels = []
     ytick_locations = []
-    t = 0;
+    t = 0
     x = [0]
     greatestX = 0
    
@@ -203,20 +203,20 @@ class Sequence:
       if chan == None or len(chan._UserValues) == 0:
         continue
       rgb = colorsys.hls_to_rgb(1.0 * chan.chanid / self.fullChannels, .4, .8)
-      rgb = '#%02x%02x%02x' % (256 * rgb[0], 256 * rgb[1], 256 * rgb[2])  # generate rgb based on position
+      rgb = '#%02x%02x%02x' % (int(255*rgb[0]), int(255*rgb[1]), int(255*rgb[2]))  # generate rgb based on position
       y = []
       x = []
       for ii in range(0, len(chan._UserValues)):
         pair = chan._UserValues[ii]
         x.append(pair[0])
-        y.append(chancounter + .7*pair[1]/chan.max_value)
+        y.append(chancounter + .7*pair[1]/chan.max_v)
         x.append(pair[2])
         if pair[2] > greatestX:
           greatestX = pair[2]
-        y.append(chancounter + .7*pair[3]/chan.max_value)
+        y.append(chancounter + .7*pair[3]/chan.max_v)
         if ii < len(chan._UserValues)-1:
           x.append(chan._UserValues[ii+1][0])
-          y.append(chancounter + .7*pair[3]/chan.max_value)
+          y.append(chancounter + .7*pair[3]/chan.max_v)
       line1 = plt.plot(x, y)                                # plot the line!
       ax.fill_between(x, y, chancounter, color='#efefef')   # shade in the region
       plt.setp(line1, linewidth=1.25, color=rgb)
@@ -240,7 +240,7 @@ class Sequence:
     plt.xlim(0 - margin, greatestX + margin)
 
     plt.tight_layout()
-    fig.savefig(filename, facecolor=fig.get_facecolor(), edgecolor='none')
+    #fig.savefig(filename, facecolor=fig.get_facecolor(), edgecolor='none')
     plt.show()
     
 #======================================================================#

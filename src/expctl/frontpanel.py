@@ -829,7 +829,7 @@ class FrontPanel(wx.Frame):
   def OnSaveCtrlMV(self, event):
     datenow = datetime.datetime.now()
     filestr = "CtrlMVs-"+self.script_name+datenow.strftime("-%m-%d-%Y")+".txt"
-    dlg = wx.FileDialog(self, message="Save current metavariable values to a file...", defaultDir=DIR_MV, defaultFile=filestr, style=wx.SAVE|wx.OVERWRITE_PROMPT)
+    dlg = wx.FileDialog(self, message="Save current metavariable values to a file...", defaultDir=str(DIR_MV), defaultFile=filestr, style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
     if dlg.ShowModal() == wx.ID_OK: # Call the dialog as a model-dialog so user is required to choose Ok or Cancel
       save_fname_seq = dlg.GetFilename()
       save_dir_seq = dlg.GetDirectory()
@@ -1089,7 +1089,7 @@ class FrontPanel(wx.Frame):
   def ExportMV(self, event):
     datenow = datetime.datetime.now()
     filestr = "MVs-"+self.script_name+datenow.strftime("-%m-%d-%Y")+".txt"
-    dlg = wx.FileDialog(self, message="Save current metavariable values to a file...", defaultDir=DIR_MV, defaultFile=filestr, style=wx.SAVE|wx.OVERWRITE_PROMPT) #TODO FD_save
+    dlg = wx.FileDialog(self, message="Save current metavariable values to a file...", defaultDir=str(DIR_MV), defaultFile=filestr, style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) #TODO FD_save
     if dlg.ShowModal() == wx.ID_OK: # Call the dialog as a model-dialog so user is required to choose Ok or Cancel
       save_fname_seq = dlg.GetFilename()
       save_dir_seq = dlg.GetDirectory()
@@ -1103,7 +1103,7 @@ class FrontPanel(wx.Frame):
   def ExportFBMV(self, event):
     datenow = datetime.datetime.now()
     filestr = "FBMVs-"+self.script_name+datenow.strftime("-%m-%d-%Y")+".txt"
-    dlg = wx.FileDialog(self, message="Save current metavariable values to a file...", defaultDir=DIR_MV, defaultFile=filestr, style=wx.SAVE|wx.OVERWRITE_PROMPT)
+    dlg = wx.FileDialog(self, message="Save current metavariable values to a file...", defaultDir=str(DIR_MV), defaultFile=filestr, style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
     if dlg.ShowModal() == wx.ID_OK: # Call the dialog as a model-dialog so user is required to choose Ok or Cancel
       save_fname_seq = dlg.GetFilename()
       save_dir_seq = dlg.GetDirectory()
@@ -1165,7 +1165,7 @@ class FrontPanel(wx.Frame):
     if not data_dir.exists():
       os.makedirs(data_dir)
     if flag == 1:
-      dlg = wx.FileDialog(self, message="Save current looped code...", defaultDir=data_dir, defaultFile=filestr, style=wx.SAVE|wx.OVERWRITE_PROMPT)
+      dlg = wx.FileDialog(self, message="Save current looped code...", defaultDir=data_dir, defaultFile=filestr, style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
       if dlg.ShowModal() == wx.ID_OK: # Call the dialog as a model-dialog so user is required to choose Ok or Cancel
         save_fname_seq = dlg.GetFilename()
         save_dir_seq = Path(dlg.GetDirectory())
