@@ -32,8 +32,8 @@ class Server:
 
 		self.sock = context.socket(zmq.REP)
 		try:
-			self.sock.bind(f"tcp://*:{self.port}")
-			logger.info(f"Server {self.name} started listening on {self.port}")
+			self.sock.bind("tcp://*:{}".format(self.port))
+			logger.info("Server {} started listening on {}".format(self.name, self.port))
 		except Exception as e:
 			logger.exception("Bind failed!")
 			sys.exit()
@@ -61,8 +61,8 @@ class Server:
 		return time.strftime('['+self.name+': %b %d %H:%M:%S]') + " "
 
 	def cmd_unknown(self, cmd=''):
-		logger.warning(f"Unknown command {cmd}!")
-		self.send_msg(self.ReplyHeader() + f"Unknown command {cmd}")
+		logger.warning("Unknown command {}!".format(cmd))
+		self.send_msg(self.ReplyHeader() + "Unknown command {}!".format(cmd))
 
 	def cmd_ping(self):
 		logger.info("Got Ping'd!")
@@ -81,8 +81,8 @@ class Server:
 		numChannels = 0
 		for chan in self.seq.allChannels:
 			if chan != None: numChannels += 1
-		logger.debug(f"Received sequence ({numChannels} channels): {self.seq.name}")
-		reply = f"Received {self.seq.name}, {numChannels} channels defined."
+		logger.debug("Received sequence ({} channels): {}".format(numChannels, self.seq.name))
+		reply = "Received sequence ({} channels): {}".format(numChannels, self.seq.name)
 		self.send_msg(self.ReplyHeader() + reply)
 	
 	def cmd_queue(self):
@@ -92,9 +92,9 @@ class Server:
 		else:
 			success = self.queue()
 			time_taken = '%.2f' % success
-			logger.debug(f'Successfully ran sequence ({time_taken} seconds)')
-			#DO not reply for QUEUE
-			self.send_msg(self.ReplyHeader() + f'Successfully ran sequence ({time_taken} seconds)')
+			logger.debug('Successfully ran sequence ({} seconds)'.format(time_taken))
+			#DO not reply for QUEUE TODO figure out correct response scheme for QUEUE
+			self.send_msg(self.ReplyHeader() + 'Successfully ran sequence ({} seconds)'.format(time_taken))
 
 	def queue(self):
 		return RunServer(self.seq, autostart=0)
@@ -106,8 +106,8 @@ class Server:
 		else:
 			success = self.run()
 			time_taken = '%.2f' % success
-			logger.debug(f'Successfully ran sequence ({time_taken} seconds)')
-			self.send_msg(self.ReplyHeader() + f'Successfully ran sequence ({time_taken} seconds)')
+			logger.debug('Successfully ran sequence ({} seconds)'.format(time_taken))
+			self.send_msg(self.ReplyHeader() + 'Successfully ran sequence ({} seconds)'.format(time_taken))
 
 	def run(self):
 		return RunServer(self.seq)

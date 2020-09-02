@@ -90,18 +90,18 @@ class RpDDS:
 		self.write(self.DDSsoftwaretrigger_OFFSET, 0)
 		print("Software triggered!")
 
-	def sendsequence(self, IFfreqA_hz,IFfreqB_hz, timesA_sec, freqsA_hz, timesB_sec,freqsB_hz): #convert freqs and times to FTW/dFTWs, and cycles, and send to RP!
+	def sendsequence(self, IFfreqA_hz,IFfreqB_hz, timesA_sec, freqsA_hz, timesB_sec, freqsB_hz, scale_freq=1.): #convert freqs and times to FTW/dFTWs, and cycles, and send to RP!
 		assert len(timesA_sec) <= self.maxevents, "TOO MANY EDGES ON CHANNEL A-- EXCEEDS RED PITAYA RAM SPACE OF " + str(maxevents)
 		assert len(timesB_sec) <= self.maxevents, "TOO MANY EDGES ON CHANNEL B-- EXCEEDS RED PITAYA RAM SPACE OF " + str(maxevents)
 
 		timesA_sec = np.array(timesA_sec)
 		timesB_sec = np.array(timesB_sec)
-		freqsA_hz = np.array(freqsA_hz)
-		freqsB_hz = np.array(freqsB_hz)
+		freqsA_hz = np.array(freqsA_hz)*scale_freq
+		freqsB_hz = np.array(freqsB_hz)*scale_freq
 
 		#compute Freqs in Hz to FTWs
-		IF_A_FTW = self.HzToFTW(IFfreqA_hz)
-		IF_B_FTW = self.HzToFTW(IFfreqB_hz)
+		IF_A_FTW = self.HzToFTW(IFfreqA_hz*scale_freq)
+		IF_B_FTW = self.HzToFTW(IFfreqB_hz*scale_freq)
 		
 		freqsA_FTW = self.HzToFTW(freqsA_hz)
 		freqsB_FTW = self.HzToFTW(freqsB_hz)
@@ -117,7 +117,7 @@ class RpDDS:
 
 		#compute ramp start/end times in cycles    
 		timesA_cyc = self.SecToCycles(timesA_sec) #list(map(SecToCycles,timesA_sec))
-		timesB_cyc = self.SecToCycles(timesA_sec) #list(map(SecToCycles,timesB_sec))
+		timesB_cyc = self.SecToCycles(timesB_sec) #list(map(SecToCycles,timesB_sec))
 		
 		#compute ramp times in cycles-- round to integers, and have each ramp be at least one cycle!
 		dtA_cyc = np.empty(timesA_cyc.shape, dtype=np.uint32)
@@ -157,16 +157,18 @@ class RpDDS:
 		if self.SWTrigger:
 			self.trigger()
 
-	def SendSequenceSimple(self, A_dat, B_dat): #dummy that takes data in the form A_dat=[IF_A_hz,[[t1_A_sec,f1_A_hz],[t2_A_sec_,f2_A_hz]...]], and then the same thing for B_dat
+	def SendSequenceSimple(self, A_dat, B_dat, scale_freq=1.): 
+		#dummy that takes data in the form A_dat=[IF_A_hz,[[t1_A_sec,f1_A_hz],[t2_A_sec_,f2_A_hz]...]], and then the same thing for B_dat
+		#frequency can me multiplied by scale_freq i.e. for doublers etc
 		IFfreqA_hz=A_dat[0]
-		timesA_sec=[d[0] for d in A_dat[1]]
-		freqsA_hz= [d[1] for d in A_dat[1]]
+		#timesA_sec=[d[0] for d in A_dat[1]]
+		#freqsA_hz= [d[1] for d in A_dat[1]]
+		#do the same thing faster with builtin python functions
+		timesA_sec, freqsA_hz = list(zip(*A_dat[1]))
 
 		IFfreqB_hz=B_dat[0]
-		timesB_sec=[d[0] for d in B_dat[1]]
-		freqsB_hz= [d[1] for d in B_dat[1]]
-		
-		self.sendsequence(IFfreqA_hz,IFfreqB_hz, timesA_sec, freqsA_hz, timesB_sec,freqsB_hz)
+		timesB_sec, freqsB_hz = list(zip(*B_dat[1]))
+		self.sendsequence(IFfreqA_hz,IFfreqB_hz, timesA_sec, freqsA_hz, timesB_sec, freqsB_hz, scale_freq=scale_freq)
 
 
 if __name__ == "__main__":
