@@ -1,75 +1,109 @@
-import mmap
-import struct
-import os
-import time
-import socket
 import sys
-from JSocket import *
+import math
+import time
+import numpy as np
+from ..ServerClass import Server, logger
+from pathlib import Path
+from ..util.SequenceProcessor import *
+from .rpdds import *
 
-RP_BASEADDRESS = 0x40000000
-RP_FPGARAMSIZE = 0x00800000
+DIR_BITFILE = Path(__file__).parent
 
-RPVERSION=True
+#A FEW HELPER FUNCTIONS
+def ConvertTimeToSeconds(ttime): #time in microseconds, converted to seconds
+	return ttime*1e-6
 
-#THIS SCRIPT ASSUMES THAT NGINX AND WYLIODRIN HAVE BEEN DISABLED, AND THE .bit file installed!
-#http://wiki.redpitaya.com/tmp/RedPitaya_HDL_memory_map.pdf
+def ConvertTupleToSeconds(tuplein): #converts ramp tuple (T0,f0,T1,f1) in microseconds and Hz to seconds and Hz
+	return [ConvertTimeToSeconds(tuplein[0]),tuplein[1],ConvertTimeToSeconds(tuplein[2]),tuplein[3]]
 
-bitfileloaded=False
+def ConvertSeqToSeconds(seqin): #converts full sequence from microseconds and Hz to seconds and Hz
+	seqout=[]
+	for i in range(len(seqin)):
+		#remove zero length tuples
+		if abs(seqin[i][0] - seqin[i][2])>0.0:
+			seqout.append(ConvertTupleToSeconds(seqin[i]))
+	return seqout
 
-if RPVERSION:
+def ConvertSeqToDDDSFormat(seqin,ssval):
+	seqout=[]
+	seqout.append([seqin[0][startTIME],seqin[0][startVAL]])
+	seqout.append([seqin[0][stopTIME],seqin[0][stopVAL]])
+	for ii in range(1,len(seqin)):
+		if seqin[ii][startVAL]!=seqout[-1][1]:
+			print("ERROR: Red Pitaya DDDS can only do ramps, not jumps!")
+		seqout.append([seqin[ii][stopTIME],seqin[ii][stopVAL]])
+	return [ssval,seqout]
 
-    fd = os.open('/dev/mem', os.O_RDWR)
-    m = mmap.mmap(fileno=fd, length=RP_FPGARAMSIZE, offset=RP_BASEADDRESS)
+def RunServer(seq, rp, autostart = 1):
+	TIME_START = time.time()
+	#CONSTANTS TELLING US ABOUT SYSTEM CONFIGURATION
+	numChan = 2
 
-    #ALL ADDRESSES SHOULD BE SENT LITTLE-ENDIAN!
-    #DATA WILL BE WRITTEN INTO MEMORY EXACTLY AS SENT, SO IT IS INCUMENT ON WRITE COMMANDS TO GET THIS CORRECT
-        
-#  built on https://docs.python.org/2/howto/sockets.html
+	## Convert seq to get all the times and frequencies, and save to buffers to pass to FPGA Block RAM
+	FinalSeqs=[] #Final list of ramps (each composed of # of steps, & slope) for each channel
+	NumRamps=[]  #Total Number of ramps for each channel
+	IFfreqsHz = []; #Initial/final frequencies in Hz
 
-# Create a TCP/IP socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# Bind the socket to the port
-if RPVERSION:
-    server_address = (socket.gethostname()+".local", 10000)
-else:
-    server_address = ("127.0.0.1", 10000)
+	## Convert seq to get all the times and frequencies
+	for chan in seq.allChannels:
+		if chan == None:
+			continue
+		if chan.chanid >= 2: #Assume the first four channels of dds_PDH sequence in allchannels.py are the four dds frequencies
+			continue
 
-print('starting up on %s port %s' % server_address, file=sys.stderr)
-sock.bind(server_address)
-# Listen for incoming connections
-sock.listen(1)
+		ssvalHz=chan.GetHardwareSSV() #steady_state_value
+		IFfreqsHz.append(ssvalHz)
 
-while True:
-    # Wait for a connection
-    print('waiting for a connection', file=sys.stderr)
-    connection, client_address = sock.accept()
-    
-    if bitfileloaded==False:
-        os.system('cat /root/SimonLab_DDDS.bit > /dev/xdevcfg')
-        bitfileloaded=True
-    try:
-        print('connection from', client_address, file=sys.stderr)
-        # Receive the data in small chunks and retransmit it
-        while True:
-            msg=rcv_msg(connection)
-            print("the message is:", end=' ')
-            print(msg)
-            if (msg[0]=='Q'):
-                    break
-            if RPVERSION:
-                if (msg[0]=='w') or (msg[0]=='W'):
-                    for kk in range(len(msg[2])/4):
-                        m[msg[1]+4*kk:msg[1]+4*kk+4]=msg[2][4*kk:4*kk+4]
-#                    m[msg[1]:msg[1]+len(msg[2])]=msg[2]
-                elif(msg[0]=='r'):
-                    write_msg(connection,0,struct.unpack('<I',m[msg[1]:msg[1]+4])[0])
-                    print("the value is:"+str(struct.unpack('<I',m[msg[1]:msg[1]+4])[0]))
-                else:
-                    print("not implemented!")
-            print("")
-        print("\n\nclosing")
-    except Exception:
-        print("Socket Closed Abruptly by Peer")
-    finally:
-        # Clean up the connection
-        connection.close()
+		#Next get the full sequence
+		fullSeq = GenerateFullSeq(chan.GetHardwareValues(),ssvalHz)
+		convertedSeq = ConvertSeqToSeconds(fullSeq)
+		formattedSeq = ConvertSeqToDDDSFormat(convertedSeq,ssvalHz)
+		#fullseq is a list of ramps in time with a frequency at each endpoint of each ramp. The first interval starts at time zero.
+		#we may need to convert the form to work with DDDS_Sequencer
+		#finally we'll need to figure out how many total ramps there were!
+		FinalSeqs.append(formattedSeq)
+		NumRamps.append(len(fullSeq))
+
+	# send frequency ramps to Red Pitaya!
+	print(FinalSeqs)
+	# to take doubler into account multiply the freqs by 0.5
+	rp.SendSequenceSimple(FinalSeqs[0],FinalSeqs[1], scale_freq=0.5)
+
+	# await trigger
+	if autostart == 1:
+		rp.trigger()
+		logger.info("Software trigger sent!")
+	else:
+		logger.info("waiting for hardware trigger...")
+		
+	TIME_STOP = time.time()
+	return TIME_STOP-TIME_START
+
+class RpDDSServer(Server):
+
+	def __init__(self, name, port, message, bitfile, maxevents):
+		super().__init__(name, port, message)
+		self.rp = RpDDS(bitfile=bitfile, fclk_Hz=125e6, maxevents=maxevents, SWTrigger=False)
+
+	def queue(self):
+		return RunServer(self.seq, self.rp, autostart=0)
+
+	def run(self):
+		return RunServer(self.seq, self.rp, autostart=1)
+
+	def plotdata(self):
+		return [0,], [0,]
+
+
+if __name__ == '__main__':
+
+	message = """
+	===============================================
+	==      DDS Profile Frequency Out Server     ==
+	==                 for Red Pitaya            ==
+	===============================================
+	"""
+	bitfile_path = DIR_BITFILE/"DDDS_xlnx_512.bit"
+	logger.info("Using bitfile {}".format(bitfile_path))
+	server = RpDDSServer("RpDDS_1", 60631, message=message, bitfile=bitfile_path, maxevents=512)
+	server.main_loop()
