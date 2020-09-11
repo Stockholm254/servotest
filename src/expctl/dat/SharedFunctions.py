@@ -102,118 +102,124 @@ def TOF(times, TimeOfFly):
 	return times_TOF
 	
 def Transport(times, acc, dist, Lat1_f=80., Lat2_f=80., Max_df=10., mode=0, twoAoms=0, Npts=32):
-    # Use computer front panel to control the DDS ramping frequency, and use the ramp
-    # direction register to change ramp direction
-    mode = int(mode)
+	# Use computer front panel to control the DDS ramping frequency, and use the ramp
+	# direction register to change ramp direction
+	mode = int(mode)
 	twoAoms = int(twoAoms)
 	Npts = int(Npts)
 
-    Lat1_MHz = Lat1_f*1e6
-    Lat2_MHz = Lat2_f*1e6
-    
-    wavelength = 784e-9 # m
-    g = 9.81 #m/s^2
-    dfMax = Max_df*Unit.MHz() # Maximum velocity = 3.91m/s
-    MHz = 1e6
+	Lat1_MHz = Lat1_f*1e6
+	Lat2_MHz = Lat2_f*1e6
+	
+	wavelength = 784e-9 # m
+	g = 9.81 #m/s^2
+	dfMax = Max_df*Unit.MHz() # Maximum velocity = 3.91m/s
+	MHz = 1e6
 
-    #Calculating transporatation time and frequency difference
-    if acc == 0.:
-        acc = 100.*g
-    else:
-        acc = acc*g
-    sign = 1. if dist >= 0 else -1.
-    
-    if mode==0: # linear ramps
-        trans_time = (abs(dist)*1e-3/acc)**(0.5)*Unit.s()
-        df = 0.5*sign*(abs(dist)*1e-3*acc)**(0.5)/(wavelength/2.)*Unit.Hz() # sweep only top channel
+	#Calculating transporatation time and frequency difference
+	if acc == 0.:
+			acc = 100.*g
+	else:
+			acc = acc*g
+	sign = 1. if dist >= 0 else -1.
+	
+	if mode==0: # linear ramps
+		trans_time = (abs(dist)*1e-3/acc)**(0.5)*Unit.s()
+		df = 0.5*sign*(abs(dist)*1e-3*acc)**(0.5)/(wavelength/2.)*Unit.Hz() # sweep only top channel
 
-        if abs(df) <= dfMax:
-            # maximum df won't be reached, triangle
-            df_MHz = -df*1e6
-            # Add time interval
-            times_acc = times.append(trans_time, "Acc")
-            times_dac = times.append(trans_time, "Dac")
-            # Frequency Ramp
-            if twoAoms:
-                RP_trans_a.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+0.5*df_MHz)
-                RP_trans_a.SetInterval(times_dac, Lat1_MHz+0.5*df_MHz, Lat1_MHz)
-                RP_trans_b.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+0.5*df_MHz)
-                RP_trans_b.SetInterval(times_dac, Lat1_MHz+0.5*df_MHz, Lat1_MHz)
-            else:
-                RP_trans_a.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+df_MHz)
-                RP_trans_a.SetInterval(times_dac, Lat1_MHz+df_MHz, Lat1_MHz)
-            # Print parameters
-            print("Total transport time:", trans_time*2/1e3, "ms")
-            print("Acceleration time:", trans_time/1e3, "ms")
-            return times_acc & times_dac
-        else:
-            # maximum df reached, trapezoid
-            Vmax = dfMax*MHz*wavelength #Factor of 2 coming from the double pass AOM pre-04/27/18
-            df = sign * dfMax
-            df_MHz = -df*1e6
-            trans_time_max = Vmax/acc
-            trans_time_cv = (abs(dist)*1e-3-Vmax*trans_time_max)/Vmax
-            print(Vmax, trans_time_max, trans_time_cv)
-            # Add time interval
-            times_acc = times.append(trans_time_max*Unit.s(), "Acc")
-            times_cv  = times.append(trans_time_cv*Unit.s(),  "Vc")
-            times_dac = times.append(trans_time_max*Unit.s(), "Dac")
-            # Frequency Ramp
-            if twoAoms:
-                RP_trans_a.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+0.5*df_MHz)
-                RP_trans_a.SetInterval(times_cv, Lat1_MHz+0.5*df_MHz, Lat1_MHz+0.5*df_MHz)
-                RP_trans_a.SetInterval(times_dac, Lat1_MHz+0.5*df_MHz, Lat1_MHz)
-                RP_trans_b.SetInterval(times_acc, Lat2_MHz, Lat2_MHz+0.5*df_MHz)
-                RP_trans_b.SetInterval(times_cv, Lat2_MHz+0.5*df_MHz, Lat2_MHz+0.5*df_MHz)
-                RP_trans_b.SetInterval(times_dac, Lat2_MHz+0.5*df_MHz, Lat2_MHz)
-            else:
-                RP_trans_a.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+df_MHz)
-                RP_trans_a.SetInterval(times_cv, Lat1_MHz+df_MHz, Lat1_MHz+df_MHz)
-                RP_trans_a.SetInterval(times_dac, Lat1_MHz+df_MHz, Lat1_MHz)
-            # Print parameters
-            print("Total transport time:", (trans_time_max*2+trans_time_cv)*1000, "ms", "(Maximum speed reached!)")
-            print("Acceleration time:", trans_time_max*1e3, "ms")
-            return times_acc & times_cv & times_dac
-    else: # sine ramp
-        dist_m = dist*1e-3
-        df_max = Max_df*1e6
-        df0 = sqrt(2.*abs(dist_m)*acc/pi)/wavelength #max detuning required to do distance in one continous ramp
-        print("Maximum detuning {:.3e}".format(df0))
-        if df0<=df_max:
-            T = 2*abs(dist_m)/(wavelength*df0)
-            print("T = {:.3f} ms".format(T*1e3))
-            ts = np.linspace(0, T, Npts, endpoint=True)
-            phis = np.linspace(-pi, pi, Npts, endpoint=True)
-            fs = -sign*df0*0.5*(np.cos(phis)+1)
-        else:
-            d_ramp = wavelength**2*df_max**2*pi/(2*acc) #distance the ramp traverses with maximum detuning
-            d_const = abs(dist_m) - d_ramp
-            t_const = d_const/(wavelength*df_max)
-            T = wavelength*df_max*pi/acc
-            print("T = {:.3f} ms".format(T*1e3))
-            ts1 = np.linspace(0, T/2, Npts//2, endpoint=True)
-            phis1 = np.linspace(-pi, 0, Npts//2, endpoint=True)
-            ts2 = t_const + np.linspace(T/2, T, Npts//2, endpoint=True)
-            phis2 = np.linspace(0, pi, Npts//2, endpoint=True)
-            fs1 = df0*0.5*(np.cos(phis1)+1)
-            fs2 = df0*0.5*(np.cos(phis2)+1)
-            ts = np.concatenate([ts1, ts2])
-            fs = -sign*np.concatenate([fs1, fs2])
-                
-        #turn np arrays into sequence format:
-        for i in range(1, len(ts)):
-            dt = ts[i] - ts[i-1]
-            times_i = times.append(dt, "dt_{:d}".format(i))
-            if i==1:
-                times_ramp = times_i
-            else:
-                times_ramp = times_ramp & times_i
-            if twoAoms:
-                RP_trans_a.SetInterval(times_i, Lat1_MHz+0.5*fs[i-1], Lat1_MHz+0.5*fs[i])
-                RP_trans_b.SetInterval(times_i, Lat2_MHz+0.5*fs[i-1], Lat2_MHz+0.5*fs[i])
-            else:
-                RP_trans_a.SetInterval(times_i, Lat1_MHz+fs[i-1], Lat1_MHz+fs[i])
-        return times_ramp
+		if abs(df) <= dfMax:
+			# maximum df won't be reached, triangle
+			df_MHz = -df*1e6
+			# Add time interval
+			times_acc = times.append(trans_time, "Acc")
+			times_dac = times.append(trans_time, "Dac")
+			# Frequency Ramp
+			if twoAoms:
+				RP_trans_a.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+0.5*df_MHz)
+				RP_trans_a.SetInterval(times_dac, Lat1_MHz+0.5*df_MHz, Lat1_MHz)
+				RP_trans_b.SetInterval(times_acc, Lat1_MHz, Lat1_MHz-0.5*df_MHz)
+				RP_trans_b.SetInterval(times_dac, Lat1_MHz-0.5*df_MHz, Lat1_MHz)
+			else:
+				RP_trans_a.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+df_MHz)
+				RP_trans_a.SetInterval(times_dac, Lat1_MHz+df_MHz, Lat1_MHz)
+			# Print parameters
+			print("Total transport time:", trans_time*2/1e3, "ms")
+			print("Acceleration time:", trans_time/1e3, "ms")
+			return times_acc & times_dac
+		else:
+			# maximum df reached, trapezoid
+			Vmax = dfMax*MHz*wavelength #Factor of 2 coming from the double pass AOM pre-04/27/18
+			df = sign * dfMax
+			df_MHz = -df*1e6
+			trans_time_max = Vmax/acc
+			trans_time_cv = (abs(dist)*1e-3-Vmax*trans_time_max)/Vmax
+			print(Vmax, trans_time_max, trans_time_cv)
+			# Add time interval
+			times_acc = times.append(trans_time_max*Unit.s(), "Acc")
+			times_cv  = times.append(trans_time_cv*Unit.s(),  "Vc")
+			times_dac = times.append(trans_time_max*Unit.s(), "Dac")
+			# Frequency Ramp
+			if twoAoms:
+				RP_trans_a.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+0.5*df_MHz)
+				RP_trans_a.SetInterval(times_cv, Lat1_MHz+0.5*df_MHz, Lat1_MHz+0.5*df_MHz)
+				RP_trans_a.SetInterval(times_dac, Lat1_MHz+0.5*df_MHz, Lat1_MHz)
+				RP_trans_b.SetInterval(times_acc, Lat2_MHz, Lat2_MHz-0.5*df_MHz)
+				RP_trans_b.SetInterval(times_cv, Lat2_MHz-0.5*df_MHz, Lat2_MHz-0.5*df_MHz)
+				RP_trans_b.SetInterval(times_dac, Lat2_MHz-0.5*df_MHz, Lat2_MHz)
+			else:
+				RP_trans_a.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+df_MHz)
+				RP_trans_a.SetInterval(times_cv, Lat1_MHz+df_MHz, Lat1_MHz+df_MHz)
+				RP_trans_a.SetInterval(times_dac, Lat1_MHz+df_MHz, Lat1_MHz)
+			# Print parameters
+			print("Total transport time:", (trans_time_max*2+trans_time_cv)*1000, "ms", "(Maximum speed reached!)")
+			print("Acceleration time:", trans_time_max*1e3, "ms")
+			return times_acc & times_cv & times_dac
+	else: # sine ramp
+		print("Sine ramp!")
+		dist_m = dist*1e-3
+		df_max = Max_df*1e6
+		df0 = sqrt(2.*abs(dist_m)*acc/pi)/wavelength #max detuning required to do distance in one continous ramp
+		print("Maximum detuning {:.3e}".format(df0))
+		if df0<=df_max:
+			print("Maximum detuning not reached")
+			T = 2*abs(dist_m)/(wavelength*df0)
+			print("T = {:.3f} ms".format(T*1e3))
+			ts = np.linspace(0, T, Npts, endpoint=True)
+			phis = np.linspace(-pi, pi, Npts, endpoint=True)
+			fs = -sign*df0*0.5*(np.cos(phis)+1)
+		else:
+			print("Maximum detuning reached")
+			d_ramp = wavelength**2*df_max**2*pi/(2*acc) #distance the ramp traverses with maximum detuning
+			d_const = abs(dist_m) - d_ramp
+			t_const = d_const/(wavelength*df_max)
+			T = wavelength*df_max*pi/acc
+			print("T = {:.3f} ms".format(T*1e3))
+			ts1 = np.linspace(0, T/2, Npts//2, endpoint=True)
+			phis1 = np.linspace(-pi, 0, Npts//2, endpoint=True)
+			ts2 = t_const + np.linspace(T/2, T, Npts//2, endpoint=True)
+			phis2 = np.linspace(0, pi, Npts//2, endpoint=True)
+			fs1 = df0*0.5*(np.cos(phis1)+1)
+			fs2 = df0*0.5*(np.cos(phis2)+1)
+			ts = np.concatenate([ts1, ts2])
+			fs = -sign*np.concatenate([fs1, fs2])
+						
+		#turn np arrays into sequence format:
+		for i in range(1, len(ts)):
+			dt = ts[i] - ts[i-1]
+			times_i = times.append(dt*Unit.s(), "dt_{:d}".format(i))
+			
+			if twoAoms:
+				RP_trans_a.SetInterval(times_i, Lat1_MHz+0.5*fs[i-1], Lat1_MHz+0.5*fs[i])
+				RP_trans_b.SetInterval(times_i, Lat2_MHz-0.5*fs[i-1], Lat2_MHz-0.5*fs[i])
+			else:
+				RP_trans_a.SetInterval(times_i, Lat1_MHz+fs[i-1], Lat1_MHz+fs[i])
+
+			if i==1:
+				times_ramp = times_i
+			else:
+				times_ramp = times_ramp & times_i
+		#print(RP_trans_a.GetHardwareValues())
+		return times_ramp
 
 def Transport_DDSRampMode(times, acc, dist, Lat1_f=80, Lat2_f=80, Max_df=5.):
 	# Use computer front panel to control the DDS ramping frequency, and use the ramp

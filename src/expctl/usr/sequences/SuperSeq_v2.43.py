@@ -430,21 +430,23 @@ times_Wait0 = times.append(Wait0_ms*Unit.ms(), "Wait At MOT")
 #	times_transport_back = Transport_DDSRampMode(times, Trans_acc_g, -Trans_distance_mm, Max_df=Trans_MaxF_MHz)
 
 #transport 1
-times_transport_1 = Transport(times, Trans_acc_g, Trans_dist_mm, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
+times_transport = Transport(times, Trans_acc_g, Trans_dist_mm, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
 #wait 1
 #if Trans_hold_1_ms>0.:
 times_Wait1 = times.append(Trans_hold_1_ms*Unit.ms(), "Wait after transport 1")
 #transport 2
-if Trans_dist_2_mm>0.:
+if abs(Trans_dist_2_mm)>0.:
 	times_transport_2 = Transport(times, Trans_acc_g, Trans_dist_2_mm, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
+	times_transport &= times_transport_2
 #wait 2
 if Trans_hold_2_ms>0.:
 	times_Wait11 = times.append(Trans_hold_2_ms*Unit.ms(), "Wait after transport 2")
 #transport 3
-if Trans_dist_3_mm>0.:
+if abs(Trans_dist_3_mm)>0.:
 	times_transport_3 = Transport(times, Trans_acc_g, Trans_dist_3_mm, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
+	times_transport &= times_transport_3
 
-times_transport = times_transport_1 #& times_transport_2&times_transport_3 HOW to fix this correctly
+#times_transport = times_transport_1 #& times_transport_2&times_transport_3 HOW to fix this correctly
 
 times_dRSC = []
 if dRSC_switch == 1:
