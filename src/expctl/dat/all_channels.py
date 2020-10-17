@@ -17,9 +17,9 @@ from . import transformations as tran # Channel value transformation function
 all_sequences = ([
   Sequence("Digital sequence",        host=IP_RYDNUGGET, port=PORT_DIGITAL,  max_channels=32, graph=1, seq_type="MASTER"),  
   Sequence("Analog sequence",         host=IP_RYDNUGGET, port=PORT_ANALOG,   max_channels=32, graph=1),  
-  Sequence("Camera sequence",         host=IP_RYDFRIES,  port=PORT_CAMERA,   max_channels=1 , graph=0),
+  Sequence("Camera sequence",         host=IP_RYDFRIES,  port=PORT_CAMERA,   max_channels=2 , graph=0),
   Sequence("DDS 1 sequence",          host=IP_RYDNUGGET, port=PORT_DDS1,     max_channels=4 , graph=0),
-  Sequence("DDS PDH sequence",        host=IP_RYDNUGGET, port=PORT_DDSPDH,   max_channels=7 , graph=0),
+  Sequence("DDS PDH sequence",        host=IP_RYDNUGGET, port=PORT_DDSPDH,   max_channels=7 , graph=0), #
   Sequence("DDS 2 sequence",          host=IP_RYDNUGGET, port=PORT_DDS2,     max_channels=4 , graph=0),
   Sequence("Photon Timer sequence",   host=IP_RYDNUGGET, port=PORT_PTIMER,   max_channels=2 , graph=0),
   Sequence("Photon Timer 2 sequence", host=IP_RYDNUGGET, port=PORT_PTIMER2,  max_channels=2 , graph=0),
@@ -29,9 +29,10 @@ all_sequences = ([
   Sequence("LabBrick 2 sequence",     host=IP_RYDFRIES,  port=PORT_LB2,      max_channels=3 , graph=0),
   Sequence("LabBrick 3 sequence",     host=IP_RYDFRIES,  port=PORT_LB3,      max_channels=3 , graph=0),
   Sequence("ADF435X sequence",        host=IP_RYDFRIES,  port=PORT_AD1,      max_channels=3 , graph=0),
+  Sequence("RP DDS Transport sequence", host=IP_RPTR,  port=PORT_RPTR,      max_channels=2 , graph=0),
   ])
 
-digital_seq1, analog_seq1, cam, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, photon_counter, lb_1, lb_2, lb_3, ad_1 = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
+digital_seq1, analog_seq1, cam, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, photon_counter, lb_1, lb_2, lb_3, ad_1, rp_ddds_1 = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
 
 #=======================================Channel Definitions=========================================
 # NEXT ADD ALL OF THE CHANNELS TO THEM! ##Note: the name in quotes must have 1 < length < 31
@@ -160,6 +161,12 @@ AD1_freq = ad_1.newChannel(0, "Microwave Freq",   system='MWaves', steady_state_
 AD1_pow  = ad_1.newChannel(1, "Microwave Power",  system='MWaves', steady_state_value=2, max_value=5, graph=0)
 AD1_ttl  = ad_1.newChannel(2, "Microwave TTL",    system='MWaves', steady_state_value=0, max_value=1, graph=0)
 
+#Red Pitaya Transport DDS
+RP_trans_a = rp_ddds_1.newChannel(0, "Lattice top freq",   system='LAT', steady_state_value=80e6, max_value=120e6, graph=0)
+RP_trans_b = rp_ddds_1.newChannel(1, "Lattice bottom freq",   system='LAT', steady_state_value=80e6, max_value=120e6, graph=0)
+
+#Camera Gain channel
+Camera_gain = cam.newChannel(0, "Camera gain", system='IMG', steady_state_value=24.0, max_value=24.0, graph=0)
 #=====================================End Channel Definitions=======================================
 
 #====================================Slave Channel Definitions======================================
@@ -169,7 +176,7 @@ AD1_ttl  = ad_1.newChannel(2, "Microwave TTL",    system='MWaves', steady_state_
 
 # THERE IS A DIGITAL SLAVE CHANNEL, DEFINED ABOVE SO NO ONE THINGS THE CHANNEL IS AVAILABLE
 # Chemeleon camera
-CAMERA = cam.newChannel(0, "Camera", steady_state_value=1, max_value=1, graph=0, ctype='Slave', master=Cam_trig)
+CAMERA = cam.newChannel(1, "Camera", steady_state_value=1, max_value=1, graph=0, ctype='Slave', master=Cam_trig)
 # Photon counter
 PhotonCounter = photon_counter.newChannel(0, "Photon Counter", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
 # Photon timers

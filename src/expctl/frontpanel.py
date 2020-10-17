@@ -84,7 +84,7 @@ class FrontPanel(wx.Frame):
     jGlobals.init() # Initialize global variables
 
     # Front panel GUI
-    wx.Frame.__init__(self, None, wx.ID_ANY, title='SimonLab Control Suite', size=(1300, 750)) 
+    wx.Frame.__init__(self, None, wx.ID_ANY, title='SimonLab Control Suite 3', size=(1300, 750)) 
     self.panel = wx.Panel(self, wx.ID_ANY)
     # self.window_size = self.GetSize()
     
@@ -285,7 +285,7 @@ class FrontPanel(wx.Frame):
     bmp = wx.BitmapFromImage(wx.Image(str(ICON_FOLDER/"38740-200.png"), wx.BITMAP_TYPE_ANY).Scale(30, 30, wx.IMAGE_QUALITY_HIGH))
     titleIco1 = wx.StaticBitmap(self.panel, wx.ID_ANY, bmp, size=(30, 30))
     titleIco2 = wx.StaticBitmap(self.panel, wx.ID_ANY, bmp, size=(30, 30))
-    title = wx.StaticText(self.panel, wx.ID_ANY, 'Simon Lab Software Suite Front Panel')
+    title = wx.StaticText(self.panel, wx.ID_ANY, 'Simon Lab Software Suite Front Panel 3')
     title.SetFont(wx.Font(12, wx.MODERN, wx.NORMAL, wx.NORMAL, False, 'Calibri'))
     # Buttons
     self.btn_remote      = wx.Button(self.panel,     wx.ID_ANY, 'Remote')
@@ -829,7 +829,7 @@ class FrontPanel(wx.Frame):
   def OnSaveCtrlMV(self, event):
     datenow = datetime.datetime.now()
     filestr = "CtrlMVs-"+self.script_name+datenow.strftime("-%m-%d-%Y")+".txt"
-    dlg = wx.FileDialog(self, message="Save current metavariable values to a file...", defaultDir=DIR_MV, defaultFile=filestr, style=wx.SAVE|wx.OVERWRITE_PROMPT)
+    dlg = wx.FileDialog(self, message="Save current metavariable values to a file...", defaultDir=str(DIR_MV), defaultFile=filestr, style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
     if dlg.ShowModal() == wx.ID_OK: # Call the dialog as a model-dialog so user is required to choose Ok or Cancel
       save_fname_seq = dlg.GetFilename()
       save_dir_seq = dlg.GetDirectory()
@@ -1089,7 +1089,7 @@ class FrontPanel(wx.Frame):
   def ExportMV(self, event):
     datenow = datetime.datetime.now()
     filestr = "MVs-"+self.script_name+datenow.strftime("-%m-%d-%Y")+".txt"
-    dlg = wx.FileDialog(self, message="Save current metavariable values to a file...", defaultDir=DIR_MV, defaultFile=filestr, style=wx.SAVE|wx.OVERWRITE_PROMPT) #TODO FD_save
+    dlg = wx.FileDialog(self, message="Save current metavariable values to a file...", defaultDir=str(DIR_MV), defaultFile=filestr, style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) #TODO FD_save
     if dlg.ShowModal() == wx.ID_OK: # Call the dialog as a model-dialog so user is required to choose Ok or Cancel
       save_fname_seq = dlg.GetFilename()
       save_dir_seq = dlg.GetDirectory()
@@ -1103,7 +1103,7 @@ class FrontPanel(wx.Frame):
   def ExportFBMV(self, event):
     datenow = datetime.datetime.now()
     filestr = "FBMVs-"+self.script_name+datenow.strftime("-%m-%d-%Y")+".txt"
-    dlg = wx.FileDialog(self, message="Save current metavariable values to a file...", defaultDir=DIR_MV, defaultFile=filestr, style=wx.SAVE|wx.OVERWRITE_PROMPT)
+    dlg = wx.FileDialog(self, message="Save current metavariable values to a file...", defaultDir=str(DIR_MV), defaultFile=filestr, style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
     if dlg.ShowModal() == wx.ID_OK: # Call the dialog as a model-dialog so user is required to choose Ok or Cancel
       save_fname_seq = dlg.GetFilename()
       save_dir_seq = dlg.GetDirectory()
@@ -1165,7 +1165,7 @@ class FrontPanel(wx.Frame):
     if not data_dir.exists():
       os.makedirs(data_dir)
     if flag == 1:
-      dlg = wx.FileDialog(self, message="Save current looped code...", defaultDir=data_dir, defaultFile=filestr, style=wx.SAVE|wx.OVERWRITE_PROMPT)
+      dlg = wx.FileDialog(self, message="Save current looped code...", defaultDir=data_dir, defaultFile=filestr, style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
       if dlg.ShowModal() == wx.ID_OK: # Call the dialog as a model-dialog so user is required to choose Ok or Cancel
         save_fname_seq = dlg.GetFilename()
         save_dir_seq = Path(dlg.GetDirectory())

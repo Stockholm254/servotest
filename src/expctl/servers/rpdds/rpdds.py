@@ -6,20 +6,14 @@ import sys
 import numpy as np
 from pathlib import Path
 
-RP_BASEADDRESS = 0x40000000
-RP_FPGARAMSIZE = 0x00800000
-
-RPVERSION=True
-
 class RpDDS:
 
-	def __init__(self, bitfile="SimonLab_DDDS.bit", fclk_Hz=125e6, maxevents=64, SWTrigger=False):
+	def __init__(self, bitfile="", fclk_Hz=125e6, maxevents=64, SWTrigger=False):
 		self.bitfile = bitfile
 
-		bitfilepath = Path(__file__).parent/self.bitfile
-		try:
-			os.system("cat {} > /dev/xdevcfg".format(bitfilepath))
-		except Exception as e:
+		if self.bitfile.exists():
+			os.system("cat {} > /dev/xdevcfg".format(self.bitfile))
+		else:
 			print("Couldn't load bitfile, exiting...", e)
 			sys.exit()
 		self.maxevents = maxevents
@@ -27,6 +21,9 @@ class RpDDS:
 		self.SWTrigger = SWTrigger
 
 		#ADDRESSES IN THE MEMORY MAPPED ADDRESS SPACE
+		self.RP_BASEADDRESS = 0x40000000
+		self.RP_FPGARAMSIZE = 0x00800000
+
 		self.LEDADDRESS              = 0x40000030    #address in FPGA memory map to control RP LEDS
 		#DDS addresses (for writing)
 		self.DDSftw_IF_A_OFFSET      = 1076887552+4*(8)         #address in memory map for the initial/final FTW for the A channel
@@ -47,7 +44,7 @@ class RpDDS:
 		self.DDScyclesBlast_OFFSET       = self.DDScyclesB_OFFSET+4*( 4*self.maxevents*1) #address in memory map for the last  element of the B cyc. list
 
 		fd = os.open('/dev/mem', os.O_RDWR)
-		self.m = mmap.mmap(fileno=fd, length=RP_FPGARAMSIZE, offset=RP_BASEADDRESS)
+		self.m = mmap.mmap(fileno=fd, length=self.RP_FPGARAMSIZE, offset=self.RP_BASEADDRESS)
 
 	@staticmethod
 	def convert_2c(val, bits): #take a signed integer and return it in 2c form
@@ -61,13 +58,11 @@ class RpDDS:
 		return RpDDS.convert_2c(val,numbits)
 
 	def write(self, addr, val):
-		#self.m[addr:addr+4] = val
-		aa = addr - RP_BASEADDRESS #since the offset of the mmap starts at RP_BASEADDRESS already, have to subtract it here?!
+		aa = addr - self.RP_BASEADDRESS #since the offset of the mmap starts at RP_BASEADDRESS already, have to subtract it here?!
 		#print("Writing at real addr {:X}, mmap addr {:X}".format(addr, aa))
 		self.m[aa:aa+4] = struct.pack('<I',val)
 
 	def write2c(self, addr, val):
-		#JSocket.write_msg(sock, addr,convert_2c(val,numbits))
 		#m[msg[1]+4*kk:msg[1]+4*kk+4]=msg[2][4*kk:4*kk+4]
 		self.m[addr:addr+4] = RpDDS.twoc32(val)
 
@@ -91,18 +86,22 @@ class RpDDS:
 	def SecToCycles(self, t_sec): #take a time in seconds and convert it to RP timesteps in cycles, without rounding, so we can do it later when we compute deltas!
 		return t_sec*self.fclk_Hz
 
-	def sendsequence(self, IFfreqA_hz,IFfreqB_hz, timesA_sec, freqsA_hz, timesB_sec,freqsB_hz): #convert freqs and times to FTW/dFTWs, and cycles, and send to RP!
+	def trigger(self):
+		self.write(self.DDSsoftwaretrigger_OFFSET, 0)
+		print("Software triggered!")
+
+	def sendsequence(self, IFfreqA_hz,IFfreqB_hz, timesA_sec, freqsA_hz, timesB_sec, freqsB_hz, scale_freq=1.): #convert freqs and times to FTW/dFTWs, and cycles, and send to RP!
 		assert len(timesA_sec) <= self.maxevents, "TOO MANY EDGES ON CHANNEL A-- EXCEEDS RED PITAYA RAM SPACE OF " + str(maxevents)
 		assert len(timesB_sec) <= self.maxevents, "TOO MANY EDGES ON CHANNEL B-- EXCEEDS RED PITAYA RAM SPACE OF " + str(maxevents)
 
 		timesA_sec = np.array(timesA_sec)
 		timesB_sec = np.array(timesB_sec)
-		freqsA_hz = np.array(freqsA_hz)
-		freqsB_hz = np.array(freqsB_hz)
+		freqsA_hz = np.array(freqsA_hz)*scale_freq
+		freqsB_hz = np.array(freqsB_hz)*scale_freq
 
 		#compute Freqs in Hz to FTWs
-		IF_A_FTW = self.HzToFTW(IFfreqA_hz)
-		IF_B_FTW = self.HzToFTW(IFfreqB_hz)
+		IF_A_FTW = self.HzToFTW(IFfreqA_hz*scale_freq)
+		IF_B_FTW = self.HzToFTW(IFfreqB_hz*scale_freq)
 		
 		freqsA_FTW = self.HzToFTW(freqsA_hz)
 		freqsB_FTW = self.HzToFTW(freqsB_hz)
@@ -118,7 +117,7 @@ class RpDDS:
 
 		#compute ramp start/end times in cycles    
 		timesA_cyc = self.SecToCycles(timesA_sec) #list(map(SecToCycles,timesA_sec))
-		timesB_cyc = self.SecToCycles(timesA_sec) #list(map(SecToCycles,timesB_sec))
+		timesB_cyc = self.SecToCycles(timesB_sec) #list(map(SecToCycles,timesB_sec))
 		
 		#compute ramp times in cycles-- round to integers, and have each ramp be at least one cycle!
 		dtA_cyc = np.empty(timesA_cyc.shape, dtype=np.uint32)
@@ -132,14 +131,6 @@ class RpDDS:
 		#compute step sizes for each ramp!
 		dfA_FTW = (np.round((2.0**32)*deltasA_FTW/dtA_cyc)).astype(np.int64) #[int(round((2.0**32)*deltasA_FTW[i]/dtA_cyc[i])) for i in range(len(dtA_cyc))]
 		dfB_FTW = (np.round((2.0**32)*deltasB_FTW/dtB_cyc)).astype(np.int64) #[int(round((2.0**32)*deltasB_FTW[i]/dtB_cyc[i])) for i in range(len(dtB_cyc))]
-
-		print(dtA_cyc)
-		print(dfA_FTW)
-
-		print("Length of dtA_cyc: " + str(len(dtA_cyc)))
-		print("Length of dBA_cyc: " + str(len(dtB_cyc)))
-		print("Length of dfA_FTW: " + str(len(dfA_FTW)))
-		print("Length of dfB_FTW: " + str(len(dfB_FTW)))
 		
 		#send the number of samples on each channel
 		self.write(self.DDSsamplesA_OFFSET, np.uint32(len(timesA_sec))) #JSocket.write_msg(sock,DDSsamplesA_OFFSET,len(timesA_sec))
@@ -157,37 +148,34 @@ class RpDDS:
 		self.write(self.DDSftw_IF_A_OFFSET, np.uint32(IF_A_FTW)) #JSocket.write_msg(sock,DDSftw_IF_A_OFFSET, int(IF_A_FTW)) #these must be sent as unsigned 32 bit numbers
 		self.write(self.DDSftw_IF_B_OFFSET, np.uint32(IF_B_FTW))#JSocket.write_msg(sock,DDSftw_IF_B_OFFSET, int(IF_B_FTW)) #these must be sent as unsigned 32 bit numbers
 	
-		print("IF A FTW: {}".format(np.uint32(IF_A_FTW)))
+		#print("IF A FTW: {}".format(np.uint32(IF_A_FTW)))
 		
 		#reset the RP FSM and prepare it for a trigger!
-		#JSocket.write_msg(sock,DDSawaittrigger_OFFSET,0) #value sent doesn't affect anything
-		self.write(self.DDSawaittrigger_OFFSET, 0)
+		self.write(self.DDSawaittrigger_OFFSET, 0) #value sent doesn't affect anything
 
 		#for now, give it a software trigger, for testing!
-		#input()
 		if self.SWTrigger:
-			#JSocket.write_msg(sock,DDSsoftwaretrigger_OFFSET,0) #value sent doesn't affect anything
-			self.write(self.DDSsoftwaretrigger_OFFSET, 0)
-			print("Software triggered!")
+			self.trigger()
 
-	def SendSequenceSimple(self, A_dat, B_dat): #dummy that takes data in the form A_dat=[IF_A_hz,[[t1_A_sec,f1_A_hz],[t2_A_sec_,f2_A_hz]...]], and then the same thing for B_dat
+	def SendSequenceSimple(self, A_dat, B_dat, scale_freq=1.): 
+		#dummy that takes data in the form A_dat=[IF_A_hz,[[t1_A_sec,f1_A_hz],[t2_A_sec_,f2_A_hz]...]], and then the same thing for B_dat
+		#frequency can me multiplied by scale_freq i.e. for doublers etc
 		IFfreqA_hz=A_dat[0]
-		timesA_sec=[d[0] for d in A_dat[1]]
-		freqsA_hz= [d[1] for d in A_dat[1]]
+		#timesA_sec=[d[0] for d in A_dat[1]]
+		#freqsA_hz= [d[1] for d in A_dat[1]]
+		#do the same thing faster with builtin python functions
+		timesA_sec, freqsA_hz = list(zip(*A_dat[1]))
 
 		IFfreqB_hz=B_dat[0]
-		timesB_sec=[d[0] for d in B_dat[1]]
-		freqsB_hz= [d[1] for d in B_dat[1]]
-		
-		self.sendsequence(IFfreqA_hz,IFfreqB_hz, timesA_sec, freqsA_hz, timesB_sec,freqsB_hz)
+		timesB_sec, freqsB_hz = list(zip(*B_dat[1]))
+		self.sendsequence(IFfreqA_hz,IFfreqB_hz, timesA_sec, freqsA_hz, timesB_sec, freqsB_hz, scale_freq=scale_freq)
 
 
 if __name__ == "__main__":
-	#CH1_DATA=[30.0e6,[[1.0,40e6],[3.0, 10e6]]]
-	#CH2_DATA=[10.0e6,[[2.0, 20.0e6],[2.0,50.0e6]]]
-	CH1_DATA=[40.0e6,[[2.0,44e6],[2.0, 36e6],[2.0, 40e6]]]
-	CH2_DATA=[40.0e6,[[1.0, 40e6]]]
+	CH1_DATA=[40.0e6,[[10.0, 45e6],[20.0, 35e6],[30.0, 40e6]]]
+	CH2_DATA= CH1_DATA#[40.0e6,[[1.0, 40e6]]]
 
-	DDS = RpDDS(bitfile="SimonLab_DDDS.bit", fclk_Hz=125e6, maxevents=64, SWTrigger=True)
+	#DDS = RpDDS(bitfile="SimonLab_DDDS.bit", fclk_Hz=125e6, maxevents=64, SWTrigger=True)
+	DDS = RpDDS(bitfile="DDDS_xlnx_512.bit", fclk_Hz=125e6, maxevents=512, SWTrigger=True)
 	DDS.SendSequenceSimple(CH1_DATA, CH2_DATA)
 	print("done")
