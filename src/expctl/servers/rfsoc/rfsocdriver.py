@@ -8,7 +8,7 @@ from pynq import Overlay
 import xrfclk
 import numpy as np
 from pynq import Xlnk
-
+import xrfdc
 DDS_CLK = 409.6 #MHz #This is the clock of the DDS. Each DDS generates 16 samples per this clock.
 #pynq needs this number specifically to start the clock.
 
@@ -29,8 +29,9 @@ def setLastBit(N,x):
 		return N & (~1)
 		
 def getFTW(freq):
-	#freq in Hz
-	return np.int64(((freq)/(10**6*SAMPLE_CLK)*(2**64)))
+	#freq in MHz from Seq!
+	#convert into Hz
+	return np.int64(((1e6*freq)/(10**6*SAMPLE_CLK)*(2**64)))
 
 def getCycles(t):
 	#t in us
@@ -130,9 +131,9 @@ class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager
 		if(start_clks):
 			self.startClocks()
 			
-		self.overlay = Overlay(bitfile_name)
+		self.overlay = Overlay(bitfile_name, ignore_version=True)
 		self.corestrings = ["self.overlay.DDS_core_"+str(i) for i in range(0,8)]
-		
+		self.rf = self.overlay.usp_rf_data_converter_0
 		scope = locals()
 		self.ddscores = [eval(corestring,scope) for corestring in self.corestrings]
 		#The following code is for assigning the right DMA and stream switch to the right sequencer core.
@@ -154,7 +155,7 @@ class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager
 		xrfclk.set_all_ref_clks(DDS_CLK)
 		print("Clocks Started\n")
 	
-	def configureTriggerManager(self, config = 0b011111111, pulselength = 50000000):
+	def configureTriggerManager(self, config = 0b1011111111, pulselength = 50000000):
 	#MSB of config indicates if to use trigger from PMOD0s (0) or switch/soft trigger. 
 	#In the latter case bits 0 to 7 determine which channels are triggered.
 	#If using PMODs the inputs at PMOD0s is just passed through. 
@@ -230,7 +231,11 @@ class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager
 			isdone = isdone and self.ddss[i].rampsFinished()
 		
 		return isdone
-	   
+	
+	def setNyquistZone(self, channel, zone = 1):
+		block = self.rf.dac_tiles[channel//4].blocks[channel%4]
+		assert zone < 3	
+		block.NyquistZone =  int(zone)
 	
 		
 		

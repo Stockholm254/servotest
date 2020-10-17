@@ -8,7 +8,7 @@ from ..util.SequenceProcessor import *
 from .rfsocdriver import *
 
 DIR_BITFILE = Path(__file__).parent
-bitfile_path = str(DIR_BITFILE/"ddsfinal10k_tm_3.bit")
+bitfile_path = str(DIR_BITFILE/"ddsfinal10k_tm_4.bit")
 logger.info(f"Using bitfile {bitfile_path}")
 
 chan_shuffler =  [0,1,2,3,4,5,6,7]#[2,1,0,3,4,5,6,7]
@@ -25,9 +25,13 @@ SAMPLE_CLK = CAL_DDS_CLK*16 #This is the clock for the DACs. Again, hardwired to
 numDDS = 8
 first_trigger = 0
 MAX_RAMPS= 10000 
-trigger_config = 0b111111111 #if MSB is 0, a hardware trigger on the PMODs is required and the other bits don't matter
-#if 1, then ramps can be triggered using the Central user switch or with software by using the method defined in rfdriver.
-#Then the other bits determine which channels will be triggered. 
+trigger_config = 0b1011111111 #if MSB-1 is 0, a hardware trigger on the PMODs is required and the other bits don't matter
+# MSB | MSB-1
+#-------------
+#  0  |   0     separate HW triggers
+#  1  |   0     global HW trigger at PMOD_0_0 (white cable)
+#  0  |   1     SW/Switch (central, SW11) trigger, remaining bits select channels to be triggered
+#  1  |   1     -"-
 
 active_chans = []
 fullSeqs = [] #list of sequences for all channels in original format, with holes filled and frequencies and times converted to FTWs and cycles
@@ -47,20 +51,22 @@ def RunServer(seq, rf, autostart=1, UPDATE_RAM=1):
 		active_chans = []
 
 		for chan in seq.allChannels:
-			chan.Print()
-			chanid = chan.chanid
 			if chan == None:
 				continue
-			elif chan.chanid >= 7:
+			chan.Print()
+			chanid = chan.chanid
+			if chan.chanid > 7:
 				logger.info(f"More channels than {numDDS}, ignoring...\n")
 				continue
 
 			active_chans.append(chan_shuffler[chanid])
 			ssvalHz = chan.GetHardwareSSV() #steady_state_value
 			ssvalFTW = getFTW(ssvalHz)
-
-			convertedSeq = ConvertSeqtoCountsandFTWs(chan.GetHardwareValues()) #values)
+			seq = chan.GetHardwareValues()
+			print(seq)
+			convertedSeq = ConvertSeqtoCountsandFTWs(seq) #values)
 			fullSeq = GenerateFullSeq(convertedSeq,ssvalFTW)
+			print(fullSeq)
 			N_Ramps = len(fullSeq)
 			fullSeqs.append(fullSeq)
 			NumRamps.append(N_Ramps)
@@ -82,11 +88,12 @@ def RunServer(seq, rf, autostart=1, UPDATE_RAM=1):
 	TIME_DATA = time.time() 
 	logger.info("Ramp sequence started. I will output based on the trigger bits. \n")
 
-	while(True):
-		if(rf.isSequenceDone(active_chans)):
-			counter = counter+1
-			logger.debug(f"Sequence executed {counter} times\n")
-			break
+	#creates a deadlock since frontpanel waits for Queue to finish
+	#while(True):
+	#	if(rf.isSequenceDone(active_chans)):
+	#		counter = counter+1
+	#		logger.debug(f"Sequence executed {counter} times\n")
+	#		break
 
 	TIME_STOP = time.time()
 	return TIME_STOP - TIME_DATA
