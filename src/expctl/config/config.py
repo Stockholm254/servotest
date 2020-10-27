@@ -28,7 +28,7 @@ IP_RYDFRIES  = '192.168.1.106' # Data collection computer (laser room top racks)
 IP_RYDCOKES  = '192.168.1.107' # Laptop (mobile, usually in the vacuum room cart)
 IP_LABSERVER = '192.168.1.101' # Simonlab data backup server (lab office behind the sofa)
 IP_RYDNUGGET = '192.168.1.120' # New rydberg polariton experiment control computer (control room)
-
+IP_RPTR = '192.168.1.11'
 ### REDICRECT TO LOCAL PC FOR TESTING
 # IP_RYDBURGER = '127.0.0.1' # Experimental control computer (control room)
 # IP_RYDFRIES  = '127.0.0.1' # Data collection computer (laser room top racks)
@@ -53,3 +53,5 @@ PORT_CAMERA     = 60614 # Chameleon camera (side or vertical imaging system, cha
 PORT_LB1        = 60615 # Lab Brick 1, for the detuning of the 1529 carrier
 PORT_LB2        = 60616 # Lab Brick 1, for the detuning of the 1529 carrier
 PORT_LB3        = 60617 # Lab Brick 1, for the detuning of the 1529 carrier
+# RPDDS PORTS
+PORT_RPTR       = 60631

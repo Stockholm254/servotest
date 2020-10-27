@@ -17,9 +17,9 @@ from . import transformations as tran # Channel value transformation function
 all_sequences = ([
   Sequence("Digital sequence",        host=IP_RYDNUGGET, port=PORT_DIGITAL,  max_channels=32, graph=1, seq_type="MASTER"),  
   Sequence("Analog sequence",         host=IP_RYDNUGGET, port=PORT_ANALOG,   max_channels=32, graph=1),  
-  Sequence("Camera sequence",         host=IP_RYDFRIES,  port=PORT_CAMERA,   max_channels=1 , graph=0),
-  Sequence("DDS 1 sequence",          host=IP_RFSOC, port=PORT_DDS1,     max_channels=4 , graph=0),
-  Sequence("DDS PDH sequence",        host=IP_RYDFRIES, port=PORT_DDSPDH,   max_channels=7 , graph=0), #
+  Sequence("Camera sequence",         host=IP_RYDFRIES,  port=PORT_CAMERA,   max_channels=2 , graph=0),
+  Sequence("DDS 1 sequence",          host=IP_RYDNUGGET, port=PORT_DDS1,     max_channels=4 , graph=0),
+  Sequence("DDS PDH sequence",        host=IP_RYDNUGGET, port=PORT_DDSPDH,   max_channels=7 , graph=0), #
   Sequence("DDS 2 sequence",          host=IP_RYDNUGGET, port=PORT_DDS2,     max_channels=4 , graph=0),
   Sequence("Photon Timer sequence",   host=IP_RYDNUGGET, port=PORT_PTIMER,   max_channels=2 , graph=0),
   Sequence("Photon Timer 2 sequence", host=IP_RYDNUGGET, port=PORT_PTIMER2,  max_channels=2 , graph=0),
@@ -164,6 +164,9 @@ AD1_ttl  = ad_1.newChannel(2, "Microwave TTL",    system='MWaves', steady_state_
 #Red Pitaya Transport DDS
 RP_trans_a = rp_ddds_1.newChannel(0, "Lattice top freq",   system='LAT', steady_state_value=80e6, max_value=120e6, graph=0)
 RP_trans_b = rp_ddds_1.newChannel(1, "Lattice bottom freq",   system='LAT', steady_state_value=80e6, max_value=120e6, graph=0)
+
+#Camera Gain channel
+Camera_gain = cam.newChannel(0, "Camera gain", system='IMG', steady_state_value=24.0, max_value=24.0, graph=0)
 #=====================================End Channel Definitions=======================================
 
 #====================================Slave Channel Definitions======================================
@@ -173,7 +176,7 @@ RP_trans_b = rp_ddds_1.newChannel(1, "Lattice bottom freq",   system='LAT', stea
 
 # THERE IS A DIGITAL SLAVE CHANNEL, DEFINED ABOVE SO NO ONE THINGS THE CHANNEL IS AVAILABLE
 # Chemeleon camera
-CAMERA = cam.newChannel(0, "Camera", steady_state_value=1, max_value=1, graph=0, ctype='Slave', master=Cam_trig)
+CAMERA = cam.newChannel(1, "Camera", steady_state_value=1, max_value=1, graph=0, ctype='Slave', master=Cam_trig)
 # Photon counter
 PhotonCounter = photon_counter.newChannel(0, "Photon Counter", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
 # Photon timers

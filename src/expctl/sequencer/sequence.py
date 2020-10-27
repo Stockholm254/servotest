@@ -379,7 +379,10 @@ class Channel:
     
     # Update sequence stop time
     #print(self._UserValues[0])    
-    self.seq.TIME_STOP = max(self.seq.TIME_STOP, self._UserValues[-1][2])
+    #self.seq.TIME_STOP = max(self.seq.TIME_STOP, self._UserValues[-1][2])
+    # SSV fix from ash
+    if(self._UserValues):
+      self.seq.TIME_STOP = max(self.seq.TIME_STOP, self._UserValues[-1][2])
 
   def SetInterval(self, timeInterval, *args):
     # *args is a list of either one or two values giving the start and end values

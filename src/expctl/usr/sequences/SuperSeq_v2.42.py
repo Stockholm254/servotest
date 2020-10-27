@@ -243,6 +243,7 @@ Img_REP_atend_pwr = 2.0
 Img_TOF_ms = 0.0
 Img_prep_time_us = 2.0
 Img_time_us = 11.5
+Img_gain_dB = 24.0
 Img_drop_time_ms = 100.0
 Img_horz_pwr = 4.6
 Img_vert_pwr = 5.0
@@ -427,21 +428,24 @@ times_Wait0 = times.append(Wait0_ms*Unit.ms(), "Wait At MOT")
 #	times_transport_back = Transport_DDSRampMode(times, Trans_acc_g, -Trans_distance_mm, Max_df=Trans_MaxF_MHz)
 
 #transport 1
-times_transport_1 = Transport(times, Trans_acc_g, Trans_dist_mm, Max_df=Trans_MaxF_MHz)
+times_transport = Transport(times, Trans_acc_g, Trans_dist_mm, Max_df=Trans_MaxF_MHz)
 #wait 1
 #if Trans_hold_1_ms>0.:
 times_Wait1 = times.append(Trans_hold_1_ms*Unit.ms(), "Wait after transport 1")
 #transport 2
 if Trans_dist_2_mm>0.:
 	times_transport_2 = Transport(times, Trans_acc_g, Trans_dist_2_mm, Max_df=Trans_MaxF_MHz)
+	times_transport = times_transport & times_transport_2
 #wait 2
 if Trans_hold_2_ms>0.:
 	times_Wait11 = times.append(Trans_hold_2_ms*Unit.ms(), "Wait after transport 2")
+	times_transport = times_transport & times_Wait11
 #transport 3
 if Trans_dist_3_mm>0.:
 	times_transport_3 = Transport(times, Trans_acc_g, Trans_dist_3_mm, Max_df=Trans_MaxF_MHz)
+	times_transport = times_transport & times_transport_3
 
-times_transport = times_transport_1 #& times_transport_2&times_transport_3 HOW to fix this correctly
+#times_transport = times_transport_1 #& times_transport_2&times_transport_3 HOW to fix this correctly
 
 times_dRSC = []
 if dRSC_switch == 1:
@@ -578,8 +582,8 @@ LB3_ttl.SetInterval(times_Init, MW_CW_ttl)
 #AD1_freq.SetInterval(times_Init, MWaves_Freq_MHz)
 #AD1_pow.SetInterval(times_Init, MWaves_pwr_dBm)
 #AD1_ttl.SetInterval(times_Init, MWaves_AD_ttl)
-
-
+#Camera
+Camera_gain.SetInterval(times_Init, Img_gain_dB)
 
 ### dRSC in MOT ###
 if MOT_dRSC_switch == 1:
