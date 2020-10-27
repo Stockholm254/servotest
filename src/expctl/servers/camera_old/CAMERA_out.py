@@ -16,6 +16,8 @@ from ...config.config import DIR_DATA
 
 fullpath = Path(__file__).parent
 
+BIT12 = False
+
 def print_camera_info(cam):
 		cam_info = cam.getCameraInfo()
 		print('\n*** CAMERA INFORMATION ***\n')
@@ -61,19 +63,37 @@ class GP_camera:
 		print_camera_info(self.c)
 
 		#Set Video mode
-		self.c.setVideoModeAndFrameRate(PyCapture2.VIDEO_MODE.VM_1280x960Y8, PyCapture2.FRAMERATE.FR_15) # 17, 3
+		if BIT12:
+			self.c.setVideoModeAndFrameRate(PyCapture2.VIDEO_MODE.VM_1280x960Y16, PyCapture2.FRAMERATE.FR_7_5)
+		else:
+			self.c.setVideoModeAndFrameRate(PyCapture2.VIDEO_MODE.VM_1280x960Y8, PyCapture2.FRAMERATE.FR_15) # 17, 3 
+		
+		 
 		logger.info(f"Video mode: {self.c.getVideoModeAndFrameRate()}")
 
 		# #Set camera properties
 		# self.get_c.set_property(type=1, on_off=True, abs_value=-0.061)   # AUTO_EXPOSURE 
-		self.c.setProperty(type=PyCapture2.PROPERTY_TYPE.AUTO_EXPOSURE, on_off=True, abs_value=-0.061)
+		#self.c.setProperty(type=PyCapture2.PROPERTY_TYPE.AUTO_EXPOSURE, onOff=False, abs_value=-0.061) #autoManualMode=0,
+		autoexp_prop = self.c.getProperty(PyCapture2.PROPERTY_TYPE.AUTO_EXPOSURE)
+		autoexp_prop.absControl = True
+		autoexp_prop.onOff = True
+		autoexp_prop.autoManualMode = False
+		autoexp_prop.absValue = -0.061
+		self.c.setProperty(autoexp_prop)
+
 		# self.get_c.set_property(type=13, abs_value=24)                   # GAIN
-		self.c.setProperty(type=PyCapture2.PROPERTY_TYPE.GAIN, abs_value=24)
+		# self.c.setProperty(type=PyCapture2.PROPERTY_TYPE.GAIN, abs_value=24)
+		gain_prop = self.c.getProperty(PyCapture2.PROPERTY_TYPE.GAIN)
+		gain_prop.absControl = True
+		gain_prop.autoManualMode = 0
+		gain_prop.absValue = 24
+		self.c.setProperty(gain_prop)
+
 
 		# Configure trigger mode
 		trigger_mode = self.c.getTriggerMode()
 		trigger_mode.onOff = True
-		trigger_mode.mode = 0
+		trigger_mode.mode = 1 # 1 for bulb trigger
 		trigger_mode.parameter = 0
 		trigger_mode.source = 0 #External trigger #7     # Using software trigger
 		self.c.setTriggerMode(trigger_mode)
@@ -81,7 +101,7 @@ class GP_camera:
 		self.c.setConfiguration(grabTimeout = 10000)
 		self.c.startCapture()  
 		
-	def GrabImages(self, shutter=0, number=0, runname="", foldername=""):
+	def GrabImages(self, shutter=0, gain=24., number=0, runname="", foldername=""):
 		self.shutter_time = shutter
 		self.num_of_images = number
 		self.run_name = runname
@@ -95,29 +115,67 @@ class GP_camera:
 		
 		img_name = []
 		for pic in range(0, self.num_of_images):
-			img_name.append(img_dir/(self.run_name + "_IMG" + str(pic+1) + ".PGM"))
+			#
+			if BIT12:
+				img_name.append(img_dir/(self.run_name + "_IMG" + str(pic+1) + ".png"))
+			else:
+				img_name.append(img_dir/(self.run_name + "_IMG" + str(pic+1) + ".PGM"))
 		if not os.path.exists(img_dir):
 			os.makedirs(img_dir)
 		
 		#Set shutter time
 		#self.get_c.set_property(type=12, abs_value=float(self.shutter_time)) #SHUTTER
-		self.c.setProperty(type=PyCapture2.PROPERTY_TYPE.SHUTTER , abs_value=float(self.shutter_time))
+		#self.c.setProperty(type=PyCapture2.PROPERTY_TYPE.SHUTTER , abs_value=float(self.shutter_time))
+		shutter_prop = self.c.getProperty(PyCapture2.PROPERTY_TYPE.SHUTTER)
+		shutter_prop.absControl = True
+		shutter_prop.autoManualMode = 0
+		shutter_prop.absValue = float(self.shutter_time)
+		self.c.setProperty(shutter_prop)
+
+		#Gain
+		gain_prop = self.c.getProperty(PyCapture2.PROPERTY_TYPE.GAIN)
+		gain_prop.absControl = True
+		gain_prop.autoManualMode = 0
+		gain_prop.absValue = gain
+		self.c.setProperty(gain_prop)
+
+		
+		#DEBUG Read paras from the camera
+		prop_type = [1, 12, 13]
+		prop_type_dic = {1: "Auto exposure", 12: "Shutter", 13: "Gain"}
+		prop_type_units = {1: "EV", 12: "ms", 13: "dB"}
+		prop_info = []
+		for _type in prop_type:
+			new_info = self.c.getProperty(_type) #self.get_c.get_property(type)
+			prop_info.append(new_info)
+		for prop in prop_info:
+			logger.info(prop_type_dic[prop.type] + " = " + str(prop.absValue) + prop_type_units[prop.type])
+
 		#Grab images
 		#self.get_c.GrabImages(filename=img_name, numImages=self.num_of_images)
 		images = {}
+		err=False
 		for i, img in enumerate(img_name):
 			try:
 					image = self.c.retrieveBuffer()
 			except PyCapture2.Fc2error as fc2Err:
-					logger.error('Error retrieving buffer : %s' % fc2Err)
+					logger.exception('Error retrieving buffer for image {} of {} : {}'.format(i, len(img_name), fc2Err))
+					err=True
 			else:
 				images[img] = image
-		for img in img_name:
-			try:
-				newimg = images[img].convert(PyCapture2.PIXEL_FORMAT.MONO8)
-				newimg.save(str(img).encode('utf-8'), PyCapture2.IMAGE_FILE_FORMAT.PGM)
-			except:
-				logger.exception("couldn't save image")
+		if not err:
+			for img in img_name:
+				try:
+
+					if BIT12:
+						newimg = images[img].convert(PyCapture2.PIXEL_FORMAT.MONO16)
+						newimg.save(str(img).encode('utf-8'), PyCapture2.IMAGE_FILE_FORMAT.PNG)
+					else:
+						newimg = images[img].convert(PyCapture2.PIXEL_FORMAT.MONO8)
+						newimg.save(str(img).encode('utf-8'), PyCapture2.IMAGE_FILE_FORMAT.PGM)
+				except:
+					logger.exception("couldn't save image")
+		return not err
 							
 			
 	 
@@ -155,8 +213,8 @@ class GP_camera:
 		text += "\n"
 		text += "##Parameters hard coded in pyflycapture2 module##\n"
 		text += "Trigger mode = 0 (IMPORTANT: This is hard coded in pyflycapture2, and not read from the camera!)\n"
-		text += "Video mode = 1280*960 8 bit\n"
-		text += "Output file format = PGM"
+		text += "Video mode = 1280*960 12 bit\n"
+		text += "Output file format = PNG"
 		
 		f = open(log_name, 'w')
 		f.write(text)
@@ -191,6 +249,11 @@ class CameraServer(Server):
 		if folder_name == "":
 			folder_name = "camera"
 		
+		chan_gain = seq.getChannelByName("Camera gain")
+		#gain_hwvalues = chan_gain.GetHardwareValues()
+		gain_mv = chan_gain._TransValues[0][1] # find the first value
+		logger.info("Gain from FP: {} dB".format(gain_mv))
+
 		shutter_end = 0
 		shutter_beg = 0
 		gap_beg = -100000 #In case the down edge is at the beginning of the sequence, then the first elements in shutter_gap will be 0, and result in an frame rate error.
@@ -227,7 +290,7 @@ class CameraServer(Server):
 					logger.info("Shutter time: " + str(ShutterTime)+ "ms")
 						
 					try:
-						self.device.GrabImages(shutter=ShutterTime, number=self.NumOfImage, runname=run_name, foldername=folder_name)
+						self.device.GrabImages(shutter=ShutterTime, gain=gain_mv, number=self.NumOfImage, runname=run_name, foldername=folder_name)
 						# error = self.device.GrabImages(shutter=ShutterTime, number=self.NumOfImage, runname=run_name)
 					except:
 						logger.error("Failed to grab images!")
@@ -249,10 +312,13 @@ class CameraServer(Server):
 				self.send_msg(self.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
 				self.RunServer(self.seq, 0)
 				# ImgWindow.update(sev.device.img_dir, sev.device.run_name, img_num=3)
-				fnames = [self.device.img_dir/(self.device.run_name+"_IMG"+str(ii+1)+".PGM") for ii in range(self.NumOfImage)]
+				if BIT12:
+					fnames = [self.device.img_dir/(self.device.run_name+"_IMG"+str(ii+1)+".png") for ii in range(self.NumOfImage)]
+				else:
+					fnames = [self.device.img_dir/(self.device.run_name+"_IMG"+str(ii+1)+".PGM") for ii in range(self.NumOfImage)]
 				loadImage(self.viewer, fnames, self.device.run_name)
 			except Exception as e:
-				logger.exception("Failed to taking or saving images!")
+				logger.exception("Failed in taking or saving images!")
 
 	def run(self):
 		return self.RunServer(self.seq)

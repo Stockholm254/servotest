@@ -314,7 +314,12 @@ class ImageViewer(wx.Frame):
 		imgArrays = []
 		for fname in filenames:
 			# imgArrays.append(np.flipud(imread(fname, mode="RGB")))
-			imgArrays.append(np.flipud(imread(fname)/255.))
+			if str(fname)[-3:]=="png":
+				print("loaded png")
+				im=imread(fname)
+				imgArrays.append(np.flipud(im)) #/1.0*2**16
+			else:
+				imgArrays.append(np.flipud(imread(fname)/255.))
 		
 		# Define additional arrays
 		if mode == MODE_ABSORPTION:
@@ -375,6 +380,7 @@ class ImageViewer(wx.Frame):
 		img = entry.images[frame_ind]
 		img = img[self.x0:self.x1, self.y0:self.y1]
 		self.image.set_data(img)
+		
 		self.imgCtrl.axes.figure.canvas.draw()
 	  
 	def fitSelectedFrame(self):
