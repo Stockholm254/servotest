@@ -35,7 +35,7 @@ def _recv_msg(sock):
 
 class Device:
 
-    def __init__(self, host, port, name = 'Seq', timeout=10.0):
+    def __init__(self, host, port, name = 'Seq', timeout=3.0):
         self.host = host
         self.port = port
         self.name = name

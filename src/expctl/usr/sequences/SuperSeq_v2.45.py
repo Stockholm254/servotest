@@ -207,7 +207,7 @@ MV(GDEP_det_MHz, min=-1000.0, max=1000.0, init=0.0, inc=0.1, digits=2)
 PRB_mode = 1.0
 PRB_ttl = 1.0
 PRB_SPCM_ttl = 1.0
-PRB_pwr = 4.5
+#PRB_pwr = 4.5
 PRBF_EOM = 5.0
 PRBB_EOM = 0.0
 PRB_delay_us = 10.0
@@ -215,8 +215,8 @@ PRB_repetitions = 10
 PRB_OP_REP_total_ms = 0.04
 PRB_gaps_ms = 0.005
 PRB_time_ms = 1.95
-MV(PRB_f0_MHz, min=0, max=3e3, init=341.99, inc=0.1, digits=3)
-PRB_df_MHz = 10.0
+#MV(PRB_f0_MHz, min=0, max=3e3, init=341.99, inc=0.1, digits=3)
+#PRB_df_MHz = 10.0
 PRB_sweep_num = 1
 PRB_Ctrl_ttl = 0.0
 PRB_Ctrl_gap_ttl = 0.0
@@ -235,6 +235,7 @@ MV(PSC_lock2_MHz, min=0.0, max=3e3, init=300.0, inc=0.1, digits=2)
 MV(PSC_ramp_ms,   min=0.0, max=1e3, init=10.0,  inc=0.1, digits=2)
 PSC_output_offset_1 = 0
 PSC_output_offset_2 = 0 
+PRB_LATT_OFF = 0
 # Tab:Imaging
 Img_switch = 0.0
 Img_DEPMOT_time_us = 50.0
@@ -246,6 +247,7 @@ Img_REP_atend_pwr = 2.0
 Img_TOF_ms = 0.0
 Img_prep_time_us = 2.0
 Img_time_us = 11.5
+Img_gain_dB = 24.0
 Img_drop_time_ms = 100.0
 Img_horz_pwr = 4.6
 Img_vert_pwr = 5.0
@@ -279,25 +281,25 @@ MV(Floq_SB1_Freq_MHz, min=8000, max=12000, init=8500, inc=1, digits=1)
 MV(Floq_SB1_pwr_dBm, min=-40, max=10, init=5, inc=0.5, digits=1) 
 MV(Floq_SB2_Freq_MHz, min=5000, max=10000, init=8500, inc=1, digits=1)
 MV(Floq_SB2_pwr_dBm, min=-40, max=10, init=5, inc=0.5, digits=1) 
-# Tab:Pulse
-MW_CW_ttl = 1
-Prb1_ttl = 0
-Prb2_ttl = 0
-MW1_ttl = 0
-MW2_ttl = 0
-#MWaves_AD_ttl = 1
-MV(MWaves_Freq_MHz, min=0, max=10000, init=1500, inc=0.1, digits=1)
-MV(MWaves_pwr_dBm, min=-40, max=5, init=5, inc=0.5, digits=1) 
+# Tab:Subrep
+PRB_pwr_low = 3.3
+PRB_pwr_high = 3.6
+PRB_ttl = 0
+PRB_U_ttl = 0
+PRB_L_ttl = 0
+MV(PRB_f0_MHz, min=0, max=3e3, init=300.0, inc=0.1, digits=3)
+PRB_df_MHz = 10.0
+MV(PRB_U_f0_MHz, min=0, max=3e3, init=2200.0, inc=0.1, digits=3)
+PRB_U_df_MHz = 10.0
+MV(PRB_L_f0_MHz, min=0, max=3e3, init=2800.0, inc=0.1, digits=3)
+PRB_L_df_MHz = 10.0
 MV(t_subrep_us, min=0, max=10000, init=50, inc=1, digits=3)
-MV(Prb1_wait_us, min=0, max=10000, init=0, inc=1, digits=3)
-MV(Prb1_dur_us, min=0, max=10000, init=25, inc=1, digits=3)
-MV(Prb2_wait_us, min=0, max=10000, init=0, inc=1, digits=3)
-MV(Prb2_dur_us, min=0, max=10000, init=0, inc=1, digits=3)
-MV(MW1_wait_us, min=-10000, max=10000, init=0, inc=1, digits=3)
-MV(MW1_dur_us, min=0, max=10000, init=0, inc=1, digits=3) 
-MV(MW2_wait_us, min=-10000, max=10000, init=0, inc=1, digits=3)
-MV(MW2_dur_us, min=0, max=10000, init=0, inc=1, digits=3) 
-
+MV(Prb_P_wait_us, min=0, max=10000, init=0, inc=1, digits=3)
+MV(Prb_P_dur_us, min=0, max=10000, init=25, inc=1, digits=3)
+MV(Prb_U_wait_us, min=0, max=10000, init=0, inc=1, digits=3)
+MV(Prb_U_dur_us, min=0, max=10000, init=0, inc=1, digits=3)
+MV(Prb_L_wait_us, min=0, max=10000, init=0, inc=1, digits=3)
+MV(Prb_L_dur_us, min=0, max=10000, init=0, inc=1, digits=3)
 # Tab:REP_Durations
 MV(REP_frac_1, min=0.0, max=0.5, init=0.5, inc=0.01, digits=2)
 MV(REP_frac_2, min=0.0, max=0.5, init=0.5, inc=0.01, digits=2)
@@ -348,9 +350,18 @@ t_PRB_total = t_PRB*PRB_repetitions
 
 STP_PRB  =     [(0., PRB_gap_ttl, t_gap2, PRB_gap_ttl), (t_gap2, PRB_ttl, t_PRB, PRB_ttl)]
 STP_BLUE =     [(0., PRB_Ctrl_gap_ttl, t_gap2, PRB_Ctrl_gap_ttl), (t_gap2, PRB_Ctrl_ttl, t_PRB, PRB_Ctrl_ttl)]
-STP_PRB_pwr  = [(0., PRB_gap_pwr, t_gap2, PRB_gap_pwr), (t_gap2, PRB_pwr, t_PRB, PRB_pwr)]
+STP_PRB_pwr  = [(0., PRB_gap_pwr, t_gap2, PRB_gap_pwr), (t_gap2, PRB_pwr_low, t_PRB, PRB_pwr_low)]
 STP_SPCM =     [(0., SPCM_alwayson*PRB_SPCM_ttl, t_gap2, SPCM_alwayson*PRB_SPCM_ttl), (t_gap2, PRB_SPCM_ttl, t_PRB, PRB_SPCM_ttl)]
 STP_REP =      [(0., 0, t_gap1, 0),(t_gap1, PRB_REP_ttl, t_PRB_OP, PRB_REP_ttl), (t_PRB_OP, 0, t_PRB, 0)]
+STP_PRB_freq = []
+STP_GATE = [(0., 1., t_gap2, 1.),]
+
+CavPrb_P_f0 = (PRB_f0_MHz+PRB_df_MHz)*Unit.MHz()
+CavPrb_P_f1 = (PRB_f0_MHz-PRB_df_MHz)*Unit.MHz()
+CavPrb_U_f0 = (PRB_U_f0_MHz+PRB_U_df_MHz)*Unit.MHz()
+CavPrb_U_f1 = (PRB_U_f0_MHz-PRB_U_df_MHz)*Unit.MHz()
+CavPrb_L_f0 = (PRB_L_f0_MHz+PRB_L_df_MHz)*Unit.MHz()
+CavPrb_L_f1 = (PRB_L_f0_MHz-PRB_L_df_MHz)*Unit.MHz()
 
 #### SUBREP STAMPS ####
 N_subreps = int(floor(PRB_time_ms*Unit.ms()/t_subrep_us))
@@ -359,41 +370,46 @@ print("DEBUG: N", N_subreps, Unit.ms(), Unit.us())
 if N_subreps==0:
 	print("ERROR: NO SUBREPS! Lower t_subrep_us below the total probe time!")
 
+#Three "probe pulses", first real probe P and then two sidebands, U and then L (can be interchanged by freq)
+
 STP_PRB_EOM = [(0., PRB_gap_ttl, t_gap2, PRB_gap_ttl), ]
-for i in range(N_subreps):
-		#pulse 1
-	if Prb1_ttl:
-		STP_PRB_EOM.append((t_gap2+subcy_time*i+Prb1_wait_us, Prb1_ttl, t_gap2+subcy_time*i+Prb1_wait_us+Prb1_dur_us, Prb1_ttl))
-		STP_PRB_EOM.append((t_gap2+subcy_time*i+Prb1_wait_us+Prb1_dur_us, 0, t_gap2+subcy_time*(i+1), 0.))
-	#pulse 2
-	if Prb2_ttl:
-		STP_PRB_EOM.append((t_gap2+subcy_time*i+Prb1_wait_us+Prb1_dur_us+Prb2_wait_us, Prb2_ttl, t_gap2+subcy_time*i+Prb1_wait_us+Prb1_dur_us+Prb2_wait_us+Prb2_dur_us, Prb2_ttl))
-		STP_PRB_EOM.append((t_gap2+subcy_time*i+Prb1_wait_us+Prb1_dur_us+Prb2_wait_us+Prb2_dur_us, 0, t_gap2+subcy_time*(i+1), 0.))
-
-#Append ghost event to bringe the total length of the stamp to PRB_time in total, since timer.appendMod is a dumb function!
-if Prb1_ttl  or Prb2_ttl:
-	STP_PRB_EOM.append((t_PRB-1, 0, t_PRB, 0.))
-
-STP_MW = [(0., 0, t_gap2, 0), ]
+STP_PRB_PWR_TTL = [(0., PRB_gap_ttl, t_gap2, PRB_gap_ttl), ]
 for i in range(N_subreps):
 	#pulse 1
-	if MW1_ttl:
-		STP_MW.append((t_gap2+subcy_time*i+MW1_wait_us, MW1_ttl, t_gap2+subcy_time*i+MW1_wait_us+MW1_dur_us, MW1_ttl))
-		STP_MW.append((t_gap2+subcy_time*i+MW1_wait_us+MW1_dur_us, 0, t_gap2+subcy_time*(i+1), 0.))
-	#pulse 2
-	if MW2_ttl:
-		STP_MW.append((t_gap2+subcy_time*i+MW1_wait_us+MW1_dur_us+MW2_wait_us, MW2_ttl, t_gap2+subcy_time*i+MW1_wait_us+MW1_dur_us+MW2_wait_us+MW2_dur_us, MW2_ttl))
-		STP_MW.append((t_gap2+subcy_time*i+MW1_wait_us+MW1_dur_us+MW2_wait_us+MW2_dur_us, 0, t_gap2+subcy_time*(i+1), 0.))
+	if PRB_ttl:
+		start, end = Prb_P_wait_us, Prb_P_wait_us+Prb_P_dur_us
+		STP_PRB_EOM.append((t_gap2+subcy_time*i+start, PRB_ttl, t_gap2+subcy_time*i+end, PRB_ttl))
+		STP_PRB_EOM.append((t_gap2+subcy_time*i+end, 0, t_gap2+subcy_time*(i+1), 0.))
+		STP_PRB_freq.append((t_gap2+subcy_time*i+start, CavPrb_P_f0, t_gap2+subcy_time*i+end, CavPrb_P_f1))
 
-#Append ghost event (see above)
-if MW1_ttl  or MW2_ttl:
-	STP_MW.append((t_PRB-1, 0, t_PRB, 0.))
+	if PRB_U_ttl:
+		start, end = Prb_P_wait_us+Prb_P_dur_us+Prb_U_wait_us,  Prb_P_wait_us+Prb_P_dur_us+Prb_U_wait_us+Prb_U_dur_us
+		STP_PRB_EOM.append((t_gap2+subcy_time*i+start, PRB_U_ttl, t_gap2+subcy_time*i+end, PRB_U_ttl))
+		STP_PRB_EOM.append((t_gap2+subcy_time*i+end, 0, t_gap2+subcy_time*(i+1), 0.))
+		STP_PRB_freq.append((t_gap2+subcy_time*i+start, CavPrb_U_f0, t_gap2+subcy_time*i+end, CavPrb_U_f1))
+		STP_GATE.append((t_gap2+subcy_time*i+start, 0, t_gap2+subcy_time*i+end, 0))
+		STP_GATE.append((t_gap2+subcy_time*i+end, 1, t_gap2+subcy_time*(i+1), 1))
+
+	if PRB_L_ttl:
+		start = Prb_P_wait_us+Prb_P_dur_us+Prb_U_wait_us+Prb_U_dur_us+Prb_L_wait_us
+		end = Prb_P_wait_us+Prb_P_dur_us+Prb_U_wait_us+Prb_U_dur_us+Prb_L_wait_us+Prb_L_dur_us
+		STP_PRB_EOM.append((t_gap2+subcy_time*i+start, PRB_L_ttl, t_gap2+subcy_time*i+end, PRB_L_ttl))
+		STP_PRB_EOM.append((t_gap2+subcy_time*i+end, 0, t_gap2+subcy_time*(i+1), 0.))
+		STP_PRB_freq.append((t_gap2+subcy_time*i+start, CavPrb_L_f0, t_gap2+subcy_time*i+end, CavPrb_L_f1))
+		STP_GATE.append((t_gap2+subcy_time*i+start, 0, t_gap2+subcy_time*i+end, 0))
+		STP_GATE.append((t_gap2+subcy_time*i+end, 1, t_gap2+subcy_time*(i+1), 1))
+
+	STP_PRB_PWR_TTL.append((t_gap2+subcy_time*i+Prb_P_wait_us+Prb_P_dur_us, (PRB_U_ttl or PRB_L_ttl), t_gap2+subcy_time*i+end, (PRB_U_ttl or PRB_L_ttl)))
+	STP_PRB_PWR_TTL.append((t_gap2+subcy_time*i+end, 0, t_gap2+subcy_time*(i+1), 0.))
+
+#Append ghost event to bringe the total length of the stamp to PRB_time in total, since timer.appendMod is a dumb function!
+if PRB_ttl or PRB_U_ttl or PRB_L_ttl:
+	STP_PRB_EOM.append((t_PRB-1, 0, t_PRB, 0.))
+	STP_PRB_PWR_TTL.append((t_PRB-1, 0, t_PRB, 0.))
+	STP_PRB_freq.append((t_PRB-1, CavPrb_P_f0, t_PRB, CavPrb_P_f0))
+	STP_GATE.append((t_PRB-1, 1, t_PRB, 1))
 
 # AUX1 should always be zero during PRB; AUX2 switches between OP and DEP
-
-#MWpulse1_ttl = 0
-#MV(MWpulse1_start_us, min=-100, max=100, init=0, inc=1)
-#MV(MWpulse1_dur_us, min=0, max=100, init=0, inc=1) 
 
 time_FinalWait_ms = max([3.0,PSC_ramp_ms])
 
@@ -501,8 +517,10 @@ LAT0_ttl.SetInterval(times_Init.afterward(1.9*Unit.us()), LAT_SWITCH)
 Blue_ttl.SetInterval(times_Init, 0)
 ODT2_ttl.SetInterval(times_Init, 0)
 Nufern0_ttl.SetInterval(times_Init, 0) 
+PRB_pwr_ttl.SetInterval(times_Init, 0) 
 MOT1_ttl.SetInterval(times_Init, 0)
 SPCM_ttl.SetInterval(times_Init, 0)
+GATE_ttl.SetInterval(times_Init, 1)
 D1Laser1_ttl.SetInterval(times_Init, 0)
 dRSC_LAT2_ttl.SetInterval(times_Init, 0)
 EITPrbEOM_ttl.SetInterval(times_Init, 0)
@@ -525,8 +543,8 @@ Sacher2_pwr.SetInterval(times_Init, 0)
 LAT0_pwr.SetInterval(times_Init, LMP)
 Blue_pwr.SetInterval(times_Init, PRB_Ctrl_pwr)
 ODT2_pwr.SetInterval(times_Init, 0)
-Nufern0_pwr.SetInterval(times_Init, PRB_pwr)
-CavPrbEOM_pwr.SetInterval(times_Init, PRBF_EOM)
+Nufern0_pwr.SetInterval(times_Init, PRB_pwr_low)
+CavPrbEOM_pwr.SetInterval(times_Init, PRB_pwr_high)
 VImg_pwr.SetInterval(times_Init, Img_vert_pwr)
 MOT2_pwr.SetInterval(times_Init, 0)
 D1Laser1_pwr.SetInterval(times_Init, dRSC_Pump_pwr)
@@ -562,7 +580,7 @@ DDS_OptPump1.SetInterval(times_Init, 80.0)
 DDS_PDH1560.SetInterval(times_Init, PDH1560_freq*Unit.MHz())
 DDS_PDH960.SetInterval(times_Init, PDH960_freq*Unit.MHz())
 DDS_PDH780.SetInterval(times_Init, PDH780_freq*Unit.MHz())
-DDS_CavPrbEOM.SetInterval(times_Init, PRB_f0_MHz*Unit.MHz())
+RFSOC1_CavPrbEom.SetInterval(times_Init, PRB_f0_MHz*Unit.MHz())
 DDS_HalfRng.SetInterval(times_Init, 0)
 # SPCM seq
 PC_bin_num.SetInterval(times_Init, PC_bin_number)
@@ -577,14 +595,15 @@ elif DetMode == 2:
 LB2_freq.SetInterval(times_Init, Floq_SB1_Freq_MHz)
 LB2_pow.SetInterval(times_Init, Floq_SB1_pwr_dBm)
 LB2_ttl.SetInterval(times_Init, 1)
-LB3_freq.SetInterval(times_Init, MWaves_Freq_MHz)
-LB3_pow.SetInterval(times_Init, MWaves_pwr_dBm)
-LB3_ttl.SetInterval(times_Init, MW_CW_ttl)
+# LB3_freq.SetInterval(times_Init, MWaves_Freq_MHz)
+# LB3_pow.SetInterval(times_Init, MWaves_pwr_dBm)
+# LB3_ttl.SetInterval(times_Init, MW_CW_ttl)
 # ADF435X
 #AD1_freq.SetInterval(times_Init, MWaves_Freq_MHz)
 #AD1_pow.SetInterval(times_Init, MWaves_pwr_dBm)
 #AD1_ttl.SetInterval(times_Init, MWaves_AD_ttl)
-
+#Camera
+Camera_gain.SetInterval(times_Init, Img_gain_dB)
 
 
 ### dRSC in MOT ###
@@ -676,8 +695,8 @@ if Trans_PGC_switch == 1:
 	# 	DDS_REP.SetInterval(times_transport.afterStart(PGC_FreqRamp_ms*Unit.ms()),DDS_REP.GetLastValue(),TREPFreq)
 
 	### Bias Field Ramp ###
-print(times_transport)
-print(times_transport.afterStart(times_transport.length()/2.0))
+#print(times_transport)
+#print(times_transport.afterStart(times_transport.length()/2.0))
 BiasX.SetInterval(times_transport.afterStart(times_transport.length()/2.0), PGC_BiasX_G, dRSC_Bx_G)
 BiasY.SetInterval(times_transport.afterStart(times_transport.length()/2.0), PGC_BiasY_G, dRSC_By_G)
 BiasZ.SetInterval(times_transport.afterStart(times_transport.length()/2.0), PGC_BiasZ_G, dRSC_Bz_G)
@@ -830,7 +849,7 @@ if OP_REP_ttl == 1:
 	if OP_REP_RF_type == 0: # typically for dRSC | strong repump (1->2') sideband (6831 MHz from LabBrick 5626 thru big amp) and relatively weak carrier (550 MHz detuned from 2->2') by zeroing BesselJ_0
 		AUX_ttl.SetInterval(times_OP, 1)
 		AUX2_ttl.SetInterval(times_OP, 1) # MUST BE ONE TO ENSURE THAT LAB BRICK IS TRIGGERED ON
-	elif OP_REP_RF_type == 1: # typically for OP | want quite weak repump sideband and strong pumping carrier, use attenuated version of LabBrick 5626 signal.
+	elif OP_REP_RF_type == 1: # typically for O P | want quite weak repump sideband and strong pumping carrier, use attenuated version of LabBrick 5626 signal.
 		AUX_ttl.SetInterval(times_OP, 0)
 		AUX2_ttl.SetInterval(times_OP, 1)
 	elif OP_REP_RF_type == 2: # typically for depumping | turn off 1->2' sideband, turn on ~2->2' resonant light (crapbox RF @ 550 MHz)
@@ -882,8 +901,6 @@ if PRB_mode == 1: # Static cloud in the cavity
 	# trigger the AWG for probing (sometimes applicable)
 	AWG_trig.SetInterval(times_Prb, 1)
 	
-
-
 	# AUX1 should always be zero during PRB; AUX2 switches between OP and DEP
 	AUX_ttl.SetInterval(times_Prb, 0)
 	# AUX2 switches between REP and OP; its timing is determined by DepumpForPrb tab
@@ -902,14 +919,6 @@ if PRB_mode == 1: # Static cloud in the cavity
 	D1Laser1_pwr.SetInterval(times_Prb.afterStart(0), PRB_REP_pwr)
 	D1Laser1_ttl.SetInterval(times_Prb.afterward(0), 0)
 
-	#AUX_ttl.SetInterval(times_Prb.afterStart(0), PRB_Wiltron_ttl)
-	#MW
-	if MW_CW_ttl:
-		MWaves_ttl.SetInterval(times_Prb, 1)
-	elif MW1_ttl or MW2_ttl:
-		MWaves_ttl.SetModulation(times_Prb, STP_MW)
-		MWaves_ttl.SetInterval(times_Prb.afterward(0), 0)
-
 	# Probe the cavity
 	Nufern0_ttl.SetModulation(times_Prb, STP_PRB)
 	Nufern0_ttl.SetInterval(times_Prb.afterward(0), 0)
@@ -917,6 +926,9 @@ if PRB_mode == 1: # Static cloud in the cavity
 	# Probe EOM modulation
 	EITPrbEOM_ttl.SetModulation(times_Prb, STP_PRB_EOM)
 	EITPrbEOM_ttl.SetInterval(times_Prb.afterward(0), 0)
+	# Probe AOM power TTL switch
+	PRB_pwr_ttl.SetModulation(times_Prb, STP_PRB_PWR_TTL) 
+	PRB_pwr_ttl.SetInterval(times_Prb.afterward(0), 0)
 	
 
 	# Blue beam
@@ -928,11 +940,14 @@ if PRB_mode == 1: # Static cloud in the cavity
 	CavPrb_f0 = (PRB_f0_MHz+PRB_df_MHz)*Unit.MHz()
 	CavPrb_f1 = (PRB_f0_MHz-PRB_df_MHz)*Unit.MHz()
 	if PRB_sweep_num == 1:
-		DDS_CavPrbEOM.SetInterval(times_Prb, CavPrb_f0, CavPrb_f1)
+		if N_subreps>1:	
+			RFSOC1_CavPrbEom.SetModulation(times_Prb, STP_PRB_freq) # scam probe frequency according to stamp (3 ramps per subrep)
+		else:
+			RFSOC1_CavPrbEom.SetInterval(times_Prb, CavPrb_f0, CavPrb_f1) # do one sweep over whole sequence, for Plotter compatibility
 	else:
 		swp_len = times_Prb.length()/PRB_sweep_num
 		for sn in range(int(PRB_sweep_num)):
-			DDS_CavPrbEOM.SetInterval(times_Prb.afterStart(sn*swp_len).afterward(swp_len), CavPrb_f0, CavPrb_f1)
+			RFSOC1_CavPrbEom.SetInterval(times_Prb.afterStart(sn*swp_len).afterward(swp_len), CavPrb_f0, CavPrb_f1)
 	# Trigger the scope
 	Scope_trig.SetInterval(times_Prb, 1)
 	# Scope_trig.SetInterval(times_Prb.beforeEnd(PRB_time_us*Unit.us()), 1)
@@ -941,12 +956,15 @@ if PRB_mode == 1: # Static cloud in the cavity
 	SPCM_ttl.SetInterval(times_Prb.beforeStart(SPCM_offset_ms*Unit.ms()), 1)
 	SPCM_ttl.SetModulation(times_Prb, STP_SPCM)
 	SPCM_ttl.SetInterval(times_Prb.afterward(0), 0)
+	# Gate the SPCM pulses during sidebands
+	GATE_ttl.SetModulation(times_Prb, STP_GATE)
 
 elif PRB_mode == 2: # for hot wire, Moving the cloud through the cavity waist (ONLY WORKS WITHOUT dRSC!)
 	# Turn off the lattice 
-	LAT0_ttl.SetInterval(times_CavPrb, 0)
-	LAT1_ttl.SetInterval(times_CavPrb, 0)
-	LAT2_ttl.SetInterval(times_CavPrb, 0)
+	if PRB_LATT_OFF:
+		LAT0_ttl.SetInterval(times_CavPrb, 0)
+		LAT1_ttl.SetInterval(times_CavPrb, 0)
+		LAT2_ttl.SetInterval(times_CavPrb, 0)
 	# Turn on/off the cavity probe beam
 	Nufern0_ttl.SetInterval(times_CavPrb, PRB_ttl)
 	Nufern0_ttl.SetInterval(times_CavPrb.afterward(0), 0)
@@ -961,7 +979,7 @@ elif PRB_mode == 2: # for hot wire, Moving the cloud through the cavity waist (O
 	# Sweep Probe Freq
 	CavPrb_f0 = (PRB_f0_MHz+PRB_df_MHz)*Unit.MHz()
 	CavPrb_f1 = (PRB_f0_MHz-PRB_df_MHz)*Unit.MHz()
-	DDS_CavPrbEOM.SetInterval(times_CavPrb, CavPrb_f0, CavPrb_f1)
+	RFSOC1_CavPrbEom.SetInterval(times_CavPrb, CavPrb_f0, CavPrb_f1)
 	# Trigger the scope
 	Scope_trig.SetInterval(times_CavPrb, 1)
 	Scope_trig.SetInterval(times_CavPrb.afterward(0), 0)
@@ -1058,8 +1076,10 @@ LAT0_ttl.SetSteadyStateValue(LAT_SWITCH)
 Blue_ttl.SetSteadyStateValue(0)
 ODT2_ttl.SetSteadyStateValue(0)
 Nufern0_ttl.SetSteadyStateValue(0) # 
+PRB_pwr_ttl.SetSteadyStateValue(0)
 MOT1_ttl.SetSteadyStateValue(0)
 SPCM_ttl.SetSteadyStateValue(0)
+GATE_ttl.SetSteadyStateValue(1)
 dRSC_LAT2_ttl.SetSteadyStateValue(0)
 D1Laser1_ttl.SetSteadyStateValue(0)
 EITPrbEOM_ttl.SetSteadyStateValue(0)
@@ -1083,8 +1103,8 @@ Sacher2_pwr.SetSteadyStateValue(0)
 LAT0_pwr.SetSteadyStateValue(LMP)
 Blue_pwr.SetSteadyStateValue(PRB_Ctrl_pwr)
 EDFA_1529_pwr.SetSteadyStateValue(Floquet_AOM_pwr)
-Nufern0_pwr.SetSteadyStateValue(PRB_pwr)
-CavPrbEOM_pwr.SetSteadyStateValue(PRBF_EOM)
+Nufern0_pwr.SetSteadyStateValue(PRB_pwr_low)
+CavPrbEOM_pwr.SetSteadyStateValue(PRB_pwr_high)
 D1Laser1_pwr.SetSteadyStateValue(dRSC_Pump_pwr)
 dRSC_LAT2_pwr.SetSteadyStateValue(0)
 MOT1_pwr.SetSteadyStateValue(0)
@@ -1109,7 +1129,7 @@ DDS_MOT.SetSteadyStateValue(MOTFREQ)
 DDS_PDH1560.SetSteadyStateValue(PDH1560_freq)
 DDS_PDH960.SetSteadyStateValue(PDH960_freq)
 DDS_PDH780.SetSteadyStateValue(PDH780_freq)
-DDS_CavPrbEOM.SetSteadyStateValue(PRB_f0_MHz)
+RFSOC1_CavPrbEom.SetSteadyStateValue(PRB_f0_MHz)
 DDS_HalfRng.SetSteadyStateValue(5)
 # DDS seq 2
 DDS_CavPrbAOM.SetSteadyStateValue(CavPrb_FreqOffset_MHz*Unit.MHz())
@@ -1117,16 +1137,16 @@ DDS_chan1.SetSteadyStateValue(80)
 DDS_OptPump1.SetSteadyStateValue(80)
 #DDS2_3.SetSteadyStateValue(ModeSort1_MHz*Unit.MHz())
 # Lab Bricks
-LB1_freq.SetSteadyStateValue(MWaves_Freq_MHz)
-LB1_pow.SetSteadyStateValue(MWaves_pwr_dBm)
+#LB1_freq.SetSteadyStateValue(MWaves_Freq_MHz)
+#LB1_pow.SetSteadyStateValue(MWaves_pwr_dBm)
 LB1_ttl.SetSteadyStateValue(0)
 LB2_freq.SetSteadyStateValue(Floq_SB1_Freq_MHz)
 LB2_pow.SetSteadyStateValue(Floq_SB1_pwr_dBm)
 LB2_ttl.SetSteadyStateValue(1)
-LB3_freq.SetSteadyStateValue(MWaves_Freq_MHz)
-LB3_pow.SetSteadyStateValue(MWaves_pwr_dBm)
-LB3_ttl.SetSteadyStateValue(0)
-MWaves_ttl.SetSteadyStateValue(0)
+# LB3_freq.SetSteadyStateValue(MWaves_Freq_MHz)
+# LB3_pow.SetSteadyStateValue(MWaves_pwr_dBm)
+# LB3_ttl.SetSteadyStateValue(0)
+# MWaves_ttl.SetSteadyStateValue(0)
 # ADF435X
 #AD1_freq.SetSteadyStateValue(MWaves_Freq_MHz)
 #AD1_pow.SetSteadyStateValue(MWaves_pwr_dBm)

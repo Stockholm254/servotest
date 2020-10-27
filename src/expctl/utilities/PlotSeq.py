@@ -26,7 +26,7 @@ def PlotSeq_DeviceValue(dm):
 
   # Load plot data from the server
   ytick_locations = []
-  t = 0;
+  t = 0
   x = [0]
   chancounter = 0  # for y-offset
   ymax=0

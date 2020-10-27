@@ -14,6 +14,7 @@ import pdb
 import pickle
 import winsound
 from pathlib import Path, WindowsPath
+import shelve
 
 import wx
 import wx.lib.agw.floatspin as FS
@@ -159,7 +160,7 @@ class FrontPanel(wx.Frame):
       seq = self.dm.seq_all[ii]
       self.m_seq.append(wx.MenuItem(menu, wx.ID_ANY, seq.name, kind=wx.ITEM_CHECK))
       menu.Append(self.m_seq[-1])
-      menu.Check(self.m_seq[-1].GetId(), True)
+      menu.Check(self.m_seq[-1].GetId(), False)
     for ii in range(len(self.dm.seq_all)):
       self.Bind(wx.EVT_MENU, self.OnCheckServers, self.m_seq[ii])
     self.menuBar.Append(menu, "&Servers")
@@ -524,28 +525,43 @@ class FrontPanel(wx.Frame):
   #=============================== GUI Methods ===============================#
   #############################################################################
   def InitFP(self): # Reload settings from the memory
-    persist_fname = self.temp_dir / self.fp_cfg
-    if os.path.exists(persist_fname):
+    path = self.temp_dir / self.fp_cfg
+    new_path = path.parent / (path.name + '.dat')
+    if os.path.exists(new_path):
 
-        ActSeqNames = [] #catch empty ActSeqNames
+        #ActSeqNames = [] #catch empty ActSeqNames
         print('Londing Front Panel Configurations!')
-        f = open(persist_fname, 'r')
-        for line in f:
-            exec(str(line))
-        f.close()
-        
+        # f = open(persist_fname, 'r')
+        # for line in f.readlines():
+        #   #exec(str(line))
+        #   line = line.strip('\n')
+        #   print(line)
+        #   exec(line)
+        # f.close()
+
+        d = shelve.open(str(self.temp_dir/self.fp_cfg))
+        self.dir_seq = d['dir_seq']
+        self.fname_seq = d['fname_seq']
+        self.script_name = d['script_name']
+        ActSeqNames = d['ActSeqNames']
+        d.close()
+        print(ActSeqNames)
         try:
             self.LoadSeq() # Load last sequence
             self.LoadMV(mv_dir=self.temp_dir, mv_fname=self.temp_MV) # Load MVs
         except:
             pass
-
+        seq_new = []
+        print(ActSeqNames)
         # Select active sequence in the manu bar and update the device manager using OnCheckServers()
         for ii, seq in enumerate(self.dm.seq_all): # Loop over all available sequence in the device manager
             if seq.name in ActSeqNames:
                 self.menuBar.Check(self.m_seq[ii].GetId(), True)
+                seq_new.append(seq)
             else:
                 self.menuBar.Check(self.m_seq[ii].GetId(), False)
+        print(seq_new) 
+        self.dm.SetActiveSeq(seq_new)
         self.OnCheckServers(None)
 
   # George W Bush was a very bad president (Graham said so)
@@ -1615,15 +1631,21 @@ class FrontPanel(wx.Frame):
         ActSeqNames.append(_seq.name)
     
     # Save front panel parameters
-    savetxt  = ''
-    savetxt += 'self.dir_seq   = {!r}\n'.format(WindowsPath(self.dir_seq))
-    savetxt += 'self.fname_seq = \''+self.fname_seq+'\'\n'
-    savetxt += 'self.script_name = \''+self.script_name+'\'\n'
-    savetxt += 'ActSeqNames = '+str(ActSeqNames)+'\n'
-    f = open(self.temp_dir/self.fp_cfg, 'w')
-    f.write(savetxt)
-    f.close()
-    
+    # savetxt  = ''
+    # savetxt += 'self.dir_seq   = {!r}\n'.format(WindowsPath(self.dir_seq))
+    # savetxt += 'self.fname_seq = \''+self.fname_seq+'\'\n'
+    # savetxt += 'self.script_name = \''+self.script_name+'\'\n'
+    # savetxt += 'ActSeqNames = '+str(ActSeqNames)+'\n'
+    # f = open(self.temp_dir/self.fp_cfg, 'w')
+    # f.write(savetxt)
+    # f.close()
+    d = shelve.open(str(self.temp_dir/self.fp_cfg))
+    d['dir_seq'] = WindowsPath(self.dir_seq)
+    d['fname_seq'] = self.fname_seq
+    d['script_name'] = self.script_name
+    d['ActSeqNames'] = ActSeqNames
+    d.close()
+
     # Save current MVs
     self.SaveMV(self.temp_dir, self.temp_MV)
     self.SaveMV(self.temp_dir, 'FB'+self.temp_MV, FB_flag=True)

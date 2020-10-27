@@ -29,10 +29,11 @@ all_sequences = ([
   Sequence("LabBrick 2 sequence",     host=IP_RYDFRIES,  port=PORT_LB2,      max_channels=3 , graph=0),
   Sequence("LabBrick 3 sequence",     host=IP_RYDFRIES,  port=PORT_LB3,      max_channels=3 , graph=0),
   Sequence("ADF435X sequence",        host=IP_RYDFRIES,  port=PORT_AD1,      max_channels=3 , graph=0),
-  Sequence("RP DDS Transport sequence", host=IP_RPTR,  port=PORT_RPTR,      max_channels=2 , graph=0),
+  Sequence("RFSOC 1 sequence",        host=IP_RFSOC_1,   port=PORT_RFSOC,    max_channels=8 , graph=0),
+  Sequence("RP DDS Transport sequence", host=IP_RPTR,    port=PORT_RPTR,     max_channels=2 , graph=0),
   ])
 
-digital_seq1, analog_seq1, cam, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, photon_counter, lb_1, lb_2, lb_3, ad_1, rp_ddds_1 = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
+digital_seq1, analog_seq1, cam, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, photon_counter, lb_1, lb_2, lb_3, ad_1, rfsoc_1, rp_ddds_1 = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
 
 #=======================================Channel Definitions=========================================
 # NEXT ADD ALL OF THE CHANNELS TO THEM! ##Note: the name in quotes must have 1 < length < 31
@@ -42,7 +43,7 @@ MOT0_ttl      = digital_seq1.newChannel(0,  "MOT TTL",          system='MOT',   
 REP0_ttl      = digital_seq1.newChannel(1,  "REP TTL",          system='MOT',     steady_state_value=1, max_value=1, graph=1)
 Scope_trig    = digital_seq1.newChannel(2,  "Scope Trig",       system='Debug',   steady_state_value=0, max_value=1, graph=1)
 Cam_trig      = digital_seq1.newChannel(3,  "Came Trig",        system='IMG',     steady_state_value=1, max_value=1, graph=1)
-DDS_trig      = digital_seq1.newChannel(4,  "DDS FPGA Trig",    system='Debug',   steady_state_value=0, max_value=1, graph=1)
+DDS_trig      = digital_seq1.newChannel(4,  "DDS FPGA Trig",    system='Debug',   steady_state_value=0, max_value=1, graph=1, transform_v=tran.DigitalNot) #9/15/2020 added inverting line driver
 UV_ttl        = digital_seq1.newChannel(5,  "Ultraviolet TTL",  system='EField',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.CavPrbAOMDelay)
 LAT1_ttl      = digital_seq1.newChannel(6,  "Lat Hori TTL",     system='LAT',     steady_state_value=1, max_value=1, graph=1)
 LAT2_ttl      = digital_seq1.newChannel(7,  "Lat Vert TTL",     system='LAT',     steady_state_value=1, max_value=1, graph=1)
@@ -53,9 +54,11 @@ MOT1_ttl      = digital_seq1.newChannel(11, "MOTdRSC Pump TTL", system='dRSC',  
 Blue_ttl      = digital_seq1.newChannel(12, "Blue TTL",         system='Blue',    steady_state_value=0, max_value=1, graph=1, transform_t=tran.BlueAOMDelay)
 ODT2_ttl      = digital_seq1.newChannel(13, "Cav DTrap TTL",    system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.BlueAOMDelay)
 Nufern0_ttl   = digital_seq1.newChannel(14, "Cav Prb TTL",      system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.CavPrbAOMDelay)
+PRB_pwr_ttl   = digital_seq1.newChannel(15, "Cav Prb Power TTL",system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.CavPrbAOMDelay)
 Timer_trig    = digital_seq1.newChannel(16, "Timer Trig",       system='Debug',   steady_state_value=0, max_value=1, graph=1, ctype='Slave', master=Scope_trig)
 SPCM_ttl      = digital_seq1.newChannel(17, "SPCM Gate TTL",    system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_v=tran.DigitalNot)
 dRSC_LAT2_ttl = digital_seq1.newChannel(18, "MOTdRSC Lat TTL",  system='dRSC',    steady_state_value=0, max_value=1, graph=1)
+GATE_ttl      = digital_seq1.newChannel(19, "Timer Gate TTL",   system='CavPrb',  steady_state_value=0, max_value=1, graph=1)
 D1Laser1_ttl  = digital_seq1.newChannel(20, "dRSC Pump TTL",    system='dRSC',    steady_state_value=1, max_value=1, graph=1)
 AUX2_ttl      = digital_seq1.newChannel(21, "Auxiliary 2 TTL",  system='dRSC',    steady_state_value=0, max_value=1, graph=1)
 EITPrbEOM_ttl = digital_seq1.newChannel(22, "Cav Prb EOM TTL",  system='CavPrb',  steady_state_value=1, max_value=1, graph=1)
@@ -160,6 +163,16 @@ LB3_ttl   = lb_3.newChannel(2, "Lab Brick 3 TTL",   system='CavPrb', steady_stat
 AD1_freq = ad_1.newChannel(0, "Microwave Freq",   system='MWaves', steady_state_value=1000, max_value=4400, graph=0)
 AD1_pow  = ad_1.newChannel(1, "Microwave Power",  system='MWaves', steady_state_value=2, max_value=5, graph=0)
 AD1_ttl  = ad_1.newChannel(2, "Microwave TTL",    system='MWaves', steady_state_value=0, max_value=1, graph=0)
+
+#RFSOC 1 DDS Box
+#RFSOC1_0 = rfsoc_1.newChannel(0, "RFSOC 1 Chan 0",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
+#RFSOC1_1 = rfsoc_1.newChannel(1, "RFSOC 1 Chan 1",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
+#RFSOC1_2 = rfsoc_1.newChannel(2, "RFSOC 1 Chan 2",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
+#RFSOC1_3 = rfsoc_1.newChannel(3, "RFSOC 1 Chan 3",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
+#RFSOC1_4 = rfsoc_1.newChannel(4, "RFSOC 1 Chan 4",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
+RFSOC1_CavPrbEom = rfsoc_1.newChannel(5, "RFSOC 1 Chan 5",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
+#RFSOC1_6 = rfsoc_1.newChannel(6, "RFSOC 1 Chan 6",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
+#RFSOC1_7 = rfsoc_1.newChannel(7, "RFSOC 1 Chan 7",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
 
 #Red Pitaya Transport DDS
 RP_trans_a = rp_ddds_1.newChannel(0, "Lattice top freq",   system='LAT', steady_state_value=80e6, max_value=120e6, graph=0)

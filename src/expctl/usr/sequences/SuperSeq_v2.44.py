@@ -235,6 +235,7 @@ MV(PSC_lock2_MHz, min=0.0, max=3e3, init=300.0, inc=0.1, digits=2)
 MV(PSC_ramp_ms,   min=0.0, max=1e3, init=10.0,  inc=0.1, digits=2)
 PSC_output_offset_1 = 0
 PSC_output_offset_2 = 0 
+PRB_LATT_OFF = 0
 # Tab:Imaging
 Img_switch = 0.0
 Img_DEPMOT_time_us = 50.0
@@ -246,6 +247,7 @@ Img_REP_atend_pwr = 2.0
 Img_TOF_ms = 0.0
 Img_prep_time_us = 2.0
 Img_time_us = 11.5
+Img_gain_dB = 24.0
 Img_drop_time_ms = 100.0
 Img_horz_pwr = 4.6
 Img_vert_pwr = 5.0
@@ -285,7 +287,7 @@ Prb1_ttl = 0
 Prb2_ttl = 0
 MW1_ttl = 0
 MW2_ttl = 0
-#MWaves_AD_ttl = 1
+
 MV(MWaves_Freq_MHz, min=0, max=10000, init=1500, inc=0.1, digits=1)
 MV(MWaves_pwr_dBm, min=-40, max=5, init=5, inc=0.5, digits=1) 
 MV(t_subrep_us, min=0, max=10000, init=50, inc=1, digits=3)
@@ -584,7 +586,8 @@ LB3_ttl.SetInterval(times_Init, MW_CW_ttl)
 #AD1_freq.SetInterval(times_Init, MWaves_Freq_MHz)
 #AD1_pow.SetInterval(times_Init, MWaves_pwr_dBm)
 #AD1_ttl.SetInterval(times_Init, MWaves_AD_ttl)
-
+#Camera
+Camera_gain.SetInterval(times_Init, Img_gain_dB)
 
 
 ### dRSC in MOT ###
@@ -830,7 +833,7 @@ if OP_REP_ttl == 1:
 	if OP_REP_RF_type == 0: # typically for dRSC | strong repump (1->2') sideband (6831 MHz from LabBrick 5626 thru big amp) and relatively weak carrier (550 MHz detuned from 2->2') by zeroing BesselJ_0
 		AUX_ttl.SetInterval(times_OP, 1)
 		AUX2_ttl.SetInterval(times_OP, 1) # MUST BE ONE TO ENSURE THAT LAB BRICK IS TRIGGERED ON
-	elif OP_REP_RF_type == 1: # typically for OP | want quite weak repump sideband and strong pumping carrier, use attenuated version of LabBrick 5626 signal.
+	elif OP_REP_RF_type == 1: # typically for O P | want quite weak repump sideband and strong pumping carrier, use attenuated version of LabBrick 5626 signal.
 		AUX_ttl.SetInterval(times_OP, 0)
 		AUX2_ttl.SetInterval(times_OP, 1)
 	elif OP_REP_RF_type == 2: # typically for depumping | turn off 1->2' sideband, turn on ~2->2' resonant light (crapbox RF @ 550 MHz)
@@ -944,9 +947,10 @@ if PRB_mode == 1: # Static cloud in the cavity
 
 elif PRB_mode == 2: # for hot wire, Moving the cloud through the cavity waist (ONLY WORKS WITHOUT dRSC!)
 	# Turn off the lattice 
-	LAT0_ttl.SetInterval(times_CavPrb, 0)
-	LAT1_ttl.SetInterval(times_CavPrb, 0)
-	LAT2_ttl.SetInterval(times_CavPrb, 0)
+	if PRB_LATT_OFF:
+		LAT0_ttl.SetInterval(times_CavPrb, 0)
+		LAT1_ttl.SetInterval(times_CavPrb, 0)
+		LAT2_ttl.SetInterval(times_CavPrb, 0)
 	# Turn on/off the cavity probe beam
 	Nufern0_ttl.SetInterval(times_CavPrb, PRB_ttl)
 	Nufern0_ttl.SetInterval(times_CavPrb.afterward(0), 0)
