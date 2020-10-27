@@ -6,6 +6,7 @@ from ..ServerClass import Server, logger
 from pathlib import Path
 from ..util.SequenceProcessor import *
 from .rpdds import *
+import time
 
 DIR_BITFILE = Path(__file__).parent
 
@@ -64,11 +65,12 @@ def RunServer(seq, rp, autostart = 1):
 		FinalSeqs.append(formattedSeq)
 		NumRamps.append(len(fullSeq))
 
-	# send frequency ramps to Red Pitaya!
-	print(FinalSeqs)
+	
 	# to take doubler into account multiply the freqs by 0.5
 	rp.SendSequenceSimple(FinalSeqs[0],FinalSeqs[1], scale_freq=0.5)
-
+	# send frequency ramps to Red Pitaya!
+	print(FinalSeqs)
+	#time.sleep(0.1)
 	# await trigger
 	if autostart == 1:
 		rp.trigger()
@@ -103,7 +105,9 @@ if __name__ == '__main__':
 	==                 for Red Pitaya            ==
 	===============================================
 	"""
-	bitfile_path = DIR_BITFILE/"DDDS_xlnx_512.bit"
+	#bitfile_path = DIR_BITFILE/"DDDS_xlnx_512.bit"
+	bitfile_path = DIR_BITFILE/"SimonLab_DDDS.bit"
 	logger.info("Using bitfile {}".format(bitfile_path))
-	server = RpDDSServer("RpDDS_1", 60631, message=message, bitfile=bitfile_path, maxevents=512)
+	#server = RpDDSServer("RpDDS_1", 60631, message=message, bitfile=bitfile_path, maxevents=512)
+	server = RpDDSServer("RpDDS_1", 60631, message=message, bitfile=bitfile_path, maxevents=64)
 	server.main_loop()
