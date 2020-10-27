@@ -62,11 +62,25 @@ def RunServer(seq, rf, autostart=1, UPDATE_RAM=1):
 			active_chans.append(chan_shuffler[chanid])
 			ssvalHz = chan.GetHardwareSSV() #steady_state_value
 			ssvalFTW = getFTW(ssvalHz)
-			seq = chan.GetHardwareValues()
-			print(seq)
+			#seq = chan.GetHardwareValues()
+			chanValues = chan.GetHardwareValues()
+			seq = []
+			for interval in chanValues:
+				# Note: had to invert logical values because of the line driver
+				if len(interval) == 4: # Regular interval
+					seq.append(interval)
+				elif len(interval) == 7: # Modulation stamps
+					stamps = interval[4]
+					stamp_length = interval[5]
+					mod_num = int(interval[6])
+					for ii in range(mod_num):
+						for stamp in stamps:
+							seq.append((interval[0]+stamp[0]+stamp_length*ii, stamp[1], interval[0]+stamp[2]+stamp_length*ii, stamp[3]))
+
+			#print(seq)
 			convertedSeq = ConvertSeqtoCountsandFTWs(seq) #values)
 			fullSeq = GenerateFullSeq(convertedSeq,ssvalFTW)
-			print(fullSeq)
+			#print(fullSeq)
 			N_Ramps = len(fullSeq)
 			fullSeqs.append(fullSeq)
 			NumRamps.append(N_Ramps)
