@@ -17,7 +17,7 @@ import random
 
 from ..utilities import jGlobals # Unit module
 from ..sequencer.sequence import SetError # Sequence set error
-from ..sequencer.intervaler import Intervaler # Interval object
+from ..sequencer.intervaler import Intervaler, TimeInterval # Interval object
 from ..utilities.util import *
 from ..utilities.Feedback import FBControlMV
 

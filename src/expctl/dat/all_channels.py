@@ -54,7 +54,7 @@ MOT1_ttl      = digital_seq1.newChannel(11, "MOTdRSC Pump TTL", system='dRSC',  
 Blue_ttl      = digital_seq1.newChannel(12, "Blue TTL",         system='Blue',    steady_state_value=0, max_value=1, graph=1, transform_t=tran.BlueAOMDelay)
 ODT2_ttl      = digital_seq1.newChannel(13, "Cav DTrap TTL",    system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.BlueAOMDelay)
 Nufern0_ttl   = digital_seq1.newChannel(14, "Cav Prb TTL",      system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.CavPrbAOMDelay)
-PRB_pwr_ttl   = digital_seq1.newChannel(15, "Cav Prb Power TTL",system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.CavPrbAOMDelay)
+PRB_pwr_ttl   = digital_seq1.newChannel(15, "Cav Prb Power TTL",system='CavPrb',  steady_state_value=0, max_value=1, graph=1) #, transform_t=tran.CavPrbAOMDelay
 Timer_trig    = digital_seq1.newChannel(16, "Timer Trig",       system='Debug',   steady_state_value=0, max_value=1, graph=1, ctype='Slave', master=Scope_trig)
 SPCM_ttl      = digital_seq1.newChannel(17, "SPCM Gate TTL",    system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_v=tran.DigitalNot)
 dRSC_LAT2_ttl = digital_seq1.newChannel(18, "MOTdRSC Lat TTL",  system='dRSC',    steady_state_value=0, max_value=1, graph=1)
@@ -87,7 +87,7 @@ EDFA_1529_pwr  = analog_seq1.newChannel(11, "Floquet Pwr",     system='Floquet',
 ODT2_pwr       = analog_seq1.newChannel(12, "Cav DTrap Pwr",   system='CavPrb',  steady_state_value=4.80,  max_value=5.0,  graph=1)
 PSC_outOff     = analog_seq1.newChannel(13, "PSC Output Offset",system='CavPrb',  steady_state_value=0.0,   max_value=5.0,  graph=1)
 Nufern0_pwr    = analog_seq1.newChannel(14, "Cav Prb Pwr",     system='CavPrb',  steady_state_value=0.0,   max_value=5.0,  graph=1)
-CavPrbEOM_pwr  = analog_seq1.newChannel(15, "Prb F EOM Pwr",   system='CavPrb',  steady_state_value=5.0,   max_value=5.0,  graph=1)
+CavPrbEOM_pwr  = analog_seq1.newChannel(15, "Prb F EOM Pwr",   system='CavPrb',  steady_state_value=2.0,   max_value=10.0,  graph=1)
 VImg_pwr       = analog_seq1.newChannel(16, "Vert Img Pwr",    system='IMG',     steady_state_value=5.0,   max_value=5.0,  graph=1)
 D1Laser1_pwr   = analog_seq1.newChannel(17, "dRSC Pump Pwr",   system='dRSC',    steady_state_value=4.6,   max_value=5.0,  graph=1)
 dRSC_LAT2_pwr  = analog_seq1.newChannel(18, "MOTdRSC Lat Pwr", system='dRSC',    steady_state_value=5.0,   max_value=5.0,  graph=1)
@@ -172,7 +172,7 @@ AD1_ttl  = ad_1.newChannel(2, "Microwave TTL",    system='MWaves', steady_state_
 #RFSOC1_4 = rfsoc_1.newChannel(4, "RFSOC 1 Chan 4",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
 RFSOC1_CavPrbEom = rfsoc_1.newChannel(5, "RFSOC 1 Chan 5",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
 #RFSOC1_6 = rfsoc_1.newChannel(6, "RFSOC 1 Chan 6",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
-#RFSOC1_7 = rfsoc_1.newChannel(7, "RFSOC 1 Chan 7",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
+RFSOC1_7 = rfsoc_1.newChannel(7, "RFSOC 1 Chan 7",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
 
 #Red Pitaya Transport DDS
 RP_trans_a = rp_ddds_1.newChannel(0, "Lattice top freq",   system='LAT', steady_state_value=80e6, max_value=120e6, graph=0)

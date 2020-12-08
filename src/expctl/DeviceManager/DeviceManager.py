@@ -134,8 +134,9 @@ class Device:
             logger.error("Server not connected!, Connect() before sending!")
             return
 
-        self.send_msg("PING")
+        
         try:
+            self.send_msg("PING")
             response, _ = self.recv_msg()
             print(response)
         except:
