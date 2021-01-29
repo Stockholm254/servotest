@@ -121,6 +121,7 @@ class RpDOG:
 		# on the time values, depending on how it gets passed in.
 
 		return rpseq
+		
 
 	def data_for_plot(seq):
 		""" Takes a sequence and prepares it for plot. """
