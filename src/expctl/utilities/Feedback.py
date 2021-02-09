@@ -159,10 +159,6 @@ def VRS_g_fit(data_dir, MVs=None, pguess=None, latest=0): # NEED TO TEST HOW SLO
 	else:
 		return pout[0][2]
 
-
-
-
-
 __FBfunctions__ = {
 				'VRS_balance': VRS_balance,
 				'VRS_g': VRS_g,
@@ -172,9 +168,6 @@ __FBfunctions__ = {
 				'BlueComp_EyTrim_FF': BlueComp_EyTrim_FF,
 				'BlueComp_EzTrim_FF': BlueComp_EzTrim_FF
 				}
-
-
-
 
 def is_float(s):
   try:
