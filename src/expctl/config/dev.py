@@ -48,6 +48,8 @@ PORT_LB2        = 60616 # Lab Brick 1, for the detuning of the 1529 carrier
 PORT_LB3        = 60617 # Lab Brick 1, for the detuning of the 1529 carrier
 # RPDDS PORTS
 PORT_RPTR       = 60631
+# RPDAC PORTS
+PORT_RPDAC      = 60632 # Used by Henry for testing currently
 
 #RFSOC PORTS
 PORT_RFSOC = 60617 # RFSOC 1 Box
