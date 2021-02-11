@@ -11,8 +11,7 @@ import time
 import numpy as np
 import coloredlogs, logging
 
-# Create ZeroMQ context
-context = zmq.Context()
+
 
 # Create a logger object.
 logger = logging.getLogger(__name__)
@@ -20,6 +19,8 @@ coloredlogs.install(level='DEBUG')
 
 #=============================== Server Class ==================================#
 class Server:
+	# Create ZeroMQ context
+	
 	def __init__(self, name, port, message=''):
 		self.message = message
 		self.name = name
@@ -29,8 +30,8 @@ class Server:
 	
 		if self.message:
 			print((self.message))
-
-		self.sock = context.socket(zmq.REP)
+		self.context = zmq.Context()
+		self.sock = self.context.socket(zmq.REP)
 		try:
 			self.sock.bind("tcp://*:{}".format(self.port))
 			logger.info("Server {} started listening on {}".format(self.name, self.port))
@@ -112,9 +113,9 @@ class Server:
 	def run(self):
 		return RunServer(self.seq)
 
-	def main_loop(self):
-		while True:
-			ev = self.sock.poll(100)
+	def main_loop(self, cond_fn=(lambda : True)):
+		while cond_fn():
+			ev = self.sock.poll(10)
 			if ev != 0:
 				try:
 					command, data = self.recv_msg() # Receive a command
@@ -143,7 +144,7 @@ class Server:
 
 		# clean up
 		self.sock.close()
-		context.term()
+		self.context.term()
 
 def DataForPlot(seq):
 	return np.zeros(10)

@@ -1430,13 +1430,15 @@ class FrontPanel(wx.Frame):
     # Here the actual looped run is entered, create run in DB
     sMVs, lMVs = self.GenerateMVDict()
     Nshots = int(loop_stop-loop_start+1)
+    sMVs.update({'j_min': loop_start, 'j_max': loop_stop})
     # Read and compress sequence and info
     path_seq = self.dir_seq / self.fname_seq
     with open(path_seq, 'r') as fs:
       seq_bin = zlib.compress(fs.read().encode())
 
     text_info = self.txtctrl_expinfo.GetValue()
-    run_doc = RunLooped(name=loop_fname, date=run_time, Nshots=Nshots, staticMVs=sMVs, loopMVs=lMVs, sequence=seq_bin, info=text_info)
+    run_doc = RunLooped(name=loop_fname, date=run_time, Nshots=Nshots,
+                        staticMVs=sMVs, loopMVs=lMVs, sequence=seq_bin, info=text_info)
     self.savedata_switch = bool(self.chkbox_savedata.GetValue())
     _run_id = createRun(self.client, run=run_doc, save=self.savedata_switch)
     self.run_id = str(_run_id) #cast BSON Object ID into string

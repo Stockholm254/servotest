@@ -1,4 +1,7 @@
-import PyCapture2
+try:
+	import PyCapture2
+except:
+	pass
 import time
 import datetime
 import os
@@ -33,7 +36,23 @@ class GP_camera:
 	def setDate(self):
 		self.run_time = datetime.datetime.now()
 		self.date_dir = self.run_time.strftime("%Y\\%m\\%d\\")
-		
+	
+	@staticmethod
+	def ListCameras():
+		# Get list of connected cameras for GUI
+		bus = PyCapture2.BusManager()
+		num_cams = bus.getNumOfCameras()
+		logger.debug('Number of cameras detected: {:d}'.format(num_cams))
+		res = {}
+		for n in range(num_cams):
+			cam = PyCapture2.Camera()
+			uid = bus.getCameraFromIndex(0)
+			cam.connect(uid)
+			cam_info = cam.getCameraInfo()
+			res[n] = {'name': cam_info.modelName, 'serial': cam_info.serialNumber, 'res': cam_info.sensorResolution}
+			cam.disconnect()
+		return res
+
 	def InitCamera(self):
 		#Connect to the camera
 
@@ -146,66 +165,61 @@ class GP_camera:
 				#Convert to a numpy array with the right shape
 				cv_image = np.array(image.getData(), dtype="uint8").reshape( (image.getRows(), image.getCols()) )
 				imgbuffer.append(cv_image)
-				#images[img] = image
-		# if not err:
-		# 	for img in img_name:
-		# 		try:
 
-		# 			if BIT12:
-		# 				newimg = images[img].convert(PyCapture2.PIXEL_FORMAT.MONO16)
-		# 				newimg.save(str(img).encode('utf-8'), PyCapture2.IMAGE_FILE_FORMAT.PNG)
-		# 			else:
-		# 				newimg = images[img].convert(PyCapture2.PIXEL_FORMAT.MONO8)
-		# 				newimg.save(str(img).encode('utf-8'), PyCapture2.IMAGE_FILE_FORMAT.PGM)
-		# 		except:
-		# 			logger.exception("couldn't save image")
 		return (not err), imgbuffer
 							
-			
-	 
-	def SaveCameraLog(self, runtime=""):
-		#log_dir = "E:\\Logs\\LOG_Cam\\" + self.date_dir
-		log_dir = Path("C:/Logs")/self.date_dir
-		# log_dir = os.path.expanduser("~\\camera_test\\" + self.date_dir) #Testing image folder
-		log_name = log_dir/(self.run_name + ".txt")
-		
-		if not os.path.exists(log_dir):
-			os.makedirs(log_dir)
-		
-		text = ""
-		text_info = ""
-		
-		#Read paras from the camera
-		prop_type = [1, 12, 13]
-		prop_type_dic = {1: "Auto exposure", 12: "Shutter", 13: "Gain"}
-		prop_type_units = {1: "EV", 12: "ms", 13: "dB"}
-		prop_info = []
-		for _type in prop_type:
-			new_info = self.c.getProperty(_type) #self.get_c.get_property(type)
-			prop_info.append(new_info)
-		for prop in prop_info:
-			#text_info += prop_type_dic[prop["type"]] + " = " + str(prop["abs_value"]) + prop_type_units[prop["type"]] + "\n"
-			text_info += prop_type_dic[prop.type] + " = " + str(prop.absValue) + prop_type_units[prop.type] + "\n"
-			
-		text += "###Log for Grey Point Chameleon camera (File generated on " + self.run_time.strftime('%b %d, %Y at %H:%M:%S') + ")###\n\n"
-		text += "##Sequences dependent parameters##\n"
-		text += "Shutter time = " + str(self.shutter_time) + "\n"
-		text += "Number of images = " + str(self.num_of_images) + "\n"
-		text += "\n"
-		text += "##Parameters read from the camera##\n"
-		text += text_info
-		text += "\n"
-		text += "##Parameters hard coded in pyflycapture2 module##\n"
-		text += "Trigger mode = 0 (IMPORTANT: This is hard coded in pyflycapture2, and not read from the camera!)\n"
-		text += "Video mode = 1280*960 12 bit\n"
-		text += "Output file format = PNG"
-		
-		f = open(log_name, 'w')
-		f.write(text)
-		f.close()
-		
 	def Disconnect(self):
 		self.c.disconnect()
+		logger.info("Disconnected the camera.")
+
+class Mock_GP_camera:
+	def __init__(self, BIT12=False):
+		#self.get_c = flycapture2.Context()
+		self.shutter_time = 0
+		self.num_of_images = 0
+		self.run_name = ""
+		self.folder_name = ""
+		self.setDate()     
+		self.BIT12 = BIT12
+		
+	def setDate(self):
+		self.run_time = datetime.datetime.now()
+		self.date_dir = self.run_time.strftime("%Y\\%m\\%d\\")
+	
+	@staticmethod
+	def ListCameras():
+		# Get list of connected cameras for GUI
+		return {0: {'name': "Mock Cam 1", 'serial': 1234, 'res': (1280, 960)}, 1: {'name': "Mock Cam 2", 'serial': 5678, 'res': (1280, 960)}}
+		
+	def InitCamera(self):
+		#Connect to the camera
+		self.c = MockCamera()
+		
+	def GrabImages(self, shutter=0, gain=24., number=0, runname="", foldername=""):
+		self.shutter_time = shutter
+		self.num_of_images = number
+		self.run_name = runname
+		self.folder_name = foldername
+		
+		#Grab images
+		imgbuffer = []
+		err=False
+		for i in range(number):
+			try:
+				lgain = 10**(gain/10.)
+				#lshutter = shutter/0.1
+				image = (self.c.get()*180).astype(np.uint8)
+			except Exception as e:
+					logger.exception('Error retrieving buffer for image {} of {} : {}'.format(i, number, e))
+					err=True
+			else:
+				#Convert to a numpy array with the right shape
+				cv_image = image #np.array(image.getData(), dtype="uint8").reshape( (image.getRows(), image.getCols()) )
+				imgbuffer.append(cv_image)
+
+		return (not err), imgbuffer
+							
+	def Disconnect(self):
 		logger.info("Disconnected the camera.")
 
 class MockCamera:
