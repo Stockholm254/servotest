@@ -58,9 +58,9 @@ def run_server(seq, rp, autostart = 1):
 
 class RpDACServer(Server):
 
-	def __init__(self, name, port, message, bitfile, maxevents):
+	def __init__(self, name, port, message, bitfile):
 		super().__init__(name, port, message)
-		self.rp = RpDAC(bitfile=bitfile, fclk_Hz=125e6, maxevents=maxevents, SWTrigger=False)
+		self.rp = RpDAC(bitfile=bitfile, SWTrigger=False)
 
 	def queue(self):
 		return run_server(self.seq, self.rp, autostart=0)
@@ -81,8 +81,7 @@ if __name__ == '__main__':
 	===============================================
 	"""
 	
-	### What is the bit file called?? Is it actually in the same directory?
-	bitfile_path = Path(__file__).parent/"SimonLab_DDDS.bit"
+	bitfile_path = Path(__file__).parent/"red_pitaya_top.bit"
 	logger.info("Using bitfile {}".format(bitfile_path))
-	server = RpDDSServer("RpDAC", 60632, message=message, bitfile=bitfile_path, maxevents=64)
+	server = RpDDSServer("RpDAC", 60632, message=message, bitfile=bitfile_path)
 	server.main_loop()
