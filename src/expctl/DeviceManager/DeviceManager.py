@@ -227,23 +227,26 @@ class DeviceManager:
 
         devices_recv = list(devices.keys()) #copy device names to keep track what was received
         devices_resp = {} #collect answers from devices
+        devices_times = {}
         # Process messages from device sockets
         t0 = time.time()
         while True:
             try:
-                evsocks = dict(self.poller.poll(10)) #poll every 50ms for answers
+                evsocks = dict(self.poller.poll(1)) #poll every 50ms for answers
             except KeyboardInterrupt:
                 return None
-                
+            t1 = time.time()    
             for d in devices_recv:
                 dev = devices[d] #get device by name
                 if dev.sock in evsocks:
                     resp, _ = dev.recv_msg()
                     devices_resp[d] = resp
+                    devices_times[d] = t1-t0
                     devices_recv.remove(d)
-            t1 = time.time()
+            
             if len(devices_recv) == 0:
                 logger.info("All devices prepared")
+                logger.info(devices_times)
                 return devices_resp
 
             if (t1-t0)>timeout:
