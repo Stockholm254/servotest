@@ -18,6 +18,9 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
+       <widget class="QComboBox" name="comboBox"/>
+      </item>
+      <item>
        <widget class="QPushButton" name="startButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -38,38 +41,86 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="label_autoscale">
+        <property name="text">
+         <string>Autoscale</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox_autoscale">
+        <property name="text">
+         <string>Colorbar autoscale</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_roi">
+        <property name="text">
+         <string>ROI</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <layout class="QFormLayout" name="formLayout">
         <item row="0" column="0">
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="roiLabelx0">
           <property name="text">
-           <string>FPS</string>
+           <string>x0</string>
           </property>
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QSpinBox" name="fpsInput"/>
+         <widget class="QSpinBox" name="x0SpinBox"/>
         </item>
         <item row="1" column="0">
-         <widget class="QLabel" name="label_2">
+         <widget class="QLabel" name="roiLabelx1">
           <property name="text">
-           <string>Queue</string>
+           <string>x1</string>
           </property>
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QProgressBar" name="progressBar">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="value">
-           <number>24</number>
+         <widget class="QSpinBox" name="x1SpinBox"/>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="roiLabely0">
+          <property name="text">
+           <string>y0</string>
           </property>
          </widget>
         </item>
+        <item row="2" column="1">
+         <widget class="QSpinBox" name="y0SpinBox"/>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="roiLabely1">
+          <property name="text">
+           <string>y1</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QSpinBox" name="y1SpinBox"/>
+        </item>
        </layout>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox_saveroi">
+        <property name="text">
+         <string>Save only ROI</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QListView" name="listView">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QListView" name="imgList">

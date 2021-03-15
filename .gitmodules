@@ -1,0 +1,3 @@
+[submodule "expdatabase"]
+	path = expdatabase
+	url = git@gitlab.com:simon-lab1/exp_database.git
