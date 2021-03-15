@@ -1,5 +1,8 @@
 from ..utilities.util import *
-#import matplotlib.pyplot as plt
+try:
+  import matplotlib.pyplot as plt
+except:
+  pass
 import colorsys
 import socket
 import pickle as pickle
