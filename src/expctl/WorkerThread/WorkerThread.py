@@ -109,7 +109,7 @@ class WorkerThread(Thread):
       self.saveswitch = saveswitch # 0: don't save any data (for pre-runs), 1: save live data, 2: save permanent
       self.time_now = datetime.datetime.now() # Run time
       # try:
-      #   self._client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_DB_RAW)
+      #   self._client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_RAW)
       # except:
       #   print("Database connection could not be established!")
       #   self.client = None

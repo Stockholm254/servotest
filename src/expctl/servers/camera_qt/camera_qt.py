@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-V0.1 of Camera server with Qt and pyqtgraph
+V0.5 of Camera server with Qt and pyqtgraph
 """
 from dataclasses import dataclass
 from datetime import datetime
@@ -11,10 +11,11 @@ from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 import numpy as np
 import os
 import time
+from scipy.optimize import curve_fit
 try:
-	import PyCapture2
+    import PyCapture2
 except:
-	from .gpcamera import Mock_GP_camera as Camera
+    from .gpcamera import Mock_GP_camera as Camera
 else:
     from .gpcamera import GP_camera as Camera
 
@@ -36,7 +37,7 @@ pg.mkQApp()
 
 ## Define main window class from template
 path = os.path.dirname(os.path.abspath(__file__))
-uiFile = os.path.join(path, 'viewer_test.ui')
+uiFile = os.path.join(path, 'viewer_fit.ui')
 WindowTemplate, TemplateBaseClass = pg.Qt.loadUiType(uiFile)
 
 @dataclass
@@ -53,7 +54,7 @@ class DbWorker(QObject):
         #super(self.__class__, self).__init__(parent)
         super(DbWorker, self).__init__(parent)
         try:
-            self.client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_DB_RAW)
+            self.client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_RAW)
         except:
             logger.exception("Database connection could not be established!")
         else:
@@ -69,11 +70,11 @@ class DbWorker(QObject):
 
 class CameraServer(Server):
     
-    def __init__(self, name, port, message, parent):
+    def __init__(self, name, port, message, parent, camera_id):
         super().__init__(name, port, message)
         #self.device = GP_camera(BIT12 = False)
         self.parent=parent
-        self.device = Camera()
+        self.device = Camera(camera_id=camera_id)
         self.ROI = ()
         self.imgbuffer=[]
         try:
@@ -215,7 +216,7 @@ class ServerWorker(QObject):
     result = pyqtSignal(np.ndarray)
     storeSignal = pyqtSignal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, camera_id=0):
         #super(self.__class__, self).__init__(parent)
         super(ServerWorker, self).__init__(parent)
         message = """===========================================
@@ -227,7 +228,7 @@ class ServerWorker(QObject):
         Bit Depth: 8
         Maximum Trigger Rate: 14fps
         WARNING: The maximum frame rate is 14fps!"""
-        self.serv = CameraServer("COut1", 60614, message=message, parent=self)
+        self.serv = CameraServer("COut1", 60614, message=message, parent=self, camera_id=camera_id)
         self.worker = DbWorker()  # no parent!
         self.thread = QThread()  # no parent!
 
@@ -239,8 +240,7 @@ class ServerWorker(QObject):
     def acquire(self, roi):
         self.serv.set_ROI(roi)
         self.serv.main_loop(cond_fn=(lambda : not QThread.currentThread().isInterruptionRequested()) )
-        #self.serv.queue.put(None)
-        #self.serv.DbThread.join()
+
         self.thread.quit()
         self.thread.wait()
         print("Exiting...")
@@ -255,7 +255,7 @@ class MainWindow(TemplateBaseClass):
 
     def __init__(self):
         TemplateBaseClass.__init__(self)
-        self.setWindowTitle('pyqtgraph example: Qt Designer')
+        self.setWindowTitle('Qt Camera Server')
         
         self.data = np.zeros((1280, 960))
 
@@ -313,7 +313,9 @@ class MainWindow(TemplateBaseClass):
 
     def create_thread(self):
         # 1 - create Worker and Thread inside the Form
-        self.worker = ServerWorker()  # no parent!
+        camera_id = self.ui.comboBox.currentIndex()
+        logger.info(f"Opening camera {camera_id}")
+        self.worker = ServerWorker(camera_id=camera_id)  # no parent!
         self.thread = QThread()  # no parent!
 
         # 2 - Connect Worker`s Signals to Form method slots to post data.
@@ -362,6 +364,7 @@ class MainWindow(TemplateBaseClass):
         # Contrast/color control
         self.hist = pg.HistogramLUTItem()
         self.hist.setImageItem(self.img)
+        self.hist.setHistogramRange(0., 255.)
         gv.addItem(self.hist,row=0, col=2)
 
         # Another plot area for displaying ROI data
@@ -386,7 +389,7 @@ class MainWindow(TemplateBaseClass):
         self.update_roi()
         self.update_roi_save_from_plot()
 
-    
+  
     def _update_plot(self, imgArrays):
         #
         mode = None
@@ -394,6 +397,7 @@ class MainWindow(TemplateBaseClass):
             absArray = (imgArrays[0]-imgArrays[2])/(imgArrays[1]-imgArrays[2]) #+1e-6
             data = 1-absArray
             mode = "ABS"
+            logger.debug("ABS")
         elif imgArrays.shape[0]==2:
             fore = np.array(imgArrays[0])
             back = np.array(imgArrays[1])
@@ -401,6 +405,7 @@ class MainWindow(TemplateBaseClass):
             diff = fore - back
             data = diff
             mode = "FL"
+            logger.debug("FL")
         else:
             data = imgArrays
             logger.debug("1 image")
@@ -412,8 +417,11 @@ class MainWindow(TemplateBaseClass):
         
         if mode=="ABS":
             self.hist.setLevels(0., 1.)
+            #self.hist.setHistogramRange(0., 1.)
         else:
-            self.hist.setLevels(np.nanmin(self.data), np.nanmax(self.data))
+            if self.ui.checkBox_autoscale.isChecked():
+                self.hist.setLevels(np.nanmin(self.data), np.nanmax(self.data))
+                #self.hist.setHistogramRange(np.nanmin(self.data), np.nanmax(self.data))
         self.update_roi()
 
     def _init_plot(self):
@@ -427,10 +435,35 @@ class MainWindow(TemplateBaseClass):
     # Callbacks for handling user interaction
     def update_roi(self):
         selected = self.roi.getArrayRegion(self.data, self.img)
-        ymean = selected.mean(axis=0)
-        xmean = selected.mean(axis=1)
-        self.plot_x.plot(np.arange(len(xmean)), xmean, clear=True)
-        self.plot_y.plot(ymean, np.arange(len(ymean)), clear=True)
+
+        ysum = selected.sum(axis=0)
+        y_x =  np.arange(len(ysum))
+        
+        xsum = selected.sum(axis=1)
+        x_x = np.arange(len(xsum))
+
+        self.plot_x.plot(x_x, xsum, clear=True)
+        self.plot_y.plot(ysum, y_x, clear=True)
+
+        if self.ui.fitCheckBox.isChecked():
+            popt_x, pcov_x = fit1Dgauss((x_x,xsum))
+            popt_y, pcov_y = fit1Dgauss((y_x,ysum))
+
+            self.plot_x.plot(x_x, gauss1D(x_x,*popt_x))
+            self.plot_y.plot(gauss1D(y_x,*popt_y),y_x)
+
+            # self.ui.fluorX.setText("Fluorescence X :"+ f'{(popt_x[0]*popt_x[2]*np.sqrt(2*math.pi)):.2f}')
+            # self.ui.fluorY.setText("Fluorescence Y :"+ f'{(popt_y[0]*popt_y[2]*np.sqrt(2*math.pi)):.2f}')
+            # self.ui.sigmaX.setText("Sigma X :"+ f'{popt_x[2]:.2f}')
+            # self.ui.sigmaY.setText("Sigma Y :"+ f'{popt_y[2]:.2f}')
+            #logger.debug(popt_x)
+            #logger.debug(popt_y)
+            self.ui.fitSpinBox_fluorX.setText("{:.3e}".format(popt_x[0]*popt_x[2]*np.sqrt(2*np.pi)))
+            self.ui.fitSpinBox_fluorY.setText("{:.3e}".format(popt_y[0]*popt_y[2]*np.sqrt(2*np.pi)))
+            self.ui.fitSpinBox_sigmaX.setText("{:.3e}".format(popt_x[2]))
+            self.ui.fitSpinBox_sigmaY.setText("{:.3e}".format(popt_y[2]))
+            self.ui.fitSpinBox_atoms.setText("{:.3e}".format(popt_x[0]*popt_x[2]*popt_y[0]*popt_y[2]*(2*np.pi)))
+
 
     def update_roi_save_from_plot(self):
         xl, yl = self.roi_save.pos() # lower left corner
@@ -486,6 +519,21 @@ def createViewer():
 
 def startapp():
     QtGui.QApplication.instance().exec_()
+
+def gauss1D(x,a,x0,sigma,c):
+    return a*np.exp(-(x-x0)**2/(2*sigma**2))+c
+
+def fit1Dgauss(data):
+    (x,y) = data
+    #inital guesses
+    mean = sum(x * y) / sum(y)
+    sigma = np.sqrt(sum(abs(y) * (x - mean)**2) / sum(abs(y)))
+    p0 = [max(y)-min(y),mean,sigma,min(y)]
+    popt, pcov = curve_fit(gauss1D, *data, p0)
+    
+    return popt,pcov
+
+
 
 win = MainWindow()
 

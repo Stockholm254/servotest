@@ -24,7 +24,7 @@ def print_camera_info(cam):
 		print()
 
 class GP_camera:
-	def __init__(self, BIT12=False):
+	def __init__(self, BIT12=False, camera_id=0):
 		#self.get_c = flycapture2.Context()
 		self.shutter_time = 0
 		self.num_of_images = 0
@@ -32,6 +32,7 @@ class GP_camera:
 		self.folder_name = ""
 		self.setDate()     
 		self.BIT12 = BIT12
+		self.camera_id = camera_id
 		
 	def setDate(self):
 		self.run_time = datetime.datetime.now()
@@ -46,10 +47,10 @@ class GP_camera:
 		res = {}
 		for n in range(num_cams):
 			cam = PyCapture2.Camera()
-			uid = bus.getCameraFromIndex(0)
+			uid = bus.getCameraFromIndex(n)
 			cam.connect(uid)
 			cam_info = cam.getCameraInfo()
-			res[n] = {'name': cam_info.modelName, 'serial': cam_info.serialNumber, 'res': cam_info.sensorResolution}
+			res[n] = {'i': n,'name': cam_info.modelName, 'serial': cam_info.serialNumber, 'res': cam_info.sensorResolution}
 			cam.disconnect()
 		return res
 
@@ -60,13 +61,13 @@ class GP_camera:
 		bus = PyCapture2.BusManager()
 		num_cams = bus.getNumOfCameras()
 		logger.info('Number of cameras detected: {:d}'.format(num_cams))
-		if not num_cams:
+		if not num_cams or self.camera_id>num_cams:
 				logger.error('Insufficient number of cameras. Exiting...')
 				exit()
 
 		# Select camera on 0th index
 		self.c = PyCapture2.Camera()
-		uid = bus.getCameraFromIndex(0)
+		uid = bus.getCameraFromIndex(self.camera_id)
 		self.c.connect(uid)
 		print_camera_info(self.c)
 
@@ -77,7 +78,7 @@ class GP_camera:
 			self.c.setVideoModeAndFrameRate(PyCapture2.VIDEO_MODE.VM_1280x960Y8, PyCapture2.FRAMERATE.FR_15) # 17, 3 
 		
 		 
-		logger.info(f"Video mode: {self.c.getVideoModeAndFrameRate()}")
+		#logger.info(f"Video mode: {self.c.getVideoModeAndFrameRate()}")
 
 		# #Set camera properties
 		autoexp_prop = self.c.getProperty(PyCapture2.PROPERTY_TYPE.AUTO_EXPOSURE)
@@ -100,7 +101,6 @@ class GP_camera:
 		trigger_mode.parameter = 0
 		trigger_mode.source = 0 #External trigger #7     # Using software trigger
 		self.c.setTriggerMode(trigger_mode)
-
 		self.c.setConfiguration(grabTimeout = 10000)
 		self.c.startCapture()  
 		
@@ -173,7 +173,7 @@ class GP_camera:
 		logger.info("Disconnected the camera.")
 
 class Mock_GP_camera:
-	def __init__(self, BIT12=False):
+	def __init__(self, BIT12=False, camera_id=0):
 		#self.get_c = flycapture2.Context()
 		self.shutter_time = 0
 		self.num_of_images = 0
@@ -181,6 +181,7 @@ class Mock_GP_camera:
 		self.folder_name = ""
 		self.setDate()     
 		self.BIT12 = BIT12
+		self.camera_id=camera_id
 		
 	def setDate(self):
 		self.run_time = datetime.datetime.now()
@@ -189,7 +190,7 @@ class Mock_GP_camera:
 	@staticmethod
 	def ListCameras():
 		# Get list of connected cameras for GUI
-		return {0: {'name': "Mock Cam 1", 'serial': 1234, 'res': (1280, 960)}, 1: {'name': "Mock Cam 2", 'serial': 5678, 'res': (1280, 960)}}
+		return {0: {'name': "Mock Cam FL", 'serial': 1234, 'res': (1280, 960)}, 1: {'name': "Mock Cam ABS", 'serial': 5678, 'res': (1280, 960)}}
 		
 	def InitCamera(self):
 		#Connect to the camera
@@ -204,18 +205,16 @@ class Mock_GP_camera:
 		#Grab images
 		imgbuffer = []
 		err=False
-		for i in range(number):
-			try:
-				lgain = 10**(gain/10.)
-				#lshutter = shutter/0.1
-				image = (self.c.get()*180).astype(np.uint8)
-			except Exception as e:
-					logger.exception('Error retrieving buffer for image {} of {} : {}'.format(i, number, e))
-					err=True
-			else:
-				#Convert to a numpy array with the right shape
-				cv_image = image #np.array(image.getData(), dtype="uint8").reshape( (image.getRows(), image.getCols()) )
-				imgbuffer.append(cv_image)
+		if self.camera_id == 1: #ABS
+			_beam = self.c.get(sigma=(200, 200), poisition_noise=3, amplitude_noise=0.05)
+			_atoms = self.c.get(sigma=(30, 30), poisition_noise=7, amplitude_noise=0.05)
+			imgbuffer.append((_beam*np.exp(-_atoms*0.8)*180).astype(np.uint8)) #foreground
+			imgbuffer.append((_beam*180).astype(np.uint8)) #background
+			imgbuffer.append((np.random.random(_beam.shape)*0.1*180).astype(np.uint8)) #ref
+		else: #FL
+			_im = self.c.get(sigma=(20, 50), poisition_noise=5, amplitude_noise=0.1)
+			imgbuffer.append((_im*180).astype(np.uint8)) #foreground
+			imgbuffer.append((np.random.random(_im.shape)*0.1*180).astype(np.uint8)) #background
 
 		return (not err), imgbuffer
 							
