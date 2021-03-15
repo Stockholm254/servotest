@@ -461,10 +461,10 @@ class ImageViewer(wx.Frame):
 			rsf = 1.5**zoom # Relative zoom factor
 			self.scale_factor = self.scale_factor*rsf
 			# Calculate new image boundary
-			self.x0 = max(int(newxc)-int(960./2./self.scale_factor), 0)
-			self.x1 = min(int(newxc)+int(960./2./self.scale_factor), cam_y)
-			self.y0 = max(int(newyc)-int(1280./2./self.scale_factor), 0)
-			self.y1 = min(int(newyc)+int(1280./2./self.scale_factor), cam_x)
+			self.x0 = int(max(int(newxc)-int(960./2./self.scale_factor), 0))
+			self.x1 = int(min(int(newxc)+int(960./2./self.scale_factor), cam_y))
+			self.y0 = int(max(int(newyc)-int(1280./2./self.scale_factor), 0))
+			self.y1 = int(min(int(newyc)+int(1280./2./self.scale_factor), cam_x))
 			# Update UI
 			self.drawSelectedFrame()
 			self.fitSelectedFrame()

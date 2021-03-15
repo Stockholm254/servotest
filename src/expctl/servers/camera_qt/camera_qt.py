@@ -46,7 +46,10 @@ class CameraServer(Server):
 			folder_name = "camera"
 		
 		chan_gain = seq.getChannelByName("Camera gain")
+		save_switch_chan = seq.getChannelByName("Camera save")
+		save_switch_values = save_switch_chan.GetHardwareValues()
 		#gain_hwvalues = chan_gain.GetHardwareValues()
+		save_switch = save_switch_values[0][1]
 		gain_mv = chan_gain._TransValues[0][1] # find the first value
 		logger.info("Gain from FP: {} dB".format(gain_mv))
 
@@ -86,7 +89,8 @@ class CameraServer(Server):
 					logger.info("Shutter time: " + str(ShutterTime)+ "ms")
 					self.imgbuffer = []
 					try:
-						success, imgbuffer = self.device.GrabImages(shutter=ShutterTime, gain=gain_mv, number=self.NumOfImage, runname=run_name, foldername=folder_name)
+						success, imgbuffer = self.device.GrabImages(shutter=ShutterTime, gain=gain_mv, save=save_switch, number=self.NumOfImage, runname=run_name, foldername=folder_name)
+						self.device.CopyImages(foldername=folder_name) # New
 						logger.debug("Success {}".format(success))
 					except:
 						logger.exception("Failed to grab images!")
@@ -267,6 +271,7 @@ class MainWindow(TemplateBaseClass):
 		self.roi.addScaleHandle([0, 0.5], [0.5, 0.5])
 		self.plot_main.addItem(self.roi)
 		self.roi.setZValue(10)  # make sure ROI is drawn above image
+		
 		# Contrast/color control
 		self.hist = pg.HistogramLUTItem()
 		self.hist.setImageItem(self.img)
@@ -320,8 +325,10 @@ class MainWindow(TemplateBaseClass):
 		
 		if mode=="ABS":
 			self.hist.setLevels(0., 1.)
+			self.hist.setLevels(min=0,max=1.0)
 		else:
-			self.hist.setLevels(np.nanmin(self.data), np.nanmax(self.data))
+			self.hist.setLevels(min=0,max=100)
+			# self.hist.setLevels(np.nanmin(self.data), np.nanmax(self.data))
 		self.update_roi()
 
 	def _init_plot(self):
