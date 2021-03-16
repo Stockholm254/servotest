@@ -54,7 +54,7 @@ class DbWorker(QObject):
         #super(self.__class__, self).__init__(parent)
         super(DbWorker, self).__init__(parent)
         try:
-            self.client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_RAW)
+            self.client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_AUTH)
         except:
             logger.exception("Database connection could not be established!")
         else:

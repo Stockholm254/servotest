@@ -239,7 +239,7 @@ if __name__ == '__main__':
 
 	#Initialize experiment database connection
 	try:
-		client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_DB_RAW)
+		client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_AUTH)
 	except:
 		logger.exception("Database connection could not be established!")
 	else:

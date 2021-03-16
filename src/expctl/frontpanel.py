@@ -133,7 +133,7 @@ class FrontPanel(wx.Frame):
     self.run_id = None
     #Initialize experiment database connection
     try:
-      self.client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_RAW)
+      self.client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_AUTH)
     except:
       logger.exception("Database connection could not be established!")
       self.client = None

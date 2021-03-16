@@ -17,7 +17,7 @@ from . import transformations as tran # Channel value transformation function
 all_sequences = ([
   Sequence("Digital sequence",        host=IP_RYDNUGGET, port=PORT_DIGITAL,  max_channels=32, graph=1, seq_type="MASTER"),  
   Sequence("Analog sequence",         host=IP_RYDNUGGET, port=PORT_ANALOG,   max_channels=32, graph=1),  
-  Sequence("Camera sequence",         host=IP_RYDFRIES,  port=PORT_CAMERA,   max_channels=2 , graph=0),
+  Sequence("Camera sequence",         host=IP_RYDFRIES,  port=PORT_CAMERA,   max_channels=3 , graph=0),
   Sequence("DDS 1 sequence",          host=IP_RYDNUGGET, port=PORT_DDS1,     max_channels=4 , graph=0),
   Sequence("DDS PDH sequence",        host=IP_RYDNUGGET, port=PORT_DDSPDH,   max_channels=7 , graph=0), #
   Sequence("DDS 2 sequence",          host=IP_RYDNUGGET, port=PORT_DDS2,     max_channels=4 , graph=0),
@@ -165,14 +165,14 @@ AD1_pow  = ad_1.newChannel(1, "Microwave Power",  system='MWaves', steady_state_
 AD1_ttl  = ad_1.newChannel(2, "Microwave TTL",    system='MWaves', steady_state_value=0, max_value=1, graph=0)
 
 #RFSOC 1 DDS Box
-#RFSOC1_0 = rfsoc_1.newChannel(0, "RFSOC 1 Chan 0",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
-#RFSOC1_1 = rfsoc_1.newChannel(1, "RFSOC 1 Chan 1",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
-#RFSOC1_2 = rfsoc_1.newChannel(2, "RFSOC 1 Chan 2",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
-#RFSOC1_3 = rfsoc_1.newChannel(3, "RFSOC 1 Chan 3",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
+RFSOC1_0 = rfsoc_1.newChannel(0, "RFSOC 1 Chan 0",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0) # HF
+RFSOC1_1 = rfsoc_1.newChannel(1, "RFSOC 1 Chan 1",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
+#RFSOC1_2 = rfsoc_1.newChannel(2, "RFSOC 1 Chan 2",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
+#RFSOC1_3 = rfsoc_1.newChannel(3, "RFSOC 1 Chan 3",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
 #RFSOC1_4 = rfsoc_1.newChannel(4, "RFSOC 1 Chan 4",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
-RFSOC1_CavPrbEom = rfsoc_1.newChannel(5, "RFSOC 1 Chan 5",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
-#RFSOC1_6 = rfsoc_1.newChannel(6, "RFSOC 1 Chan 6",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
-RFSOC1_7 = rfsoc_1.newChannel(7, "RFSOC 1 Chan 7",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
+RFSOC1_CavPrbEom = rfsoc_1.newChannel(5, "RFSOC 1 Chan 5",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
+RFSOC1_6 = rfsoc_1.newChannel(6, "RFSOC 1 Chan 6",   system='CavPrb', steady_state_value=120e3, max_value=3200, graph=0)
+RFSOC1_7 = rfsoc_1.newChannel(7, "RFSOC 1 Chan 7",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0) # LF
 
 #Red Pitaya Transport DDS
 RP_trans_a = rp_ddds_1.newChannel(0, "Lattice top freq",   system='LAT', steady_state_value=80e6, max_value=120e6, graph=0)
@@ -180,6 +180,8 @@ RP_trans_b = rp_ddds_1.newChannel(1, "Lattice bottom freq",   system='LAT', stea
 
 #Camera Gain channel
 Camera_gain = cam.newChannel(0, "Camera gain", system='IMG', steady_state_value=24.0, max_value=24.0, graph=0)
+Camera_save = cam.newChannel(2, "Camera save", system='IMG', steady_state_value=0, max_value=1, graph=0)
+
 #=====================================End Channel Definitions=======================================
 
 #====================================Slave Channel Definitions======================================
