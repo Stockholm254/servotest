@@ -71,6 +71,15 @@ class GP_camera:
 		self.c.connect(uid)
 		print_camera_info(self.c)
 
+		conf = self.c.getConfiguration()
+		logger.debug(f"Camera configuration {conf}")
+		# conf.registerTimeout = 1500
+		self.c.setConfiguration(registerTimeout = 1500, grabTimeout = 1500)
+		conf = self.c.getConfiguration()
+		logger.debug(f"Camera configuration after {conf}")
+
+		
+
 		#Set Video mode
 		if self.BIT12:
 			self.c.setVideoModeAndFrameRate(PyCapture2.VIDEO_MODE.VM_1280x960Y16, PyCapture2.FRAMERATE.FR_7_5)
@@ -152,7 +161,7 @@ class GP_camera:
 			logger.info(prop_type_dic[prop.type] + " = " + str(prop.absValue) + prop_type_units[prop.type])
 
 		#Grab images
-		#images = {}
+		images_file = {}
 		imgbuffer = []
 		err=False
 		for i, img in enumerate(img_name):
@@ -163,10 +172,11 @@ class GP_camera:
 					err=True
 			else:
 				#Convert to a numpy array with the right shape
-				cv_image = np.array(image.getData(), dtype="uint8").reshape( (image.getRows(), image.getCols()) )
+				cv_image = np.transpose(np.array(image.getData(), dtype="uint8").reshape( (image.getRows(), image.getCols()) ) )
 				imgbuffer.append(cv_image)
+				images_file[img] = image
 
-		return (not err), imgbuffer
+		return (not err), imgbuffer, images_file
 							
 	def Disconnect(self):
 		self.c.disconnect()
