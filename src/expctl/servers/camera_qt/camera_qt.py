@@ -21,7 +21,7 @@ else:
 
 from ..ServerClass import logger, Server
 from copy import deepcopy
-
+from collections import deque
 import expdatabase.conf as conf
 from expdatabase.db import insertImage
 from expdatabase.types import ShotImage
@@ -31,6 +31,10 @@ from bson import ObjectId
 IMG_ABS= {0: 'fg', 1: 'bg', 2: 'ref'}
 IMG_FL = {0: 'fg', 1: 'bg'}
 
+STORE_FILES = False
+
+CAMERA_SERIALS = {13442499: 'Cam Absorption', 15331899: 'Cam Fluorescence'}
+DEFAULT_ROI = {13442499: (500, 1100, 350, 950), 15331899: (550, 850, 250, 950)}
 # Interpret image data as row-major instead of col-major
 #pg.setConfigOptions(imageAxisOrder='row-major')
 pg.mkQApp()
@@ -45,25 +49,53 @@ class ImageQueueItem:
     run_id: ObjectId
     save: bool
     shot: ShotImage
+    images_file: dict
 
+@dataclass
+class ImageBufferItem:
+    buffer: np.ndarray
+    gain: float
+    shutter: float
+    power: float
+
+@dataclass
+class ImageEntryItem:
+    buffer: np.ndarray
+    names: dict
 
 class DbWorker(QObject):
     finished = pyqtSignal()
 
     def __init__(self, parent=None):
-        #super(self.__class__, self).__init__(parent)
         super(DbWorker, self).__init__(parent)
         try:
             self.client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_AUTH)
         except:
             logger.exception("Database connection could not be established!")
+            self.client = None
         else:
             logger.info("Database connected.")
 
     def storeImage(self, item):
-        insertImage(self.client, item.run_id, item.shot, item.save)
-        logger.debug("stored image from thread")
-    
+        # Save to the DB
+        try:
+            insertImage(self.client, item.run_id, item.shot, item.save)
+        except:
+            logger.exception("Problem storing image to DB")
+        else:
+            logger.debug("stored image in DB from thread")
+        # Save as files for legacy reasons  
+        if STORE_FILES:  
+            for name, img in item.images_file.items():
+                try:
+                    newimg = img.convert(PyCapture2.PIXEL_FORMAT.MONO8)
+                    if not name.parent.exists():
+                        name.parent.mkdir(parents=True)
+                    p = str(name).encode('utf-8').replace(b'\\',b'/')
+                    newimg.save(p, PyCapture2.IMAGE_FILE_FORMAT.PGM)
+                except:
+                    logger.exception("couldn't save image")
+
     @pyqtSlot(object)
     def store(self, item):
         self.storeImage(item)
@@ -82,11 +114,6 @@ class CameraServer(Server):
             logger.info("Camera initiated.")
         except:
             logger.exception("Failed to connect the camera!")
-
-        #create saving thread for db
-        # self.queue = queue.Queue()
-        # self.DbThread = DbWriter(q = self.queue, name='dbwriter')
-        # self.DbThread.start()
 
     def set_ROI(self, roi):
         if len(roi)==4:
@@ -111,6 +138,12 @@ class CameraServer(Server):
         #gain_hwvalues = chan_gain.GetHardwareValues()
         gain_mv = chan_gain._TransValues[0][1] # find the first value
         logger.info("Gain from FP: {} dB".format(gain_mv))
+
+        chan_pwr = seq.getChannelByName("Camera Img_horz_pwr")
+        Img_horz_pwr_vals = chan_pwr._TransValues
+        #logger.info("Img_horz_pwr values from FP: {}".format(Img_horz_pwr_vals))
+        Img_horz_pwr = Img_horz_pwr_vals[-1][1]
+        logger.info("Img_horz_pwr from FP: {}".format(Img_horz_pwr))
 
         shutter_end = 0
         shutter_beg = 0
@@ -148,45 +181,59 @@ class CameraServer(Server):
                     logger.info("Shutter time: " + str(ShutterTime)+ "ms")
                     self.imgbuffer = []
                     try:
-                        success, imgbuffer = self.device.GrabImages(shutter=ShutterTime, gain=gain_mv, number=self.NumOfImage, runname=run_name, foldername=folder_name)
+                        success, imgbuffer, images_file = self.device.GrabImages(shutter=ShutterTime, gain=gain_mv, number=self.NumOfImage, runname=run_name, foldername=folder_name)
                         logger.debug("Success {}".format(success))
+                        if not success:
+                            raise RuntimeError("Grab Images failed, this shot will not be saved!")
                     except:
                         logger.exception("Failed to grab images!")
                     else:
-                        self.imgbuffer = np.stack(imgbuffer, axis=0)
-                        logger.debug("Grabbed {} images".format(len(self.imgbuffer)))
+                        #self.imgbuffer = np.stack(imgbuffer, axis=0)
+                        self.imgbuffer = ImageBufferItem(buffer=np.stack(imgbuffer, axis=0),
+                                                        gain=gain_mv, 
+                                                        shutter=ShutterTime, 
+                                                        power=Img_horz_pwr)
+
+                        logger.debug("Grabbed {} images".format(len(self.imgbuffer.buffer)))
+                        logger.debug("Image shape: {}".format(self.imgbuffer.buffer.shape))
                         buf = deepcopy(self.imgbuffer)
                         # send images to GUI
                         self.parent.result.emit(buf)
                         logger.debug("Emitted to GUI")
 
-                        # apply ROI for saving
-                        if len(self.ROI)>0:
-                            x0, x1, y0, y1 = self.ROI
-                            imgbuffer = self.imgbuffer[:,x0:x1,y0:y1]
-
                         #save image into db
-                        if self.NumOfImage==3:
-                            im_type = 'abs' 
-                            ims = {IMG_ABS[i]: imgbuffer[i] for i in range(self.NumOfImage)}
-                        elif self.NumOfImage==2:  
-                            im_type = 'fl'
-                            ims = {IMG_FL[i]: imgbuffer[i] for i in range(self.NumOfImage)}
-                        else:
-                            im_type = 'unkwn'
-                            ims = {'u_i'.format(i): imgbuffer[i] for i in range(self.NumOfImage)}
-                        
+                        if seq.saveswitch>0:
+                            # apply ROI for saving
+                            if len(self.ROI)==4:
+                                x0, y0, x1, y1 = self.ROI
+                                imgbuffer = self.imgbuffer.buffer[:,x0:x1,y0:y1]
+                                _roi = self.ROI
+                            else:
+                                _roi = (0, 0, self.imgbuffer.shape[1], self.imgbuffer.shape[2])
 
-                        shot = ShotImage(date=datetime.now(), 
-                                        j=int(seq.counter), 
-                                        img_type=im_type, 
-                                        roi=self.ROI,
-                                        data=ims)
-                        save = True if seq.saveswitch==2 else False
-                        item = ImageQueueItem(run_id=ObjectId(seq.run_id), save=save, shot=shot)
-                        #self.queue.put(item)
-                        self.parent.storeSignal.emit(item)
-                        logger.debug("Emitted to Thread")
+                            
+                            if self.NumOfImage==3:
+                                im_type = 'abs' 
+                                ims = {IMG_ABS[i]: imgbuffer[i] for i in range(self.NumOfImage)}
+                            elif self.NumOfImage==2:  
+                                im_type = 'fl'
+                                ims = {IMG_FL[i]: imgbuffer[i] for i in range(self.NumOfImage)}
+                            else:
+                                im_type = 'unkwn'
+                                ims = {'u_i'.format(i): imgbuffer[i] for i in range(self.NumOfImage)}
+                            
+
+                            shot = ShotImage(date=datetime.now(), 
+                                            j=int(seq.counter), 
+                                            img_type=im_type, 
+                                            roi=_roi,
+                                            data=ims)
+                            save = True if seq.saveswitch==2 else False
+                            
+                            item = ImageQueueItem(run_id=ObjectId(seq.run_id), save=save, shot=shot, images_file=images_file)
+                            #self.queue.put(item)
+                            self.parent.storeSignal.emit(item)
+                            logger.info("Emitted to Save Thread")
 
         elif autostart == 1:
             TIME_STOP = time.time()
@@ -213,7 +260,7 @@ class CameraServer(Server):
 
 class ServerWorker(QObject):
     finished = pyqtSignal()
-    result = pyqtSignal(np.ndarray)
+    result = pyqtSignal(object)
     storeSignal = pyqtSignal(object)
 
     def __init__(self, parent=None, camera_id=0):
@@ -263,8 +310,13 @@ class MainWindow(TemplateBaseClass):
         self.ui = WindowTemplate()
         self.ui.setupUi(self)
         #get cameras
-        cams = Camera.ListCameras()
-        camstrs = ["{}: {}".format(c['name'], c['serial']) for c in cams.values()]
+        self.cams = Camera.ListCameras()
+        # Name known cameras
+        for n, c in self.cams.items():
+            if c['serial'] in CAMERA_SERIALS.keys():
+                c['name'] = CAMERA_SERIALS[c['serial'] ]
+
+        camstrs = ["{}: {}".format(c['name'], c['serial']) for c in self.cams.values()]
         self.ui.comboBox.addItems(camstrs)
         self.ui.stopButton.clicked.connect(self.button_stop)
         self.ui.startButton.clicked.connect(self.button_start)
@@ -273,21 +325,43 @@ class MainWindow(TemplateBaseClass):
             el.setRange(0,2000)
             el.valueChanged.connect(self.update_roi_save_from_spinbox)
         self.ui.checkBox_lockroi.stateChanged.connect(self.update_roi_lock)
+        self.ui.comboBox.currentIndexChanged.connect(self.set_default_save_roi)
+
+        #self.history = deque(maxlen=16)
         self.setup_plot()
+        self.set_default_save_roi()
 
         self.show()
+
+    @pyqtSlot()
+    def set_default_save_roi(self):
+        camera_id = self.ui.comboBox.currentIndex()
+        ser = self.cams[camera_id]['serial'] #serial of current camera
+        if ser in DEFAULT_ROI.keys():
+            res = self.cams[camera_id]['res'].decode('utf-8').split('x')
+            xmax, ymax = int(res[0]), int(res[1])
+            self.ui.x1SpinBox.setMaximum(xmax)
+            self.ui.y1SpinBox.setMaximum(ymax)
+            x0, x1, y0, y1 = DEFAULT_ROI[ser]
+            self.ui.x0SpinBox.setValue(x0)
+            self.ui.x1SpinBox.setValue(x1)
+            self.ui.y0SpinBox.setValue(y0)
+            self.ui.y1SpinBox.setValue(y1)
+            self.update_roi_save_from_spinbox()
+
+        # Set default ROI for this camera
 
     @pyqtSlot()
     def button_stop(self):
         self.stop_thread()
         self.ui.startButton.setEnabled(True)
         self.ui.stopButton.setEnabled(False)
-        self.ui.checkBox_saveroi.setEnabled(False)
+        self.ui.checkBox_saveroi.setEnabled(True)
         self.ui.x0SpinBox.setEnabled(True)
         self.ui.x1SpinBox.setEnabled(True)
         self.ui.y0SpinBox.setEnabled(True)
         self.ui.y1SpinBox.setEnabled(True)
-        self.roi_save.setEnabled(True)
+        #self.roi_save.setEnabled(True)
 
     @pyqtSlot()
     def button_start(self):
@@ -297,7 +371,7 @@ class MainWindow(TemplateBaseClass):
             x1 = self.ui.x1SpinBox.value()
             y0 = self.ui.y0SpinBox.value()
             y1 = self.ui.y1SpinBox.value()
-            roi = (x0, x1, y0, y1)
+            roi = (x0, y0, x1, y1)
         else:
             roi = ()
 
@@ -315,6 +389,7 @@ class MainWindow(TemplateBaseClass):
         # 1 - create Worker and Thread inside the Form
         camera_id = self.ui.comboBox.currentIndex()
         logger.info(f"Opening camera {camera_id}")
+
         self.worker = ServerWorker(camera_id=camera_id)  # no parent!
         self.thread = QThread()  # no parent!
 
@@ -390,43 +465,80 @@ class MainWindow(TemplateBaseClass):
         self.update_roi_save_from_plot()
 
   
-    def _update_plot(self, imgArrays):
+    def _update_plot(self, buffer_item: ImageBufferItem):
         #
         mode = None
+        imgArrays = buffer_item.buffer
         if imgArrays.shape[0]==3:
-            absArray = (imgArrays[0]-imgArrays[2])/(imgArrays[1]-imgArrays[2]) #+1e-6
-            data = 1-absArray
+            data = self._process_absorption(buffer_item)
             mode = "ABS"
+            frameNames = {0: "Absorption image", 1: "Probe with atoms", 2: "Probe without atoms", 3: "Dark field"}
             logger.debug("ABS")
         elif imgArrays.shape[0]==2:
-            fore = np.array(imgArrays[0])
-            back = np.array(imgArrays[1])
-            fore[fore < back] = back[fore < back]
-            diff = fore - back
-            data = diff
+            data = self._process_fluorescence(buffer_item)
             mode = "FL"
+            frameNames = {0: "Fluorescence image", 1: "Probe with atoms", 2: "Probe without atoms"}
             logger.debug("FL")
         else:
             data = imgArrays
-            logger.debug("1 image")
+            frameNames = {i: str(i) for i in range(len(imgArrays))}
+            logger.debug("unknown number of images")
 
-        # if data.shape != self.data.shape:
-        # 	self.plot_main.autoRange() 
+        #entry = ImageEntryItem(buffer=buffer_item.buffer, names=frameNames, index=)
+
+        #self.history.appendleft(entry)
         self.data = data
         self.img.setImage(self.data)
         
         if mode=="ABS":
-            self.hist.setLevels(0., 1.)
+            #self.hist.setLevels(0., 1.)
+            self.hist.setLevels(0., 10.)
             #self.hist.setHistogramRange(0., 1.)
         else:
             if self.ui.checkBox_autoscale.isChecked():
                 self.hist.setLevels(np.nanmin(self.data), np.nanmax(self.data))
-                #self.hist.setHistogramRange(np.nanmin(self.data), np.nanmax(self.data))
         self.update_roi()
+
+    def _show_selected_entry(self):
+        pass
+
+    def _show_selected_frame(self):
+        pass
+
+    def _process_fluorescence(self, buffer_item):
+        imgArrays = buffer_item.buffer
+        fore = np.array(imgArrays[0])
+        back = np.array(imgArrays[1])
+        fore[fore < back] = back[fore < back]
+        diff = fore - back
+
+        def _img_time(t):
+            return 2.16e1*t 
+
+        def _img_gain(g):
+            return 4.87e3*np.exp(g*1.17e-1)
+
+        def _img_pwr(p):
+            return np.polyval([ -13560.43361486,  179062.01299561, -753441.71015276, 1025454.73261022], p)
+
+        scale_time = _img_time(0.4)/_img_time(buffer_item.shutter) # Img_time used for calibration was 400us = 0.4 ms
+        scale_gain = _img_gain(14.0)/_img_gain(buffer_item.gain)
+        scale_power = _img_pwr(5.0)/_img_pwr(buffer_item.power)
+
+        return 61.43*scale_time*scale_gain*scale_power*diff
+
+    def _process_absorption(self, buffer_item):
+        imgArrays = buffer_item.buffer
+        absArray = (imgArrays[1]-imgArrays[2])/(imgArrays[0]-imgArrays[2])
+        absArray = np.nan_to_num(absArray, nan=1e-10, posinf=1e-10, neginf=1e-10)
+        data = np.log(absArray)
+        data = np.nan_to_num(data, nan=0, posinf=0, neginf=0)
+        return data
 
     def _init_plot(self):
         data = np.zeros((1280, 960))
-        self._update_plot(data)
+        buf = ImageBufferItem(buffer=data, gain=0.0, shutter=1.0, power=5.0)
+        self._update_plot(buf)
 
     @pyqtSlot(np.ndarray)
     def setData(self,data):
@@ -449,20 +561,18 @@ class MainWindow(TemplateBaseClass):
             popt_x, pcov_x = fit1Dgauss((x_x,xsum))
             popt_y, pcov_y = fit1Dgauss((y_x,ysum))
 
+            #fix negative sigmas
+            popt_x[2] = abs(popt_x[2])
+            popt_y[2] = abs(popt_y[2])
+
             self.plot_x.plot(x_x, gauss1D(x_x,*popt_x))
             self.plot_y.plot(gauss1D(y_x,*popt_y),y_x)
 
-            # self.ui.fluorX.setText("Fluorescence X :"+ f'{(popt_x[0]*popt_x[2]*np.sqrt(2*math.pi)):.2f}')
-            # self.ui.fluorY.setText("Fluorescence Y :"+ f'{(popt_y[0]*popt_y[2]*np.sqrt(2*math.pi)):.2f}')
-            # self.ui.sigmaX.setText("Sigma X :"+ f'{popt_x[2]:.2f}')
-            # self.ui.sigmaY.setText("Sigma Y :"+ f'{popt_y[2]:.2f}')
-            #logger.debug(popt_x)
-            #logger.debug(popt_y)
             self.ui.fitSpinBox_fluorX.setText("{:.3e}".format(popt_x[0]*popt_x[2]*np.sqrt(2*np.pi)))
             self.ui.fitSpinBox_fluorY.setText("{:.3e}".format(popt_y[0]*popt_y[2]*np.sqrt(2*np.pi)))
             self.ui.fitSpinBox_sigmaX.setText("{:.3e}".format(popt_x[2]))
             self.ui.fitSpinBox_sigmaY.setText("{:.3e}".format(popt_y[2]))
-            self.ui.fitSpinBox_atoms.setText("{:.3e}".format(popt_x[0]*popt_x[2]*popt_y[0]*popt_y[2]*(2*np.pi)))
+            self.ui.fitSpinBox_atoms.setText("{:.3e}".format( np.sqrt(popt_x[0]*popt_y[0]*popt_x[2]*popt_y[2]*(2*np.pi)) ) ) ### add scale factor here ###  
 
 
     def update_roi_save_from_plot(self):
@@ -483,14 +593,14 @@ class MainWindow(TemplateBaseClass):
         print("updated roi from plot")	
 
     def update_roi_save_from_spinbox(self):
-        xl, yl = self.roi_save.pos() # lower left corner
-        w, h = self.roi_save.size() # width and height
-        print("before:", xl, yl, w, h)
+        #xl, yl = self.roi_save.pos() # lower left corner
+        #w, h = self.roi_save.size() # width and height
+        #print("before:", xl, yl, w, h)
         x0 = self.ui.x0SpinBox.value()
         x1 = self.ui.x1SpinBox.value()
         y0 = self.ui.y0SpinBox.value()
         y1 = self.ui.y1SpinBox.value()
-        print("after:", x0, y0, x1-x0, y1-y0)
+        #print("after:", x0, y0, x1-x0, y1-y0)
         self.roi_save.setPos(x0, y0, update=False)
         self.roi_save.setSize((x1-x0, y1-y0), update=False)
         print("updated roi from spin")	
