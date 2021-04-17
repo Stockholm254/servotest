@@ -59,6 +59,7 @@ RUNMODE_DEBUG  = 5 # Sequence debug mode
 ############################
 EVT_RESULT_ID = wx.NewId()
 EVT_UPDATE_ID = wx.NewId()
+EVT_PLOT_TIMES_ID = wx.NewId()
 
 # Magic code binds events so our worker thread will return data and invoke a function
 def EVT_RESULT(win, func):
@@ -66,6 +67,9 @@ def EVT_RESULT(win, func):
 
 def EVT_UPDATE(win, func):
   win.Connect(-1, -1, EVT_UPDATE_ID, func)
+
+def EVT_PLOT_TIMES(win, func):
+  win.Connect(-1, -1, EVT_PLOT_TIMES_ID, func)
 
 class ResultEvent(wx.PyEvent):
   """Simple event to carry arbitrary result data back to GUI."""
@@ -83,6 +87,14 @@ class UpdateEvent(wx.PyEvent):
       self.data  = data
       self.abort = abort
 
+class PlotEvent(wx.PyEvent):
+  """Simple event to carry plot data (especially times) back to GUI."""
+  def __init__(self, data, success=False):
+      wx.PyEvent.__init__(self)
+      self.SetEventType(EVT_PLOT_TIMES_ID)
+      self.data  = data
+      self.success = success
+
 ######################################################
 ###    Thread class that executes repeated runs    ###
 ######################################################
@@ -90,7 +102,7 @@ class WorkerThread(Thread):
   def __init__(
                self, notify_window, loop=0, delay=5.0, 
                prerun=0, startval=0, stopval=10, random=0, 
-               runflag=0, saveswitch=0
+               runflag=0, saveswitch=0, IntervalerObj=None
                ):
       
       Thread.__init__(self)
@@ -108,6 +120,7 @@ class WorkerThread(Thread):
       self.random         = random            # Randomize loop run order
       self.saveswitch = saveswitch # 0: don't save any data (for pre-runs), 1: save live data, 2: save permanent
       self.time_now = datetime.datetime.now() # Run time
+      self.IntervalerObj = IntervalerObj
       # try:
       #   self._client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_AUTH)
       # except:
@@ -179,6 +192,10 @@ class WorkerThread(Thread):
         exec(self._notify_window.loop_code)
       exec(self._notify_window.staticcode)
       print("Executed Loop/Static Code")
+      # get Intervaler object from sequence for plotting
+      if self.loop==RUNMODE_DEBUG:
+        self.IntervalerObj['Intervaler'] = eval("times") #times
+
       return 1
     except SetError as e:
       printError("SetError: "+e.msg)
@@ -197,7 +214,7 @@ class WorkerThread(Thread):
   # function contains all steps of a single run
   def __RunExp__(self, counter, savelog=True, FB=False):
     tstart = time.time()
-    ClearTerminal() # Clear terminal
+    # ClearTerminal() # Clear terminal
     ResetAll(self._dm) # Reset all sequence
     
     if savelog: # do not save log for idle mode
@@ -256,20 +273,15 @@ class WorkerThread(Thread):
         if FBMV.FF_ctrl.GetValue():
           FBMV.feedbackIteration(trace_full_dir, MVs=self._notify_window.metavariables_fb)
 
-
-
     tend = time.time()
     print("__RunExp__ took "+str(tend-tstart)+" seconds")
     print("__ExecSeqCode__ took "+str(texec-tprelim)+" seconds")
-
-
-     
 
     return finish
 
   # function for sequence debugging
   def __Debug__(self):
-    ClearTerminal() # Clear concole
+    # ClearTerminal() # Clear concole
     ResetAll(self._dm) # Reset all sequence
     e = self.__ExecSeqCode__(0) # Execute sequence file and MV values
     if e==0: # Return if the sequence has a bug
@@ -299,7 +311,8 @@ class WorkerThread(Thread):
     
     # create a reference MV dict to track changes through "notify update" during IDLE
     #if self.loop==RUNMODE_IDLE:
-    sMVs_old, lMVs_old = self._notify_window.GenerateMVDict()
+    if self.loop!=RUNMODE_DEBUG:
+      sMVs_old, lMVs_old = self._notify_window.GenerateMVDict()
 
     while(1):
       loopprevstart = loopstart

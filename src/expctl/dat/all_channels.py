@@ -17,7 +17,8 @@ from . import transformations as tran # Channel value transformation function
 all_sequences = ([
   Sequence("Digital sequence",        host=IP_RYDNUGGET, port=PORT_DIGITAL,  max_channels=32, graph=1, seq_type="MASTER"),  
   Sequence("Analog sequence",         host=IP_RYDNUGGET, port=PORT_ANALOG,   max_channels=32, graph=1),  
-  Sequence("Camera sequence",         host=IP_RYDFRIES,  port=PORT_CAMERA,   max_channels=3 , graph=0),
+  Sequence("Camera sequence",         host=IP_RYDFRIES,  port=PORT_CAMERA,   max_channels=4 , graph=0),
+  Sequence("Camera 2 sequence",       host=IP_RYDFRIES,  port=PORT_CAMERA2,  max_channels=4 , graph=0),
   Sequence("DDS 1 sequence",          host=IP_RYDNUGGET, port=PORT_DDS1,     max_channels=4 , graph=0),
   Sequence("DDS PDH sequence",        host=IP_RYDNUGGET, port=PORT_DDSPDH,   max_channels=7 , graph=0), #
   Sequence("DDS 2 sequence",          host=IP_RYDNUGGET, port=PORT_DDS2,     max_channels=4 , graph=0),
@@ -28,12 +29,13 @@ all_sequences = ([
   Sequence("LabBrick 1 sequence",     host=IP_RYDFRIES,  port=PORT_LB1,      max_channels=3 , graph=0),
   Sequence("LabBrick 2 sequence",     host=IP_RYDFRIES,  port=PORT_LB2,      max_channels=3 , graph=0),
   Sequence("LabBrick 3 sequence",     host=IP_RYDFRIES,  port=PORT_LB3,      max_channels=3 , graph=0),
+  Sequence("LabBrick 4 sequence",     host=IP_RYDFRIES,  port=PORT_LB4,      max_channels=3 , graph=0),
   Sequence("ADF435X sequence",        host=IP_RYDFRIES,  port=PORT_AD1,      max_channels=3 , graph=0),
   Sequence("RFSOC 1 sequence",        host=IP_RFSOC_1,   port=PORT_RFSOC,    max_channels=8 , graph=0),
   Sequence("RP DDS Transport sequence", host=IP_RPTR,    port=PORT_RPTR,     max_channels=2 , graph=0),
   ])
 
-digital_seq1, analog_seq1, cam, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, photon_counter, lb_1, lb_2, lb_3, ad_1, rfsoc_1, rp_ddds_1 = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
+digital_seq1, analog_seq1, cam, cam2, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, photon_counter, lb_1, lb_2, lb_3, lb_4, ad_1, rfsoc_1, rp_ddds_1 = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
 
 #=======================================Channel Definitions=========================================
 # NEXT ADD ALL OF THE CHANNELS TO THEM! ##Note: the name in quotes must have 1 < length < 31
@@ -42,7 +44,7 @@ digital_seq1, analog_seq1, cam, dds_1, dds_pdh, dds_2, photon_timer, photon_time
 MOT0_ttl      = digital_seq1.newChannel(0,  "MOT TTL",          system='MOT',     steady_state_value=1, max_value=1, graph=1)
 REP0_ttl      = digital_seq1.newChannel(1,  "REP TTL",          system='MOT',     steady_state_value=1, max_value=1, graph=1)
 Scope_trig    = digital_seq1.newChannel(2,  "Scope Trig",       system='Debug',   steady_state_value=0, max_value=1, graph=1)
-Cam_trig      = digital_seq1.newChannel(3,  "Came Trig",        system='IMG',     steady_state_value=1, max_value=1, graph=1)
+Cam_trig      = digital_seq1.newChannel(3,  "Camera Trig",        system='IMG',     steady_state_value=1, max_value=1, graph=1)
 DDS_trig      = digital_seq1.newChannel(4,  "DDS FPGA Trig",    system='Debug',   steady_state_value=0, max_value=1, graph=1, transform_v=tran.DigitalNot) #9/15/2020 added inverting line driver
 UV_ttl        = digital_seq1.newChannel(5,  "Ultraviolet TTL",  system='EField',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.CavPrbAOMDelay)
 LAT1_ttl      = digital_seq1.newChannel(6,  "Lat Hori TTL",     system='LAT',     steady_state_value=1, max_value=1, graph=1)
@@ -68,8 +70,10 @@ EDFA_1529_ttl = digital_seq1.newChannel(25, "Floquet TTL",      system='Floquet'
 MOT2_ttl      = digital_seq1.newChannel(26, "Global DEP TTL",   system='Slice',   steady_state_value=0, max_value=1, graph=1, transform_t=tran.MOTPrbDelay)
 dRSC_LAT_ttl  = digital_seq1.newChannel(27, "dRSC Lat TTL",     system='dRSC',    steady_state_value=0, max_value=1, graph=1)
 MWaves_ttl    = digital_seq1.newChannel(29, "MWave switch TTL", system='MWaves',  steady_state_value=0, max_value=1, graph=1)
-AWG_trig      = digital_seq1.newChannel(30, "AWG Trigger",      system='Debug',   steady_state_value=0, max_value=1, graph=1)
-Digi_test     = digital_seq1.newChannel(31, "Digital Test",     system='Debug',   steady_state_value=0, max_value=1, graph=1)
+Shut_abs_ttl  = digital_seq1.newChannel(30, "Abs img shutter",  system='Debug',   steady_state_value=0, max_value=1, graph=1, transform_t = tran.ShutterDelay)
+# AWG_trig      = digital_seq1.newChannel(30, "AWG Trigger",      system='Debug',   steady_state_value=0, max_value=1, graph=1), used to go to F4
+Shut_MOT_ttl  = digital_seq1.newChannel(31, "MOT shutter",  system='Debug',   steady_state_value=0, max_value=1, graph=1, transform_t = tran.ShutterDelay)
+#Digi_test     = digital_seq1.newChannel(31, "Digital Test",     system='Debug',   steady_state_value=0, max_value=1, graph=1), used to go to B10
 
 # Analog card
 MOT0_pwr       = analog_seq1.newChannel(0,  "MOT Pwr",         system='MOT',     steady_state_value=5.0,   max_value=5.0,  graph=1)
@@ -142,7 +146,7 @@ PT_save = photon_timer.newChannel(0, "Photon Timer Save", system='CavPrb', stead
 # Lab Brick 1
 # note Freq is in 10*Hz
 LB1_freq  = lb_1.newChannel(0, "Lab Brick 1 Freq",  system='MWaves', steady_state_value=7500, max_value=10000, graph=0) # transformation handled in server
-LB1_pow   = lb_1.newChannel(1, "Lab Brick 1 Power", system='MWaves', steady_state_value=0,   max_value=10,    graph=0) # transformation handled in server
+LB1_pow   = lb_1.newChannel(1, "Lab Brick 1 Power", system='MWaves', steady_state_value=0,   max_value=40,    graph=0) # transformation handled in server
 LB1_ttl   = lb_1.newChannel(2, "Lab Brick 1 TTL",   system='MWaves', steady_state_value=1,   max_value=1,   graph=0) # transformation handled in server
 
 # Lab Brick 2
@@ -157,6 +161,11 @@ LB3_freq  = lb_3.newChannel(0, "Lab Brick 3 Freq",  system='CavPrb', steady_stat
 LB3_pow   = lb_3.newChannel(1, "Lab Brick 3 Power", system='CavPrb', steady_state_value=0,   max_value=40,    graph=0) # transformation handled in server
 LB3_ttl   = lb_3.newChannel(2, "Lab Brick 3 TTL",   system='CavPrb', steady_state_value=1,   max_value=1,   graph=0) # transformation handled in server
 
+# Lab Brick 4 for optical repumping
+# note Freq is in 10*Hz
+LB4_freq  = lb_4.newChannel(0, "Lab Brick 4 Freq",  system='dRSC', steady_state_value=8500, max_value=10000, graph=0) # transformation handled in server
+LB4_pow   = lb_4.newChannel(1, "Lab Brick 4 Power", system='dRSC', steady_state_value=0,   max_value=40,    graph=0) # transformation handled in server
+LB4_ttl   = lb_4.newChannel(2, "Lab Brick 4 TTL",   system='dRSC', steady_state_value=1,   max_value=1,   graph=0) # transformation handled in server
 
 # Analog Devices ADF435X 1
 # note Freq is in MHz
@@ -165,18 +174,18 @@ AD1_pow  = ad_1.newChannel(1, "Microwave Power",  system='MWaves', steady_state_
 AD1_ttl  = ad_1.newChannel(2, "Microwave TTL",    system='MWaves', steady_state_value=0, max_value=1, graph=0)
 
 #RFSOC 1 DDS Box
-RFSOC1_0 = rfsoc_1.newChannel(0, "RFSOC 1 Chan 0",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0) # HF
-RFSOC1_1 = rfsoc_1.newChannel(1, "RFSOC 1 Chan 1",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
-#RFSOC1_2 = rfsoc_1.newChannel(2, "RFSOC 1 Chan 2",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
-#RFSOC1_3 = rfsoc_1.newChannel(3, "RFSOC 1 Chan 3",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
+#RFSOC1_0 = rfsoc_1.newChannel(0, "RFSOC 1 Chan 0",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0) # HF
+#RFSOC1_1 = rfsoc_1.newChannel(1, "RFSOC 1 Chan 1",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
+RFSOC1_2 = rfsoc_1.newChannel(2, "RFSOC 1 Chan 2",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
+RFSOC1_3 = rfsoc_1.newChannel(3, "RFSOC 1 Chan 3",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
 #RFSOC1_4 = rfsoc_1.newChannel(4, "RFSOC 1 Chan 4",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
-RFSOC1_CavPrbEom = rfsoc_1.newChannel(5, "RFSOC 1 Chan 5",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
-RFSOC1_6 = rfsoc_1.newChannel(6, "RFSOC 1 Chan 6",   system='CavPrb', steady_state_value=120e3, max_value=3200, graph=0)
+#RFSOC1_5 = rfsoc_1.newChannel(5, "RFSOC 1 Chan 5",   system='CavPrb', steady_state_value=120e3, max_value=3200, graph=0)
+RFSOC1_CavPrbEom = rfsoc_1.newChannel(6, "RFSOC 1 Chan 6",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
 RFSOC1_7 = rfsoc_1.newChannel(7, "RFSOC 1 Chan 7",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0) # LF
 
 #Red Pitaya Transport DDS
-RP_trans_a = rp_ddds_1.newChannel(0, "Lattice top freq",   system='LAT', steady_state_value=80e6, max_value=120e6, graph=0)
-RP_trans_b = rp_ddds_1.newChannel(1, "Lattice bottom freq",   system='LAT', steady_state_value=80e6, max_value=120e6, graph=0)
+RP1_DDS_0 = rp_ddds_1.newChannel(0, "RedPitaya 1 Chan 0",   system='Debug', steady_state_value=10e6, max_value=40e6, graph=0)
+RP1_DDS_1 = rp_ddds_1.newChannel(1, "RedPitaya 1 Chan 1",   system='Debug', steady_state_value=10e6, max_value=40e6, graph=0)
 
 #Camera Gain channel
 Camera_gain = cam.newChannel(0, "Camera gain", system='IMG', steady_state_value=24.0, max_value=24.0, graph=0)
@@ -200,8 +209,14 @@ PT_save_3 = photon_timer_3.newChannel(0, "Photon Timer 3 Save", system='CavPrb',
 PhotonTimer = photon_timer.newChannel(1, "Photon Timer", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
 PhotonTimer2 =photon_timer_2.newChannel(1, "Photon Timer 2", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
 PhotonTimer3 =photon_timer_3.newChannel(1, "Photon Timer 3", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
+# Pass Img_horz_pwr also to the camera server for computing the atom number
+Camera_Img_horz_pwr =cam.newChannel(3, "Camera Img_horz_pwr", system='IMG', steady_state_value=5.0, max_value=5.0, graph=0, ctype='Slave', master=MOT0_pwr)
 
-
+#Camera 2
+Camera2_gain = cam2.newChannel(0, "Camera gain", system='IMG', steady_state_value=24.0, max_value=24.0, graph=0, ctype='Slave', master=Camera_gain)
+Camera2_save = cam2.newChannel(2, "Camera save", system='IMG', steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Camera_save)
+CAMERA2 = cam2.newChannel(1, "Camera", steady_state_value=1, max_value=1, graph=0, ctype='Slave', master=Cam_trig)
+Camera_Img_horz_pwr = cam2.newChannel(3, "Camera Img_horz_pwr", system='IMG', steady_state_value=5.0, max_value=5.0, graph=0, ctype='Slave', master=MOT0_pwr)
 
 ###########################################################################################################
 ###   AUTO DETECT SEQUENCE AND CHANNEL TYPE AND CREATE HELPER LIST THAT IS USEFUL FOR THE FRONT PANEL   ###

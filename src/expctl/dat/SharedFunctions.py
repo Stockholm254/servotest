@@ -101,10 +101,12 @@ def TOF(times, TimeOfFly):
 	
 	return times_TOF
 	
-def Transport(times,  acc, dist, chanA=RP_trans_a, chanB=None, Lat1_f=80., Lat2_f=80., Max_df=10., mode=0, twoAoms=0, Npts=32):
+def Transport(times,  acc, dist, chanA=None, chanB=None, Lat1_f=80., Lat2_f=80., Max_df=10., mode=0, twoAoms=0, Npts=32):
 	# channels chanA and chanB should be channel objects
 	# Use computer front panel to control the DDS ramping frequency, and use the ramp
 	# direction register to change ramp direction
+	if chanA is None:
+		raise RuntimeError("You have to specify a chanA!")
 	mode = int(mode)
 	twoAoms = int(twoAoms)
 	Npts = int(Npts)

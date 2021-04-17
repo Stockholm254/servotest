@@ -156,7 +156,7 @@ class Device:
         self.send_msg("GETPLOTDATA")
         try:
             response, plt_data = self.recv_msg()
-            print(response)
+            logger.debug("Got plot data {}".format(response))
             return plt_data
         except:
             logger.error("Failed to get plot data")
