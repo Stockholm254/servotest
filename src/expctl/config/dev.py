@@ -43,9 +43,11 @@ PORT_PTIMER3    = 60626 # Photon timer FPGA (control room under table rack); Tim
 PORT_AD1		= 60701 # Analog Devices ADF435X, for microwave generation
 # RYDFRIES PORTS
 PORT_CAMERA     = 60614 # Chameleon camera (side or vertical imaging system, chamber table)
+PORT_CAMERA2    = 60613 # Chameleon camera (side or vertical imaging system, chamber table)
 PORT_LB1        = 60615 # Lab Brick 1, for the detuning of the 1529 carrier
 PORT_LB2        = 60616 # Lab Brick 1, for the detuning of the 1529 carrier
 PORT_LB3        = 60617 # Lab Brick 1, for the detuning of the 1529 carrier
+PORT_LB4        = 60618 # Lab Brick 4, for repump sideband of 795 OP
 # RPDDS PORTS
 PORT_RPTR       = 60631
 

@@ -17,7 +17,7 @@ class Rb87:
 
 ## All numbers are in MHz
 def groundHF():
-  return 6834.68
+  return 6834.68261090429
  
 def excitedHF(F1, F2):
   F1 = int(F1)

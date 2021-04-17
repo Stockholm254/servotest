@@ -8,6 +8,11 @@ import numpy as np
 import math
 import time
 
+import coloredlogs, logging
+# Create a logger object.
+logger = logging.getLogger(__name__)
+coloredlogs.install(level='DEBUG')
+
 #identity tranformation, used as the default for Channel transformations
 def id_trans(x):
   return x
@@ -399,6 +404,7 @@ class Channel:
       startT, endT = timeInterval._start, timeInterval._stop
       self.Set([(startT,startV,endT,endV)])
     except:
+      logger.exception('Invalid SetInterval() for '+str(self.name)+'.')
       raise SetError('Invalid SetInterval() for '+str(self.name)+'.')
 
   def SetLogRamp(self, timeInterval, v0, v1, sample_rate=0.04):

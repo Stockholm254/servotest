@@ -15,6 +15,7 @@ import winsound
 from pathlib import Path, WindowsPath
 import shelve
 from numpy.lib.npyio import save
+import secrets
 
 import wx
 import wx.lib.agw.floatspin as FS
@@ -42,7 +43,7 @@ from .dat.all_channels import * #THIS IS WHERE WE DEFINE SEQUENCES AND CHANNELS 
 from .sequencer.sequence import *
 
 from .DeviceManager.DeviceManager import DeviceManager
-from .WorkerThread.WorkerThread import WorkerThread, EVT_RESULT, EVT_UPDATE
+from .WorkerThread.WorkerThread import WorkerThread, EVT_RESULT, EVT_UPDATE, EVT_PLOT_TIMES
 
 from .config.config import * # control suite preference
 import coloredlogs, logging
@@ -536,6 +537,7 @@ class FrontPanel(wx.Frame):
     ### Call this function when the thread returns. ###
     EVT_RESULT(self, self.OnReturnFromRun) # Run result
     EVT_UPDATE(self, self.OnUpdateRunInfo) # Run info real time update
+    EVT_PLOT_TIMES(self, self.OnReturnFromDebug) # Event for return Interlaver timing object from worker
 
     ### Reload the Front Panel ###
     self.InitFP()
@@ -1364,7 +1366,11 @@ class FrontPanel(wx.Frame):
     run_time = datetime.datetime.now()
 
     text_info = self.txtctrl_expinfo.GetValue()
-    run_doc = RunIdle(name=loop_fname, date=run_time, initMVs=sMVs, updateMVs=[], sequence=seq_bin, info=text_info)
+    _loop_name = loop_fname
+    if _loop_name =='':
+      _loop_name = secrets.token_hex(8)
+    idle_name = "IDLE_{}".format(_loop_name)
+    run_doc = RunIdle(name=idle_name, date=run_time, initMVs=sMVs, updateMVs=[], sequence=seq_bin, info=text_info)
     #self.savedata_switch = bool(self.chkbox_savedata.GetValue())
     self.savedata_switch = 0
     _run_id = createRun(self.client, run=run_doc, save=False)
@@ -1440,6 +1446,7 @@ class FrontPanel(wx.Frame):
     run_doc = RunLooped(name=loop_fname, date=run_time, Nshots=Nshots,
                         staticMVs=sMVs, loopMVs=lMVs, sequence=seq_bin, info=text_info)
     self.savedata_switch = bool(self.chkbox_savedata.GetValue())
+    logger.debug("Loopen run with save_switch {}".format(self.savedata_switch))
     _run_id = createRun(self.client, run=run_doc, save=self.savedata_switch)
     self.run_id = str(_run_id) #cast BSON Object ID into string
 
@@ -1493,6 +1500,14 @@ class FrontPanel(wx.Frame):
         self.ShowMessage(event.data)
     else:
         self.statusbar.SetStatusText(event.data)
+
+  def OnReturnFromDebug(self, event):
+    if event.abort:
+        self.worker.abort()
+        self.ShowMessage(event.data)
+    else:
+        self.statusbar.SetStatusText(event.data)
+  
   
   #######################################
   ###         Utility Methods         ###
@@ -1679,10 +1694,16 @@ class FrontPanel(wx.Frame):
     self.debug_done = 0
 
     wx.BeginBusyCursor()
-    self.worker = WorkerThread(self, loop=5) # Execute the sequence file
+    IntervalTime = {'times': None}
+    self.worker = WorkerThread(self, loop=5, IntervalerObj=IntervalTime) # Execute the sequence file
     self.worker.join()
-    #IntervalTime = self.worker.IntervalTime()
-    PlotSeq.PlotSeq_DeviceValue(self.dm) # Plot the actual device value
+    try:
+      _IntervalTime = IntervalTime['Intervaler']
+    except KeyError:
+      _IntervalTime = None
+    logger.debug("IntervalTime {}".format(_IntervalTime))
+
+    PlotSeq.PlotSeq_DeviceValue(self.dm, IntervalTime=_IntervalTime) # Plot the actual device value
     '''TODO: PLOT SEQUENCE VALUES. FUNCTION IS DONE, ONLY NEED GUI OBJECT'''
     #time.sleep(.5) # wait the code to be executed by the WorkerThread
     #PlotSeq.PlotSeq_SeqValue(self.dm, IntervalTime) # Plot the sequence data

@@ -70,3 +70,6 @@ def DigitalNot(TTL):
   else:
     OUT = 0
   return OUT
+
+def ShutterDelay(t):
+  return t-5000.0

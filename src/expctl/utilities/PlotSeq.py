@@ -13,14 +13,14 @@ from .util import *
 ############################
 ###  Plot Device Values  ###
 ############################
-def PlotSeq_DeviceValue(dm):
+def PlotSeq_DeviceValue(dm, IntervalTime=None):
   # Configurate qtgraph
   plotTitle = "Hardware Timing"
   pyqtgraph.setConfigOption('background', '#ffffff')
   pyqtgraph.setConfigOption('foreground', '#333333')
   plotWidget = pyqtgraph.plot(title=plotTitle)
   p1 = plotWidget.plotItem
-  plotWidget.resize(1300, 650)
+  plotWidget.resize(1300, 2000)
   
   seqs = dm.seq_plot
 
@@ -88,25 +88,26 @@ def PlotSeq_DeviceValue(dm):
   p1.addItem(refLiner)
   
   '''TODO: TIME LABELS'''
-  # timeBars=[]
-  # labelTimes=True
-  # try: # Get time interval value
-  #   for interval in timeObj:
-  #     timeBars.append(interval.end_t()/1.0e6)
-  # except NameError:
-  #   labelTime=False
-  
-  # for t in timeBars: # Add reference line for each time interval
-  #   refLine = pyqtgraph.InfiniteLine(pos=t, angle=90, pen={'color': 1}, movable=False, bounds=None)
-  #   p1.addItem(refLine)
-  
-  # if labelTimes:
-  #   for t in timeObj:
-  #     if t.getName():
-  #       if t.start_t() != t.end_t():
-  #         text  = pyqtgraph.TextItem(t.getName(), color=0.7, angle=0)
-  #         text.setPos(t.start_t()/1.0e6, chancounter+1)
-  #         p1.addItem(text)
+  if IntervalTime is not None:
+    timeBars=[]
+    labelTimes=True
+    try: # Get time interval value
+      for interval in IntervalTime:
+        timeBars.append(interval.end_t()/1.0e6)
+    except NameError:
+      labelTime=False
+    
+    for t in timeBars: # Add reference line for each time interval
+      refLine = pyqtgraph.InfiniteLine(pos=t, angle=90, pen={'color': 1}, movable=False, bounds=None)
+      p1.addItem(refLine)
+    
+    if labelTimes:
+      for t in IntervalTime:
+        if t.getName():
+          if t.start_t() != t.end_t():
+            text  = pyqtgraph.TextItem(t.getName(), color=0.7, angle=0)
+            text.setPos(t.start_t()/1.0e6, chancounter+1)
+            p1.addItem(text)
   
   p1.setYRange(0, chancounter)
   plotWidget.show()
@@ -142,7 +143,7 @@ def PlotSeq_SeqValue(dm):
       rgb = (256 * rgb[0], 256 * rgb[1], 256 * rgb[2])
 
       # Get channel values:
-      y = []; x = [];
+      y = []; x = []
       for ii in range(0, len(_chan._UserValues)):
         pair = _chan._UserValues[ii] # get time-value tuple
         x.append(pair[0]/1e6); y.append(chancounter+.7*pair[1]/_chan.max_v); # start value
