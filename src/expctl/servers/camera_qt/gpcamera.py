@@ -24,7 +24,7 @@ def print_camera_info(cam):
 		print()
 
 class GP_camera:
-	def __init__(self, BIT12=False, camera_id=0):
+	def __init__(self, BIT12=False, camera_id=0, video_mode=0, trigger_port=0, trigger_mode=0):
 		#self.get_c = flycapture2.Context()
 		self.shutter_time = 0
 		self.num_of_images = 0
@@ -33,6 +33,10 @@ class GP_camera:
 		self.setDate()     
 		self.BIT12 = BIT12
 		self.camera_id = camera_id
+		self.video_mode = video_mode
+		self.trigger_port = trigger_port
+		self.trigger_mode = trigger_mode
+		logger.debug("Trigger on GPIO {:d}".format(self.trigger_port))
 		
 	def setDate(self):
 		self.run_time = datetime.datetime.now()
@@ -71,23 +75,24 @@ class GP_camera:
 		self.c.connect(uid)
 		print_camera_info(self.c)
 
-		conf = self.c.getConfiguration()
-		logger.debug(f"Camera configuration {conf}")
-		# conf.registerTimeout = 1500
-		self.c.setConfiguration(registerTimeout = 1500, grabTimeout = 1500)
-		conf = self.c.getConfiguration()
-		logger.debug(f"Camera configuration after {conf}")
+		# conf = self.c.getConfiguration()
+		# logger.debug(f"Camera configuration {conf}")
+		# # conf.registerTimeout = 1500
+		# self.c.setConfiguration(registerTimeout = 1500, grabTimeout = 1500)
+		# conf = self.c.getConfiguration()
+		# logger.debug(f"Camera configuration after {conf}")
 
-		
+		logger.info(f"Video mode: {self.c.getVideoModeAndFrameRate()}")
 
 		#Set Video mode
 		if self.BIT12:
 			self.c.setVideoModeAndFrameRate(PyCapture2.VIDEO_MODE.VM_1280x960Y16, PyCapture2.FRAMERATE.FR_7_5)
 		else:
-			self.c.setVideoModeAndFrameRate(PyCapture2.VIDEO_MODE.VM_1280x960Y8, PyCapture2.FRAMERATE.FR_15) # 17, 3 
+			#self.c.setVideoModeAndFrameRate(PyCapture2.VIDEO_MODE.VM_1280x960Y8, PyCapture2.FRAMERATE.FR_15) # 17, 3 
+			pass
 		
 		 
-		#logger.info(f"Video mode: {self.c.getVideoModeAndFrameRate()}")
+		logger.info(f"Video mode: {self.c.getVideoModeAndFrameRate()}")
 
 		# #Set camera properties
 		autoexp_prop = self.c.getProperty(PyCapture2.PROPERTY_TYPE.AUTO_EXPOSURE)
@@ -106,11 +111,11 @@ class GP_camera:
 		# Configure trigger mode
 		trigger_mode = self.c.getTriggerMode()
 		trigger_mode.onOff = True
-		trigger_mode.mode = 0 # 1 for bulb trigger
+		trigger_mode.mode = self.trigger_mode # 0 for programmed shutter time, 1 for bulb trigger
 		trigger_mode.parameter = 0
-		trigger_mode.source = 0 #External trigger #7     # Using software trigger
+		trigger_mode.source = int(self.trigger_port) #0 #External trigger #7     # Using software trigger
 		self.c.setTriggerMode(trigger_mode)
-		self.c.setConfiguration(grabTimeout = 10000)
+		self.c.setConfiguration(grabTimeout = 3000)
 		self.c.startCapture()  
 		
 	def GrabImages(self, shutter=0, gain=24., number=0, runname="", foldername=""):
@@ -150,15 +155,15 @@ class GP_camera:
 
 		
 		#DEBUG Read paras from the camera
-		prop_type = [1, 12, 13]
-		prop_type_dic = {1: "Auto exposure", 12: "Shutter", 13: "Gain"}
-		prop_type_units = {1: "EV", 12: "ms", 13: "dB"}
-		prop_info = []
-		for _type in prop_type:
-			new_info = self.c.getProperty(_type)
-			prop_info.append(new_info)
-		for prop in prop_info:
-			logger.info(prop_type_dic[prop.type] + " = " + str(prop.absValue) + prop_type_units[prop.type])
+		# prop_type = [1, 12, 13]
+		# prop_type_dic = {1: "Auto exposure", 12: "Shutter", 13: "Gain"}
+		# prop_type_units = {1: "EV", 12: "ms", 13: "dB"}
+		# prop_info = []
+		# for _type in prop_type:
+		# 	new_info = self.c.getProperty(_type)
+		# 	prop_info.append(new_info)
+		# for prop in prop_info:
+		# 	logger.info(prop_type_dic[prop.type] + " = " + str(prop.absValue) + prop_type_units[prop.type])
 
 		#Grab images
 		images_file = {}

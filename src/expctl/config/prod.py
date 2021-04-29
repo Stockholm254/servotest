@@ -49,7 +49,6 @@ PORT_LB1        = 60615 # Lab Brick 1, for the detuning of the 1529 carrier
 PORT_LB2        = 60616 # Lab Brick 1, for the detuning of the 1529 carrier
 PORT_LB3        = 60617 # Lab Brick 1, for the detuning of the 1529 carrier
 PORT_LB4        = 60618 # Lab Brick 4, for repump sideband of 795 OP
-
 # RPDDS PORTS
 PORT_RPTR       = 60631
 

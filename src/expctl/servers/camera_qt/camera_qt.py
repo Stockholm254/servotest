@@ -7,6 +7,7 @@ from datetime import datetime
 from numpy.lib.npyio import save
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
+#from pyqtgraph import Qt
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 import numpy as np
 import os
@@ -33,8 +34,10 @@ IMG_FL = {0: 'fg', 1: 'bg'}
 
 STORE_FILES = False
 
-CAMERA_SERIALS = {13442499: 'Cam Absorption', 15331899: 'Cam Fluorescence'}
-DEFAULT_ROI = {13442499: (500, 1100, 350, 950), 15331899: (550, 850, 250, 950)}
+CAMERA_SERIALS = {13442499: 'Cam Absorption', 15331899: 'Cam Fluorescence', 17497066: 'Cam Absorption 3',}
+DEFAULT_ROI = {13442499: (500, 1100, 350, 950), 15331899: (550, 850, 250, 950), 17497066: (500, 1100, 350, 950), 17497066: (350, 550, 450, 650)}
+DEFAULT_FIT_ROI = {13442499: (500, 1100, 350, 950), 15331899: (550, 850, 250, 950), 17497066: (500, 1100, 350, 950), 17497066: (350, 550, 450, 650)}
+CAMERA_KWARGS = {17497066: {'trigger_port': 2, 'trigger_mode': 1, 'video_mode': (23, 8)}} #CM3 full resolution (2048x1536) (23, 8) 
 # Interpret image data as row-major instead of col-major
 #pg.setConfigOptions(imageAxisOrder='row-major')
 pg.mkQApp()
@@ -57,11 +60,6 @@ class ImageBufferItem:
     gain: float
     shutter: float
     power: float
-
-@dataclass
-class ImageEntryItem:
-    buffer: np.ndarray
-    names: dict
 
 class DbWorker(QObject):
     finished = pyqtSignal()
@@ -102,11 +100,11 @@ class DbWorker(QObject):
 
 class CameraServer(Server):
     
-    def __init__(self, name, port, message, parent, camera_id):
+    def __init__(self, name, port, message, parent, camera_id, camera_kwargs):
         super().__init__(name, port, message)
         #self.device = GP_camera(BIT12 = False)
         self.parent=parent
-        self.device = Camera(camera_id=camera_id)
+        self.device = Camera(camera_id=camera_id, **camera_kwargs)
         self.ROI = ()
         self.imgbuffer=[]
         try:
@@ -209,8 +207,9 @@ class CameraServer(Server):
                                 imgbuffer = self.imgbuffer.buffer[:,x0:x1,y0:y1]
                                 _roi = self.ROI
                             else:
-                                _roi = (0, 0, self.imgbuffer.shape[1], self.imgbuffer.shape[2])
-
+                                #_roi = (0, 0, self.imgbuffer.shape[1], self.imgbuffer.shape[2])
+                                _roi = (0, 0, self.imgbuffer.buffer.shape[1], self.imgbuffer.buffer.shape[2])
+                                imgbuffer = self.imgbuffer.buffer
                             
                             if self.NumOfImage==3:
                                 im_type = 'abs' 
@@ -263,7 +262,7 @@ class ServerWorker(QObject):
     result = pyqtSignal(object)
     storeSignal = pyqtSignal(object)
 
-    def __init__(self, parent=None, camera_id=0):
+    def __init__(self, parent=None, port=60614, camera_id=0, camera_kwargs={}):
         #super(self.__class__, self).__init__(parent)
         super(ServerWorker, self).__init__(parent)
         message = """===========================================
@@ -275,7 +274,7 @@ class ServerWorker(QObject):
         Bit Depth: 8
         Maximum Trigger Rate: 14fps
         WARNING: The maximum frame rate is 14fps!"""
-        self.serv = CameraServer("COut1", 60614, message=message, parent=self, camera_id=camera_id)
+        self.serv = CameraServer("COut1", port, message=message, parent=self, camera_id=camera_id, camera_kwargs=camera_kwargs)
         self.worker = DbWorker()  # no parent!
         self.thread = QThread()  # no parent!
 
@@ -296,14 +295,38 @@ class ServerWorker(QObject):
     def start(self, roi):
         self.acquire(roi)
 
+@dataclass
+class ImageEntryItem:
+    imgarray: np.ndarray
+    names: dict
+    label: str
+
+class ItemModel(QtCore.QAbstractListModel):
+    def __init__(self, *args, items=None, **kwargs):
+        super(ItemModel, self).__init__(*args, **kwargs)
+        #self.items = deque(items or [], maxlen=16) 
+        self.items = deque(maxlen=16) 
+
+    def data(self, index, role):
+        if role == QtCore.Qt.DisplayRole:
+            entry = self.items[index.row()]
+            text = "Image {} {:d}".format(entry.label, index.row())
+            return text
+
+    def rowCount(self, index):
+        return len(self.items)
+
+    def get(self, idx):
+        return self.items[idx]
+
 class MainWindow(TemplateBaseClass):  
     start_acquire = pyqtSignal(tuple)
     stop_acquire = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, port=60614):
         TemplateBaseClass.__init__(self)
         self.setWindowTitle('Qt Camera Server')
-        
+        self.port = port
         self.data = np.zeros((1280, 960))
 
         # Create the main window
@@ -327,10 +350,21 @@ class MainWindow(TemplateBaseClass):
         self.ui.checkBox_lockroi.stateChanged.connect(self.update_roi_lock)
         self.ui.comboBox.currentIndexChanged.connect(self.set_default_save_roi)
 
-        #self.history = deque(maxlen=16)
+        self.history = deque(maxlen=16)
+
+        self.frame_model = QtGui.QStandardItemModel()
+        self.ui.listView.setModel(self.frame_model)
+
+        self.entry_model = ItemModel()
+        self.ui.imgList.setModel(self.entry_model)
+        
+        #self.frame_model.itemChanged.connect(self._show_selected_frame)
+        self.ui.listView.selectionModel().selectionChanged.connect(self._show_selected_frame)
+        self.ui.imgList.selectionModel().selectionChanged.connect(self._show_selected_entry)
+
         self.setup_plot()
         self.set_default_save_roi()
-
+        self.ui.checkBox_saveroi.setChecked(True)
         self.show()
 
     @pyqtSlot()
@@ -342,6 +376,8 @@ class MainWindow(TemplateBaseClass):
             xmax, ymax = int(res[0]), int(res[1])
             self.ui.x1SpinBox.setMaximum(xmax)
             self.ui.y1SpinBox.setMaximum(ymax)
+
+            # save ROI
             x0, x1, y0, y1 = DEFAULT_ROI[ser]
             self.ui.x0SpinBox.setValue(x0)
             self.ui.x1SpinBox.setValue(x1)
@@ -349,6 +385,10 @@ class MainWindow(TemplateBaseClass):
             self.ui.y1SpinBox.setValue(y1)
             self.update_roi_save_from_spinbox()
 
+            # fit ROI
+            x0, x1, y0, y1 = DEFAULT_FIT_ROI[ser]
+            self.roi.setPos(x0, y0, update=True)
+            self.roi.setSize((abs(x1-x0), abs(y1-y0)), update=True)
         # Set default ROI for this camera
 
     @pyqtSlot()
@@ -389,8 +429,13 @@ class MainWindow(TemplateBaseClass):
         # 1 - create Worker and Thread inside the Form
         camera_id = self.ui.comboBox.currentIndex()
         logger.info(f"Opening camera {camera_id}")
+        ser = self.cams[camera_id]['serial'] #serial of current camera
+        if ser in CAMERA_KWARGS.keys():
+            kwargs = CAMERA_KWARGS[ser]
+        else:
+            kwargs = {}
 
-        self.worker = ServerWorker(camera_id=camera_id)  # no parent!
+        self.worker = ServerWorker(port=self.port, camera_id=camera_id, camera_kwargs=kwargs)  # no parent!
         self.thread = QThread()  # no parent!
 
         # 2 - Connect Worker`s Signals to Form method slots to post data.
@@ -439,6 +484,8 @@ class MainWindow(TemplateBaseClass):
         # Contrast/color control
         self.hist = pg.HistogramLUTItem()
         self.hist.setImageItem(self.img)
+        self.hist.gradient.loadPreset('inferno')
+
         self.hist.setHistogramRange(0., 255.)
         gv.addItem(self.hist,row=0, col=2)
 
@@ -467,10 +514,11 @@ class MainWindow(TemplateBaseClass):
   
     def _update_plot(self, buffer_item: ImageBufferItem):
         #
-        mode = None
+        mode = "UNKWN"
         imgArrays = buffer_item.buffer
         if imgArrays.shape[0]==3:
             data = self._process_absorption(buffer_item)
+            #data = buffer_item.buffer[1]
             mode = "ABS"
             frameNames = {0: "Absorption image", 1: "Probe with atoms", 2: "Probe without atoms", 3: "Dark field"}
             logger.debug("ABS")
@@ -480,30 +528,47 @@ class MainWindow(TemplateBaseClass):
             frameNames = {0: "Fluorescence image", 1: "Probe with atoms", 2: "Probe without atoms"}
             logger.debug("FL")
         else:
-            data = imgArrays
+            data = imgArrays[0]
             frameNames = {i: str(i) for i in range(len(imgArrays))}
             logger.debug("unknown number of images")
 
-        #entry = ImageEntryItem(buffer=buffer_item.buffer, names=frameNames, index=)
-
+        
+        entry = ImageEntryItem(imgarray=np.concatenate([data[None,:,:], buffer_item.buffer],axis=0) , names=frameNames, label=mode)
         #self.history.appendleft(entry)
+        self.entry_model.items.appendleft(entry)
+        self.entry_model.layoutChanged.emit()  
         self.data = data
-        self.img.setImage(self.data)
+        self.img.setImage(self.data, autoLevels=self.ui.checkBox_autoscale.isChecked())
         
         if mode=="ABS":
             #self.hist.setLevels(0., 1.)
-            self.hist.setLevels(0., 10.)
+            #self.hist.setLevels(0., 3.)
             #self.hist.setHistogramRange(0., 1.)
+            pass
         else:
             if self.ui.checkBox_autoscale.isChecked():
                 self.hist.setLevels(np.nanmin(self.data), np.nanmax(self.data))
         self.update_roi()
 
     def _show_selected_entry(self):
-        pass
+        print("Data Changed")
+        self.frame_model.clear()
+        index = self.ui.imgList.selectionModel().selectedIndexes()[0].row()
+        print(index)
+        for n in self.entry_model.get(index).names:
+            print(n)
+            item = QtGui.QStandardItem("Frame {}".format(n))
+            self.frame_model.appendRow(item)
+        self.frame_model.layoutChanged.emit()
 
     def _show_selected_frame(self):
-        pass
+        print("Frame changed")
+        index_entry = self.ui.imgList.selectionModel().selectedIndexes()[0].row()
+        entry = self.entry_model.get(index_entry)
+        index_frame = self.ui.listView.selectionModel().selectedIndexes()[0].row()
+        print(index_frame)
+        self.data = entry.imgarray[int(index_frame)]
+        self.img.setImage(self.data)
 
     def _process_fluorescence(self, buffer_item):
         imgArrays = buffer_item.buffer
@@ -528,15 +593,41 @@ class MainWindow(TemplateBaseClass):
         return 61.43*scale_time*scale_gain*scale_power*diff
 
     def _process_absorption(self, buffer_item):
+        logger.debug("processing absorption")
         imgArrays = buffer_item.buffer
-        absArray = (imgArrays[1]-imgArrays[2])/(imgArrays[0]-imgArrays[2])
-        absArray = np.nan_to_num(absArray, nan=1e-10, posinf=1e-10, neginf=1e-10)
-        data = np.log(absArray)
-        data = np.nan_to_num(data, nan=0, posinf=0, neginf=0)
+        
+        if self.ui.checkBox_absScale.isChecked():
+            bounds_roi, _ = self.roi.getArraySlice(self.data, self.img, returnSlice=True)
+            bounds_roi_save, _ = self.roi_save.getArraySlice(self.data, self.img, returnSlice=True)
+            logger.debug(f"ROI {bounds_roi}")
+            logger.debug(f"ROI save{bounds_roi_save}")
+            msk = np.zeros(imgArrays[0].shape, dtype=np.int8)
+            msk[bounds_roi_save] = 1
+            msk[bounds_roi] = 0
+
+            fg_scale = np.nansum(imgArrays[0]*msk)
+            bg_scale = np.nansum(imgArrays[1]*msk)
+
+            absArray = (imgArrays[1]*fg_scale/bg_scale)/(imgArrays[0])
+            absArray = np.nan_to_num(absArray, nan=1e-1, posinf=1e-1, neginf=1e-1)
+            data = np.log(absArray)
+            data = np.nan_to_num(data, nan=0, posinf=0, neginf=0)
+
+        else:
+            absArray = (imgArrays[1]-imgArrays[2])/(imgArrays[0]-imgArrays[2])
+            absArray = np.nan_to_num(absArray, nan=1e-1, posinf=1e-1, neginf=1e-1)
+            data = np.log(absArray)
+            data = np.nan_to_num(data, nan=0, posinf=0, neginf=0)
+        
+        # scale factor for absolute atom number
+        res_Xsec = 1.356 * 1e-9 # cm^2 (resonant cross section from Steck)
+        px_to_um = 3.75 # um
+        data = data / res_Xsec *(px_to_um**2*1e-8) # um to cm 
+
         return data
 
     def _init_plot(self):
-        data = np.zeros((1280, 960))
+        data = np.concatenate([np.ones((1, 1280, 960)), np.zeros((1, 1280, 960)), 2*np.ones((1, 1280, 960)), 3*np.ones((1, 1280, 960))], axis=0)
         buf = ImageBufferItem(buffer=data, gain=0.0, shutter=1.0, power=5.0)
         self._update_plot(buf)
 
@@ -546,7 +637,11 @@ class MainWindow(TemplateBaseClass):
 
     # Callbacks for handling user interaction
     def update_roi(self):
-        selected = self.roi.getArrayRegion(self.data, self.img)
+        #selected = self.roi.getArraycRegion()
+        # profiling revealed that getArraycRegion took a significant amount of time as it interpolates when the ROI handles don't align to an integer!
+        # this method should only slice the numpy array by ineintegersgers and be much faster!
+        slc, _ = self.roi.getArraySlice(self.data, self.img, returnSlice=True)
+        selected = self.data[slc]
 
         ysum = selected.sum(axis=0)
         y_x =  np.arange(len(ysum))
@@ -572,7 +667,7 @@ class MainWindow(TemplateBaseClass):
             self.ui.fitSpinBox_fluorY.setText("{:.3e}".format(popt_y[0]*popt_y[2]*np.sqrt(2*np.pi)))
             self.ui.fitSpinBox_sigmaX.setText("{:.3e}".format(popt_x[2]))
             self.ui.fitSpinBox_sigmaY.setText("{:.3e}".format(popt_y[2]))
-            self.ui.fitSpinBox_atoms.setText("{:.3e}".format( np.sqrt(popt_x[0]*popt_y[0]*popt_x[2]*popt_y[2]*(2*np.pi)) ) ) ### add scale factor here ###  
+            self.ui.fitSpinBox_atoms.setText("{:.3e}".format( np.sqrt(popt_x[0]*popt_y[0]*popt_x[2]*popt_y[2]*(2*np.pi))    ) ) ### add scale factor here ###  
 
 
     def update_roi_save_from_plot(self):
@@ -645,11 +740,11 @@ def fit1Dgauss(data):
 
 
 
-win = MainWindow()
+#win = MainWindow()
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
     import sys
-    win = MainWindow()
+    win = MainWindow(port=60614)
     if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
         QtGui.QApplication.instance().exec_()
