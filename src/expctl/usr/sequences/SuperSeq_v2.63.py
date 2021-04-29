@@ -133,7 +133,7 @@ Trans_GDEP_ttl = 1
 Trans_GDEP_pwr = 5
 Trans_ParamHeat_switch = 0
 MV(ParamHeat_freq_kHz, min=0, max=40000.0, init=110, inc=0.1, digits=3)
-Shutter_open_switch = 0
+# Shutter_open_switch = 0
 MV(Shutter_delay_ms, min=0, max=10, init=2.5, inc=0.1, digits=2)
 # Tab:dRSC
 dRSC_switch   = 1
@@ -542,12 +542,12 @@ times_Wait1p5 = times.append(Wait1p5_ms*Unit.ms(), "Wait In Cav AFTER dRSC")
 if BRamp1_ttl == 1:
 	times_BRamp1 = times.append(BRamp1_ms*Unit.ms(),'B Ramp 1')
 	times_BRamp1_settle = times.append(BRamp1_settle_ms*Unit.ms(),'B Ramp 1 Settle')
-if OP_REP_ttl or OP_780_switch == 1:
-	times_OP = times.append(OP_REP_ms*Unit.ms(),'Optical Pumping')
-if BRamp2_ttl == 1:
-	times_BRamp2 = times.append(BRamp2_ms*Unit.ms(),'B Ramp 2')
 if GDEP_ttl == 1:
 	times_GDEP = times.append(GDEP_ms*Unit.ms(), 'GDEP right before probe')
+if BRamp2_ttl == 1:
+	times_BRamp2 = times.append(BRamp2_ms*Unit.ms(),'B Ramp 2')
+if OP_REP_ttl or OP_780_switch == 1:
+	times_OP = times.append(OP_REP_ms*Unit.ms(),'Optical Pumping')
 
 if PRB_mode == 1:
 	times_delay = times.append(PRB_delay_us*Unit.us(), 'PRB_delay')
@@ -683,6 +683,9 @@ Camera_gain.SetInterval(times_Init, Img_gain_dB)
 Camera_save.SetInterval(times_Init, Img_save)
 Shut_MOT_ttl.SetInterval(times_Init, 1) # TTL=1 is open
 Shut_abs_ttl.SetInterval(times_Init, 0) # TTL=0 is closed
+
+
+#Shut_MOT_ttl.SetInterval(times_transport.afterward(1), 0)
 
 # Microwaves for HFS spectroscopy
 if MW_cw_ttl:
@@ -831,7 +834,7 @@ MOT2_pwr.SetInterval(times_transport, Trans_GDEP_pwr)
 
 ### Shutter to block MOT light
 if times_transport.length() > 5*Unit.ms():
-	Shut_MOT_ttl.SetInterval(times_transport.afterStart(Shutter_delay_ms*Unit.ms()).afterward(0), Shutter_open_switch)
+	Shut_MOT_ttl.SetInterval(times_transport.afterStart(Shutter_delay_ms*Unit.ms()).afterward(0), 0)
 
 ### degenerate Raman sideband cooling 
 if dRSC_switch == 1:
@@ -913,14 +916,14 @@ if Ramp1_switch == 1:
 	LAT2_pwr.SetLogRamp(times_ramp1, LAT2_pwr.GetLastValue(), Ramp1_Retro_pwr, sample_rate=samprate)
 	Sacher2_pwr.SetLogRamp(times_ramp1, Sacher2_pwr.GetLastValue(), Ramp1_ELAT_pwr, sample_rate=samprate)
 if Ramp2_switch == 1:
-	samprate = np.minimum(0.04, Ramp1_steps/Ramp2_dur_us)
+	samprate = np.minimum(0.04, Ramp2_steps/Ramp2_dur_us)
 	#print samprate
 	LAT0_pwr.SetLogRamp(times_ramp2, Ramp1_ODT_pwr, Ramp2_ODT_pwr, sample_rate=samprate)
 	LAT1_pwr.SetLogRamp(times_ramp2, Ramp1_Retro_pwr, Ramp2_Retro_pwr, sample_rate=samprate)
 	LAT2_pwr.SetLogRamp(times_ramp2, Ramp1_Retro_pwr, Ramp2_Retro_pwr, sample_rate=samprate)
 	Sacher2_pwr.SetLogRamp(times_ramp2, Ramp1_ELAT_pwr, Ramp2_ELAT_pwr, sample_rate=samprate)
 if Ramp3_switch == 1:
-	samprate = np.minimum(0.04, Ramp1_steps/Ramp3_dur_us)
+	samprate = np.minimum(0.04, Ramp3_steps/Ramp3_dur_us)
 	LAT0_pwr.SetLogRamp(times_ramp3, Ramp2_ODT_pwr, Ramp3_ODT_pwr, sample_rate=samprate)
 	LAT1_pwr.SetLogRamp(times_ramp3, Ramp2_Retro_pwr, Ramp3_Retro_pwr, sample_rate=samprate)
 	LAT2_pwr.SetLogRamp(times_ramp3, Ramp2_Retro_pwr, Ramp3_Retro_pwr, sample_rate=samprate)
@@ -1005,6 +1008,7 @@ if GDEP_ttl == 1:
 	MOT2_ttl.SetInterval(times_GDEP, 1)
 	MOT2_ttl.SetInterval(times_GDEP.afterward(0), 0)
 	MOT2_pwr.SetInterval(times_GDEP, GDEP_pwr)
+	MOT2_pwr.SetInterval(times_GDEP.afterward(0), 0)
 
 
 ### Probe cycle ###
@@ -1100,7 +1104,7 @@ elif PRB_mode == 2: # for hot wire, Moving the cloud through the cavity waist (O
 	# Turn on/off the cavity probe beam
 	Nufern0_ttl.SetInterval(times_CavPrb, PRB_ttl)
 	Nufern0_ttl.SetInterval(times_CavPrb.afterward(0), 0)
-	Nufern0_pwr.SetInterval(times_CavPrb, PRB_pwr)
+	Nufern0_pwr.SetInterval(times_CavPrb, PRB_pwr_low)
 	# Turn on/off the cavity probe EOM
 	EITPrbEOM_ttl.SetInterval(times_CavPrb, 1)
 	EITPrbEOM_ttl.SetInterval(times_CavPrb.afterward(0), 0)
@@ -1123,8 +1127,8 @@ elif PRB_mode == 2: # for hot wire, Moving the cloud through the cavity waist (O
 
 if Img_switch == 1: # Fluorescence imaging
 	times_IMG = Imaging(times, 1, Img_prep_time_us*Unit.us(), Img_TOF_ms*Unit.ms(), Img_time_us*Unit.us(), Img_drop_time_ms*Unit.ms(), Img_horz_pwr, Img_REP_pwr, IMGMOTFREQ, IMGREPFREQ, img_dep_time = Img_DEPMOT_time_us*Unit.us())
-	#Shut_MOT_ttl.SetInterval(times_transport.beforeEnd(0*Unit.ms()), 1)
-	Shut_MOT_ttl.SetInterval(times_IMG.beforeStart(2.5*Unit.ms()), 1)
+	Shut_MOT_ttl.SetInterval(times_transport.beforeEnd(2.5*Unit.ms()), 1)
+	# Shut_MOT_ttl.SetInterval(times_IMG.beforeStart(2.5*Unit.ms()), 1)
 	AUX_ttl.SetInterval(times_IMG.afterStart((Img_prep_time_us+Img_DEPMOT_time_us+1000.0*Img_TOF_ms)*Unit.us()).afterward(0),Img_RF_ttl)
 	AUX_ttl.SetInterval(times_IMG.afterward(0),0)
 if Img_switch == 2: # Absorption imaging
@@ -1143,7 +1147,7 @@ DDS_trig.Set([(0, 1, 10*Unit.us(), 1),(10*Unit.us(),0,times_FinalWait[1],0)])
 if Img_switch == 2:
 	
 	# open MOT shutter
-	Shut_MOT_ttl.SetInterval(times_IMG_DEP.beforeStart(2.5*Unit.ms()), 1)
+	#Shut_MOT_ttl.SetInterval(times_IMG_DEP.beforeStart(2.5*Unit.ms()), 1)
 	#Shut_MOT_ttl.SetInterval(times_transport.beforeEnd(0*Unit.ms()), 1)
 
 	if Img_FRAMP_switch == 1:
@@ -1157,8 +1161,9 @@ if Img_switch == 2:
 	#Shut_abs_ttl.SetInterval(times_transport.beforeEnd(0*Unit.ms()), 1)
 	Shut_abs_ttl.SetInterval(times_IMG.beforeStart(5*Unit.ms()), 1)
 	# turn off ELAT during imaging
-	Sacher2_ttl.SetInterval(times_IMG, 0)
-	Sacher2_pwr.SetInterval(times_IMG, 0)
+	#Sacher2_ttl.SetInterval(times_IMG, 0)
+	#Sacher2_pwr.SetInterval(times_IMG, 0)
+
 	# depump all (esp. MOT) just before imaging
 	if Img_DEPMOT_atend_us > 0.0:
 		MOT0_ttl.SetInterval(times_IMG_DEP, 1)

@@ -1,3 +1,4 @@
 pymongo
 blosc
+python-blosc
 pillow
