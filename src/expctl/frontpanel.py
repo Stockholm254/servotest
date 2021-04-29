@@ -258,7 +258,7 @@ class FrontPanel(wx.Frame):
     self.btn_run          = wx.Button(self.panel,     wx.ID_ANY, 'Run Single')
     #self.btn_run_repeated = wx.Button(self.panel,     wx.ID_ANY, 'Run Repeatedly')
     self.btn_run_idle     = wx.Button(self.panel,     wx.ID_ANY, 'Run Idle')
-    self.chkbox_savedata   = wx.CheckBox(self.panel,   wx.ID_ANY, 'Save Data')
+    #self.chkbox_savedata   = wx.CheckBox(self.panel,   wx.ID_ANY, 'Save Data')
     self.txt_rungap       = wx.StaticText(self.panel, wx.ID_ANY, 'Run Gap (ms):')
     self.txtctrl_rungap   = wx.TextCtrl(self.panel,   wx.ID_ANY, size=(55, -1), value=str(5))
     self.ln_runsetting    = wx.StaticLine(self.panel, wx.ID_ANY)
@@ -285,7 +285,7 @@ class FrontPanel(wx.Frame):
     self.sizer_runbtns.Add(self.btn_run,          0, flag=wx.ALL|wx.ALIGN_TOP|wx.LEFT, border=5)
     #self.sizer_runbtns.Add(self.btn_run_repeated, 0, flag=wx.ALL|wx.ALIGN_TOP|wx.LEFT, border=5)
     self.sizer_runbtns.Add(self.btn_run_idle,     0, flag=wx.ALL|wx.ALIGN_TOP|wx.LEFT, border=5)
-    self.sizer_runbtns.Add(self.chkbox_savedata,        0, flag=wx.ALL|wx.EXPAND, border=5)
+    #self.sizer_runbtns.Add(self.chkbox_savedata,        0, flag=wx.ALL|wx.EXPAND, border=5)
     self.sizer_runpref.Add(self.txt_rungap,     pos=(0,0), flag=wx.ALL|wx.ALIGN_TOP|wx.ALIGN_LEFT, border=5)
     self.sizer_runpref.Add(self.txtctrl_rungap, pos=(0,1), flag=wx.ALL|wx.ALIGN_TOP|wx.ALIGN_LEFT, border=5)
     self.sizer_RunCtrl.Add(self.sizer_runbtns,   0, flag=wx.LEFT|wx.ALIGN_TOP,               border=5)
@@ -1445,7 +1445,7 @@ class FrontPanel(wx.Frame):
     text_info = self.txtctrl_expinfo.GetValue()
     run_doc = RunLooped(name=loop_fname, date=run_time, Nshots=Nshots,
                         staticMVs=sMVs, loopMVs=lMVs, sequence=seq_bin, info=text_info)
-    self.savedata_switch = bool(self.chkbox_savedata.GetValue())
+    self.savedata_switch = True #bool(self.chkbox_savedata.GetValue())
     logger.debug("Loopen run with save_switch {}".format(self.savedata_switch))
     _run_id = createRun(self.client, run=run_doc, save=self.savedata_switch)
     self.run_id = str(_run_id) #cast BSON Object ID into string

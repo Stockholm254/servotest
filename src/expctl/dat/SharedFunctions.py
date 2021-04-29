@@ -303,14 +303,16 @@ def Imaging(times, mode,
 	MOT0_ttl.SetInterval(times_Prep, 0)
 	REP0_ttl.SetInterval(times_Prep, 0)
 
-	LAT0_ttl.SetInterval(times_Prep.afterStart(0), 0)
-	LAT1_ttl.SetInterval(times_Prep.afterStart(0), 0)
-	LAT2_ttl.SetInterval(times_Prep.afterStart(0), 0)
+	LAT0_ttl.SetInterval(times_Prep.afterStart(t_prep).afterward(0), 0)
+	LAT1_ttl.SetInterval(times_Prep.afterStart(t_prep).afterward(0), 0)
+	LAT2_ttl.SetInterval(times_Prep.afterStart(t_prep).afterward(0), 0)
 
 	# Ramp off LAT0_pwr so don't heat atoms with abrupt turnoff (which can artificially scale up the measured temperature in TOF)
-	LAT0_pwr.SetInterval(times_Prep.afterStart(100), LAT0_pwr.GetLastValue(), 0)
+	#LAT0_pwr.SetInterval(times_Prep.afterStart(100), LAT0_pwr.GetLastValue(), 0)
 	#LAT0_pwr.SetInterval(times_Prep.afterStart(1000), LAT0_pwr.GetLastValue(), 0)
-	#LAT0_pwr.SetLogRamp(times_Prep.afterStart(1000), LAT0_pwr.GetLastValue(), 0, sample_rate=0.04)
+	LAT0_pwr.SetLogRamp(times_Prep.afterStart(t_prep), LAT0_pwr.GetLastValue(), 0, sample_rate=0.04)
+	Sacher2_pwr.SetLogRamp(times_Prep.afterStart(t_prep), Sacher2_pwr.GetLastValue(), 0, sample_rate=0.04)
+	Sacher2_ttl.SetInterval(times_Prep.afterward(0), 0)
 
 	if mode == 1: # Fluorescence imaging
 		times_img1 = times.append(t_img, 'ForeGnd')

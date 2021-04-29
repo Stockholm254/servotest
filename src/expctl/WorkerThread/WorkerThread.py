@@ -158,7 +158,12 @@ class WorkerThread(Thread):
         seq.foldername = self._notify_window.dir_data # Data folder
         seq.run_id = self._notify_window.run_id #Add run_id to sequence
         seq.counter = counter
-        seq.saveswitch = self.saveswitch
+        # don't save pre-runs!
+        # this seems the best place to implement that since no args are passed to this function
+        if self.loop == RUNMODE_PRE:
+          seq.saveswitch = 0
+        else:
+          seq.saveswitch = self.saveswitch
         if FB:
           seq.foldername+="/FB"
         seq.runname = GenFname(header='', dt=self.time_now, post=str(counter))
@@ -482,32 +487,6 @@ def RunExperiment(dm):
   CopyChans() # Copy the bright sequence to the corresponding dark sequence
   
   # Start sending data to device servers and check if they finish parsing the data
-  #_socks = {} # Dict for temporarily hold all the open sockets
-  # Send and queue all sequence
-  #tqueuestart = time.time()
-  # for seq in seqs:
-  #   print(seq.name+" (Length: "+str(seq.TIME_STOP/1e6)+"s):")
-  #   print('\tSending...')
-  #   r = dm.Send(seq)
-
-  #   if seq != MasterSequence: # Queue the sequence unless is master sequence
-  #     _socks[seq.name] = dm.Queue(seq) # Collect the open socket for later use
-  #     if _socks[seq.name] != -1:
-  #       print(seq.name + " queued")
-  #   else:
-  #     print('\tMaster sequence, will run after all sequences have been queued...')
-  #tqueueend = time.time()
-
-  # e_prep = True
-  # for seq in seqs: # Check if sequence finish parsing the data
-  #   if seq != MasterSequence:
-  #     print("checking "+seq.name)
-  #     if _socks[seq.name] != -1:
-  #       e = dm.PrepFinish(_socks[seq.name])
-  #       if e == 0: 
-  #         printError(seq.name+' failed in the preperation!')
-  #         e_prep = False
-  # tcheckprepend = time.time()
   tsend = dm.SendSequences()
   e_prep, tqueue, tprep = dm.QueueSequences(MasterSequence, timeout=3.)
 
@@ -519,7 +498,6 @@ def RunExperiment(dm):
   if not e_prep:
     return e_prep
 
-  #FinishRun = WaitForAllToFinish(dm) # Wait for all sequence to finish
   FinishRun = dm.WaitForAllToFinish() # Wait for all sequence to finish
   tend = time.time()
 
@@ -536,9 +514,5 @@ def SendData(dm):
   seq_length = DefineEndings(seqs) # Match the end time of all sequences
   CopyChans() # Copy the bright sequence to the corresponding dark sequence
   # Send and queue all sequence
-  # for seq in seqs:
-  #   print(seq.name+" (Length: "+str(seq.TIME_STOP/1e6)+"s):")
-  #   print('\tSending...')
-  #   dm.Send(seq)
   dm.SendSequences()
   return 1
