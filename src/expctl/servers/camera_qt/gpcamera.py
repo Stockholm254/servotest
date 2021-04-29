@@ -5,11 +5,14 @@ except:
 import time
 import datetime
 import os
+import shutil
 import numpy as np
 from ..ServerClass import logger
 from pathlib import Path
 from copy import deepcopy
 from ...config.config import DIR_DATA
+
+BIT12 = False
 
 def print_camera_info(cam):
 		cam_info = cam.getCameraInfo()
@@ -104,7 +107,7 @@ class GP_camera:
 		self.c.setConfiguration(grabTimeout = 10000)
 		self.c.startCapture()  
 		
-	def GrabImages(self, shutter=0, gain=24., number=0, runname="", foldername=""):
+	def GrabImages(self, shutter=0, gain=24., save=0, number=0, runname="", foldername=""):
 		self.shutter_time = shutter
 		self.num_of_images = number
 		self.run_name = runname
@@ -114,6 +117,7 @@ class GP_camera:
 		self.setDate()
 		img_dir = DIR_DATA/self.date_dir/self.folder_name
 		self.img_dir = img_dir
+		logger.debug("saving to {}".format(self.img_dir))
 		
 		img_name = []
 		for pic in range(0, self.num_of_images):
@@ -122,8 +126,8 @@ class GP_camera:
 				img_name.append(img_dir/(self.run_name + "_IMG" + str(pic+1) + ".png"))
 			else:
 				img_name.append(img_dir/(self.run_name + "_IMG" + str(pic+1) + ".PGM"))
-		# if not os.path.exists(img_dir):
-		# 	os.makedirs(img_dir)
+		if not os.path.exists(img_dir):
+			os.makedirs(img_dir)
 		
 		#Set shutter time
 		shutter_prop = self.c.getProperty(PyCapture2.PROPERTY_TYPE.SHUTTER)
@@ -152,7 +156,7 @@ class GP_camera:
 			logger.info(prop_type_dic[prop.type] + " = " + str(prop.absValue) + prop_type_units[prop.type])
 
 		#Grab images
-		#images = {}
+		images = {}
 		imgbuffer = []
 		err=False
 		for i, img in enumerate(img_name):
@@ -165,23 +169,48 @@ class GP_camera:
 				#Convert to a numpy array with the right shape
 				cv_image = np.array(image.getData(), dtype="uint8").reshape( (image.getRows(), image.getCols()) )
 				imgbuffer.append(cv_image)
+				images[img] = image
+		if not err:
+			for img in img_name:
+				if save == 1:
+					logger.info("Img_save = 1, saving images")
+					try:
 
+						if BIT12:
+							newimg = images[img].convert(PyCapture2.PIXEL_FORMAT.MONO16)
+							newimg.save(str(img).encode('utf-8'), PyCapture2.IMAGE_FILE_FORMAT.PNG)
+						else:
+							newimg = images[img].convert(PyCapture2.PIXEL_FORMAT.MONO8)
+							newimg.save(str(img).encode('utf-8'), PyCapture2.IMAGE_FILE_FORMAT.PGM)
+					except:
+						logger.exception("couldn't save image")
+				else:
+					logger.info("Img_save = 0, not saving images")
 		return (not err), imgbuffer
 							
-	def Disconnect(self):
-		self.c.disconnect()
-		logger.info("Disconnected the camera.")
-
-class Mock_GP_camera:
-	def __init__(self, BIT12=False, camera_id=0):
-		#self.get_c = flycapture2.Context()
-		self.shutter_time = 0
-		self.num_of_images = 0
-		self.run_name = ""
-		self.folder_name = ""
-		self.setDate()     
-		self.BIT12 = BIT12
-		self.camera_id=camera_id
+	def CopyImages(self, foldername=""):
+		COPYPath = DIR_DATA/self.date_dir/foldername
+		BKPPath = Path("S:/Rydberg Experiment Data")/self.date_dir/foldername
+		files = [file for file in os.listdir(COPYPath) if os.path.isfile(os.path.join(COPYPath, file))]
+		try:
+			if not os.path.exists(BKPPath):
+				os.makedirs(BKPPath)
+			for file in files:
+				if not os.path.exists(os.path.join(BKPPath, file)):
+					shutil.copy(os.path.join(COPYPath, file), BKPPath)
+			return 1
+		except:
+			return 0
+	
+	 
+	def SaveCameraLog(self, runtime=""):
+		#log_dir = "E:\\Logs\\LOG_Cam\\" + self.date_dir
+		log_dir = Path("C:/Logs")/self.date_dir
+		# log_dir = os.path.expanduser("~\\camera_test\\" + self.date_dir) #Testing image folder
+		log_name = log_dir/(self.run_name + ".txt")
+		
+		if not os.path.exists(log_dir):
+			os.makedirs(log_dir)
 		
 	def setDate(self):
 		self.run_time = datetime.datetime.now()
