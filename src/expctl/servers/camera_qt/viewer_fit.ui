@@ -82,6 +82,19 @@
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QCheckBox" name="checkBox_absScale">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>ABS scale fluctuations</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
@@ -257,16 +270,10 @@
         <item>
          <widget class="QListView" name="listView">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+           <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
-          </property>
-          <property name="gridSize">
-           <size>
-            <width>1</width>
-            <height>3</height>
-           </size>
           </property>
          </widget>
         </item>
