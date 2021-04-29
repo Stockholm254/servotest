@@ -1,0 +1,6 @@
+pyzmq
+coloredlogs
+pymongo
+
+get spinnaker sdk (only runtime and driver) and pyspin from https://www.flir.com/products/spinnaker-sdk/ for the correct python version (now we use python 3.8)
+follow instructions in download to setup pyspin

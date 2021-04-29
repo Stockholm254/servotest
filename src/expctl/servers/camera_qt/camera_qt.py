@@ -13,12 +13,19 @@ import numpy as np
 import os
 import time
 from scipy.optimize import curve_fit
+# try:
+#     import PyCapture2
+# except:
+#     from .gpcamera import Mock_GP_camera as Camera
+# else:
+#     from .gpcamera import GP_camera as Camera
+
 try:
-    import PyCapture2
+    import PySpin
 except:
-    from .gpcamera import Mock_GP_camera as Camera
+    from .spincamera import Mock_GP_camera as Camera
 else:
-    from .gpcamera import GP_camera as Camera
+    from .spincamera import GP_camera as Camera
 
 from ..ServerClass import logger, Server
 from copy import deepcopy
@@ -35,8 +42,8 @@ IMG_FL = {0: 'fg', 1: 'bg'}
 STORE_FILES = False
 
 CAMERA_SERIALS = {13442499: 'Cam Absorption', 15331899: 'Cam Fluorescence', 17497066: 'Cam Absorption 3',}
-DEFAULT_ROI = {13442499: (500, 1100, 350, 950), 15331899: (550, 850, 250, 950), 17497066: (500, 1100, 350, 950), 17497066: (350, 550, 450, 650)}
-DEFAULT_FIT_ROI = {13442499: (500, 1100, 350, 950), 15331899: (550, 850, 250, 950), 17497066: (500, 1100, 350, 950), 17497066: (350, 550, 450, 650)}
+DEFAULT_ROI = {13442499: (500, 1100, 350, 950), 15331899: (550, 850, 250, 950), 17497066: (500, 1100, 350, 950), 17497066: (500, 1100, 800, 1300)}
+DEFAULT_FIT_ROI = {13442499: (500, 1100, 350, 950), 15331899: (550, 850, 250, 950), 17497066: (500, 1100, 350, 950), 17497066: (600, 1000, 900, 1200)}
 CAMERA_KWARGS = {17497066: {'trigger_port': 2, 'trigger_mode': 1, 'video_mode': (23, 8)}} #CM3 full resolution (2048x1536) (23, 8) 
 # Interpret image data as row-major instead of col-major
 #pg.setConfigOptions(imageAxisOrder='row-major')
@@ -286,7 +293,7 @@ class ServerWorker(QObject):
     def acquire(self, roi):
         self.serv.set_ROI(roi)
         self.serv.main_loop(cond_fn=(lambda : not QThread.currentThread().isInterruptionRequested()) )
-
+        self.serv.device.Disconnect()
         self.thread.quit()
         self.thread.wait()
         print("Exiting...")
@@ -372,7 +379,7 @@ class MainWindow(TemplateBaseClass):
         camera_id = self.ui.comboBox.currentIndex()
         ser = self.cams[camera_id]['serial'] #serial of current camera
         if ser in DEFAULT_ROI.keys():
-            res = self.cams[camera_id]['res'].decode('utf-8').split('x')
+            res = self.cams[camera_id]['res'].split('x') #.decode('utf-8')
             xmax, ymax = int(res[0]), int(res[1])
             self.ui.x1SpinBox.setMaximum(xmax)
             self.ui.y1SpinBox.setMaximum(ymax)
@@ -618,7 +625,7 @@ class MainWindow(TemplateBaseClass):
             absArray = np.nan_to_num(absArray, nan=1e-1, posinf=1e-1, neginf=1e-1)
             data = np.log(absArray)
             data = np.nan_to_num(data, nan=0, posinf=0, neginf=0)
-        
+
         # scale factor for absolute atom number
         res_Xsec = 1.356 * 1e-9 # cm^2 (resonant cross section from Steck)
         px_to_um = 3.75 # um
