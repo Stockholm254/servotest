@@ -1,0 +1,8 @@
+pymongo
+blosc
+python-blosc
+pillow
+pyqtgraph
+scipy
+blosc
+python-blosc

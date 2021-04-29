@@ -101,10 +101,12 @@ def TOF(times, TimeOfFly):
 	
 	return times_TOF
 	
-def Transport(times,  acc, dist, chanA=RP_trans_a, chanB=None, Lat1_f=80., Lat2_f=80., Max_df=10., mode=0, twoAoms=0, Npts=32):
+def Transport(times,  acc, dist, chanA=None, chanB=None, Lat1_f=80., Lat2_f=80., Max_df=10., mode=0, twoAoms=0, Npts=32):
 	# channels chanA and chanB should be channel objects
 	# Use computer front panel to control the DDS ramping frequency, and use the ramp
 	# direction register to change ramp direction
+	if chanA is None:
+		raise RuntimeError("You have to specify a chanA!")
 	mode = int(mode)
 	twoAoms = int(twoAoms)
 	Npts = int(Npts)
@@ -301,9 +303,16 @@ def Imaging(times, mode,
 	MOT0_ttl.SetInterval(times_Prep, 0)
 	REP0_ttl.SetInterval(times_Prep, 0)
 
-	LAT0_ttl.SetInterval(times_Prep.afterStart(0), 0)
-	LAT1_ttl.SetInterval(times_Prep.afterStart(0), 0)
-	LAT2_ttl.SetInterval(times_Prep.afterStart(0), 0)
+	LAT0_ttl.SetInterval(times_Prep.afterStart(t_prep).afterward(0), 0)
+	LAT1_ttl.SetInterval(times_Prep.afterStart(t_prep).afterward(0), 0)
+	LAT2_ttl.SetInterval(times_Prep.afterStart(t_prep).afterward(0), 0)
+
+	# Ramp off LAT0_pwr so don't heat atoms with abrupt turnoff (which can artificially scale up the measured temperature in TOF)
+	#LAT0_pwr.SetInterval(times_Prep.afterStart(100), LAT0_pwr.GetLastValue(), 0)
+	#LAT0_pwr.SetInterval(times_Prep.afterStart(1000), LAT0_pwr.GetLastValue(), 0)
+	LAT0_pwr.SetLogRamp(times_Prep.afterStart(t_prep), LAT0_pwr.GetLastValue(), 0, sample_rate=0.04)
+	Sacher2_pwr.SetLogRamp(times_Prep.afterStart(t_prep), Sacher2_pwr.GetLastValue(), 0, sample_rate=0.04)
+	Sacher2_ttl.SetInterval(times_Prep.afterward(0), 0)
 
 	# Ramp off LAT0_pwr so don't heat atoms with abrupt turnoff (which can artificially scale up the measured temperature in TOF)
 	LAT0_pwr.SetInterval(times_Prep.afterStart(100), LAT0_pwr.GetLastValue(), 0)

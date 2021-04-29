@@ -25,6 +25,7 @@ temp/
 .vscode
 tags
 TestOutput
+src/expctl/usr/snippets/*
 
 # Package files
 *.egg
