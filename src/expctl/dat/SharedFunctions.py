@@ -313,9 +313,10 @@ def Imaging(times, mode,
 	LAT0_pwr.SetLogRamp(times_Prep.afterStart(t_prep), LAT0_pwr.GetLastValue(), 0, sample_rate=0.04)
 	Sacher2_pwr.SetLogRamp(times_Prep.afterStart(t_prep), Sacher2_pwr.GetLastValue(), 0, sample_rate=0.04)
 	Sacher2_ttl.SetInterval(times_Prep.afterward(0), 0)
+	#ODT2_ttl.SetInterval(times_Prep.afterward(0), 0)
 
 	# Ramp off LAT0_pwr so don't heat atoms with abrupt turnoff (which can artificially scale up the measured temperature in TOF)
-	LAT0_pwr.SetInterval(times_Prep.afterStart(100), LAT0_pwr.GetLastValue(), 0)
+	#LAT0_pwr.SetInterval(times_Prep.afterStart(100), LAT0_pwr.GetLastValue(), 0)
 	#LAT0_pwr.SetInterval(times_Prep.afterStart(1000), LAT0_pwr.GetLastValue(), 0)
 	#LAT0_pwr.SetLogRamp(times_Prep.afterStart(1000), LAT0_pwr.GetLastValue(), 0, sample_rate=0.04)
 

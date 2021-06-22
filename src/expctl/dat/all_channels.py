@@ -33,9 +33,11 @@ all_sequences = ([
   Sequence("ADF435X sequence",        host=IP_RYDFRIES,  port=PORT_AD1,      max_channels=3 , graph=0),
   Sequence("RFSOC 1 sequence",        host=IP_RFSOC_1,   port=PORT_RFSOC,    max_channels=8 , graph=0),
   Sequence("RP DDS Transport sequence", host=IP_RPTR,    port=PORT_RPTR,     max_channels=2 , graph=0),
+  Sequence("Kinesis Lambda 2",        host=IP_RYDFRIES,  port=PORT_KINESIS_2,max_channels=1 , graph=0),
+  Sequence("Kinesis Lambda 4",        host=IP_RYDFRIES,  port=PORT_KINESIS_4,max_channels=1 , graph=0),
   ])
 
-digital_seq1, analog_seq1, cam, cam2, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, photon_counter, lb_1, lb_2, lb_3, lb_4, ad_1, rfsoc_1, rp_ddds_1 = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
+digital_seq1, analog_seq1, cam, cam2, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, photon_counter, lb_1, lb_2, lb_3, lb_4, ad_1, rfsoc_1, rp_ddds_1, kinesis_2, kinesis_4 = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
 
 #=======================================Channel Definitions=========================================
 # NEXT ADD ALL OF THE CHANNELS TO THEM! ##Note: the name in quotes must have 1 < length < 31
@@ -54,7 +56,7 @@ V1_ttl        = digital_seq1.newChannel(9,  "V1 TTL",           system='EField',
 LAT0_ttl      = digital_seq1.newChannel(10, "Lat Main TTL",     system='LAT',     steady_state_value=0, max_value=1, graph=1, transform_t=tran.LatAOMDelay)
 MOT1_ttl      = digital_seq1.newChannel(11, "MOTdRSC Pump TTL", system='dRSC',    steady_state_value=0, max_value=1, graph=1)
 Blue_ttl      = digital_seq1.newChannel(12, "Blue TTL",         system='Blue',    steady_state_value=0, max_value=1, graph=1, transform_t=tran.BlueAOMDelay)
-ODT2_ttl      = digital_seq1.newChannel(13, "Cav DTrap TTL",    system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.BlueAOMDelay)
+ODT2_ttl      = digital_seq1.newChannel(13, "Cav DTrap TTL",    system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.LatAOMDelay)
 Nufern0_ttl   = digital_seq1.newChannel(14, "Cav Prb TTL",      system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.CavPrbAOMDelay)
 PRB_pwr_ttl   = digital_seq1.newChannel(15, "Cav Prb Power TTL",system='CavPrb',  steady_state_value=0, max_value=1, graph=1) #, transform_t=tran.CavPrbAOMDelay
 Timer_trig    = digital_seq1.newChannel(16, "Timer Trig",       system='Debug',   steady_state_value=0, max_value=1, graph=1, ctype='Slave', master=Scope_trig)
@@ -186,6 +188,10 @@ RFSOC1_7 = rfsoc_1.newChannel(7, "RFSOC 1 Chan 7",   system='CavPrb', steady_sta
 #Red Pitaya Transport DDS
 RP1_DDS_0 = rp_ddds_1.newChannel(0, "RedPitaya 1 Chan 0",   system='Debug', steady_state_value=10e6, max_value=40e6, graph=0)
 RP1_DDS_1 = rp_ddds_1.newChannel(1, "RedPitaya 1 Chan 1",   system='Debug', steady_state_value=10e6, max_value=40e6, graph=0)
+
+# Thorlabs Kinesis waveplate rotational stages
+KINESIS_LAM_2 = kinesis_2.newChannel(0, "Lambda 2 angle", system='dRSC', steady_state_value=355.5, max_value=360.0, graph=0)
+KINESIS_LAM_4 = kinesis_4.newChannel(0, "Lambda 4 angle", system='dRSC', steady_state_value=355.5, max_value=360.0, graph=0)
 
 #Camera Gain channel
 Camera_gain = cam.newChannel(0, "Camera gain", system='IMG', steady_state_value=24.0, max_value=24.0, graph=0)
