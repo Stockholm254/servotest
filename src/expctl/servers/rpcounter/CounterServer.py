@@ -13,7 +13,6 @@ from expdatabase.db import insertCounter
 from expdatabase.types import ShotCounter
 from pymongo import MongoClient
 from bson import ObjectId
-from ..config.config import DIR_DATA
 from .rpcounter import RpCounter
 
 DIR_BITFILE = Path(__file__).parent
@@ -45,7 +44,7 @@ class CounterServer(Server):
             logger.error('QUEUE failed. Sequence has not been imported!')
         else:
             try:
-                acquire_data, save_data = RunServer(self.seq, 0)
+                acquire_data, save_data = self._RunServer()
                 logger.debug('Sequence has been queued... Trigger it whenever!')
                 self.send_msg(self.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
                 logger.debug(f'Acquire: {acquire_data}, Save: {save_data}')
@@ -70,7 +69,7 @@ class CounterServer(Server):
     def plotdata(self):
         return 1
 
-    def _RunServer(self, autostart = 1):
+    def _RunServer(self):
         TIME_START = time.time()
         seq = self.seq
 
@@ -126,7 +125,7 @@ class CounterServer(Server):
             MaxCounts = max_count_rate*BinSize # expected number of counts in one bin
             DacScale = min(int(floor(2**13/MaxCounts)),2**16-1)
             logger.debug("DAC scale factor: {:d}".format(DacScale))
-            self.counter.nbins = sample_num
+            self.counter.nbins = int(sample_num)
             self.counter.ncycles = BinCycles
             self.counter.dac_scale = DacScale
 

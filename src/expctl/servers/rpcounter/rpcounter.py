@@ -6,6 +6,7 @@ import sys
 import numpy as np
 from pathlib import Path
 from time import time
+from pynq import Overlay
 
 class RpCounter:
 
@@ -13,9 +14,11 @@ class RpCounter:
         self.bitfile = bitfile
 
         if self.bitfile.exists():
-            os.system("cat {} > /dev/xdevcfg".format(self.bitfile))
+            #os.system("cat {} > /dev/xdevcfg".format(self.bitfile))
+            print(str(self.bitfile))
+            overlay = Overlay(str(self.bitfile))
         else:
-            print("Couldn't load bitfile, exiting...", e)
+            print("Couldn't load bitfile, exiting...")
             sys.exit()
 
         self.fclk_Hz = fclk_Hz
@@ -44,7 +47,7 @@ class RpCounter:
 
     @nbins.setter
     def nbins(self, value):
-        self._nbins = value
+        self._nbins = int(value)
         val = struct.pack('<HH', self._ncycles, self._nbins)
         aa = self.RP_CFG - self.RP_BRAM
         self.m[aa:aa+4] = val
@@ -55,7 +58,7 @@ class RpCounter:
 
     @ncycles.setter
     def ncycles(self, value):
-        self._ncycles = value
+        self._ncycles = int(value)
         val = struct.pack('<HH', self._ncycles, self._nbins)
         aa = self.RP_CFG - self.RP_BRAM
         self.m[aa:aa+4] = val
@@ -66,7 +69,7 @@ class RpCounter:
 
     @dac_scale.setter
     def dac_scale(self, value):
-        self._dac_scale = value
+        self._dac_scale = int(value)
         aa = self.RP_CFG - self.RP_BRAM
         self.m[aa+4:aa+8] = struct.pack('<HH', self._dac_scale, self._dac_scale)
 
