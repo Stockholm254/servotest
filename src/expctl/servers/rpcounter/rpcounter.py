@@ -1,0 +1,128 @@
+import mmap
+import struct
+import os
+import time
+import sys
+import numpy as np
+from pathlib import Path
+from time import time
+
+class RpCounter:
+
+    def __init__(self, bitfile="", fclk_Hz=125e6, nbins=1000, ncycles=1250, dac_scale=100):
+        self.bitfile = bitfile
+
+        if self.bitfile.exists():
+            os.system("cat {} > /dev/xdevcfg".format(self.bitfile))
+        else:
+            print("Couldn't load bitfile, exiting...", e)
+            sys.exit()
+
+        self.fclk_Hz = fclk_Hz
+
+        #ADDRESSES IN THE MEMORY MAPPED ADDRESS SPACE
+        self.RP_BRAM = 0x40000000 # import adresses manually from Vivado
+        self.RP_CFG = 0x43C10000
+        self.RP_STS = 0x43C20000
+        self.RP_FPGARAMSIZE = self.RP_STS - self.RP_BRAM + 0xFFFF
+
+        fd = os.open('/dev/mem', os.O_RDWR)
+        self.m = mmap.mmap(fileno=fd, length=self.RP_FPGARAMSIZE, offset=self.RP_BRAM)
+
+        self._nbins = nbins
+        self._ncycles = ncycles
+        self._dac_scale = dac_scale
+
+        # call the setters to write hardware
+        self.nbins = nbins
+        self.ncycles = ncycles
+        self.dac_scale = dac_scale
+
+    @property
+    def nbins(self):
+        return self._nbins
+
+    @nbins.setter
+    def nbins(self, value):
+        self._nbins = value
+        val = struct.pack('<HH', self._ncycles, self._nbins)
+        aa = self.RP_CFG - self.RP_BRAM
+        self.m[aa:aa+4] = val
+
+    @property
+    def ncycles(self):
+        return self._ncycles
+
+    @ncycles.setter
+    def ncycles(self, value):
+        self._ncycles = value
+        val = struct.pack('<HH', self._ncycles, self._nbins)
+        aa = self.RP_CFG - self.RP_BRAM
+        self.m[aa:aa+4] = val
+
+    @property
+    def dac_scale(self):
+        return self._dac_scale
+
+    @dac_scale.setter
+    def dac_scale(self, value):
+        self._dac_scale = value
+        aa = self.RP_CFG - self.RP_BRAM
+        self.m[aa+4:aa+8] = struct.pack('<HH', self._dac_scale, self._dac_scale)
+
+    def GetStatus(self):
+        bb = self.RP_STS - self.RP_BRAM
+        read = self.m[bb:(bb+4*3)]
+        done, clk = struct.unpack('<IQ',read)
+        return done, clk
+
+    def _WaitForSts(self, sts, msg):
+        while True:
+            done, clk = self.GetStatus()
+            if done==sts:
+                print(msg)
+                break
+        return clk
+
+    def WaitForTrigger(self):
+        # wait for the done signal to go low
+        return self._WaitForSts(sts=0, msg='FPGA triggered')
+
+    def WaitForEnd(self):
+        # wait for the done signal to go high again
+        return self._WaitForSts(sts=1, msg='FPGA done')
+
+    def WaitForBoth(self):
+        # wait for the done signal to go low and high again
+        self.WaitForTrigger()
+        return self.WaitForEnd()
+
+    def GetCounts(self):
+        data = np.frombuffer(self.m[0:(self.nbins*2)], dtype=np.dtype(np.uint16))
+        return data
+
+if __name__ == "__main__":
+    DIR_BITFILE = Path(__file__).parent
+    bitfile_path = DIR_BITFILE/"counter_32k.bit"
+    print("Using bitfile {}".format(bitfile_path))
+
+    counter = RpCounter(bitfile=bitfile_path, fclk_Hz=125e6, nbins=1000, ncycles=1250, dac_scale=100)
+    print(counter.nbins, counter.ncycles, counter.dac_scale)
+    print(counter.WaitForBoth())
+    data = counter.GetCounts()
+    print(data.shape, np.unique(data))
+
+    counter.nbins=10000
+    print(counter.nbins, counter.ncycles, counter.dac_scale)
+    print(counter.WaitForBoth())
+    data = counter.GetCounts()
+    print(data.shape, np.unique(data))
+
+    counter.nbins=1000
+    counter.ncycles=12500
+    print(counter.nbins, counter.ncycles, counter.dac_scale)
+    print(counter.WaitForBoth())
+    data = counter.GetCounts()
+    print(data.shape, np.unique(data))
+
+    print("done")

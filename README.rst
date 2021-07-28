@@ -22,7 +22,9 @@ Installation
 - create conda environment with conda env create -n expctl3 python=3.8
 - conda install numpy scipy matplotlib wxpython blosc python-blosc pymongo pillow
 - pip install pyzmq pyqt pyqtgraph
-- install expdatabase via $expctl/expdatabase> python setup.py develop
+- install expdatabase via:
+    - git submodule update --init --recursive
+    - $expctl/expdatabase> python setup.py develop
 - cd ../
 - $expctlpython> setup.py develop
 
