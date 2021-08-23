@@ -15,11 +15,11 @@ class RpDAC:
 	Pitaya and the FPGA itself. 
 	"""
 
-	def __init__(self, bitfile="", num_channels=16, fclk_Hz=125e6, maxevents=64*16, vmin_volts=-10., vmax_volts=10.):
+	def __init__(self, bitfile="", num_channels=16, fclk_Hz=125e6, max_events=64*16, vmin_volts=-10., vmax_volts=10.):
 		
 		# Save arguments, define constants
 		self.bitfile = bitfile
-		self.MAXEVENTS = maxevents
+		self.MAX_EVENTS = max_events
 		self.FCLK_HZ = fclk_Hz
 		self.NUM_CHANNELS = num_channels
 
@@ -52,8 +52,8 @@ class RpDAC:
 		self.SAMPLES_OFFSET          = 1076887552+4*2    # offset in WORDS (4 bytes) to # of samples for the current channel
 
 		self.VOLTS_OFFSET            = 1076887552+4*40   # offset in WORDS to the first element of the current freq list
-		self.CYCLES_OFFSET           = self.VOLTS_OFFSET  + 4*self.MAXEVENTS*2  # offset in WORDS to the first element of the current cyc. list
-		self.legacy_OFFSET           = self.CYCLES_OFFSET + 4*self.MAXEVENTS*1  # offset in WORDS to the first element of the current cyc. list
+		self.CYCLES_OFFSET           = self.VOLTS_OFFSET  + 4*self.MAX_EVENTS*2  # offset in WORDS to the first element of the current cyc. list
+		self.legacy_OFFSET           = self.CYCLES_OFFSET + 4*self.MAX_EVENTS*1  # offset in WORDS to the first element of the current cyc. list
 
 		# Open the memory-mapped space where the CPU interfaces with the FPGA
 		fd = os.open('/dev/mem', os.O_RDWR)
@@ -148,7 +148,8 @@ class RpDAC:
 			# Program this channel
 			for i in range(len(dts)):
 				
-				self.write_2cLong(self.VOLTS_OFFSET + 8*i, dvdts[i])
+				self.write_2cLong(
+					self.VOLTS_OFFSET + 8*i, dvdts[i])
 				self.write_2cLong(self.legacy_OFFSET + 8*i, 0)  # this is leftover from an earlier version of the system
 				self.write(self.CYCLES_OFFSET + 4*i, dts[i])
 
