@@ -21,35 +21,17 @@ FNAME_TEMP_MV = 'temp_MV.txt' # File name for temporary mvs
 ####################################
 ### REDICRECT TO LOCAL PC FOR TESTING
 ## IP address
-IP_RYDBURGER = '127.0.0.1' # Experimental control computer (control room)
-IP_RYDFRIES  = '127.0.0.1' # Data collection computer (laser room top racks)
-IP_RYDCOKES  = '127.0.0.1' # Laptop (mobile, usually in the vacuum room cart)
+IP_RYDRAMEN = '127.0.0.1' # Loadlock control computer
 IP_LABSERVER = '127.0.0.1' # Simonlab data backup server (lab office behind the sofa)
-IP_RYDNUGGET = '127.0.0.1' # New rydberg polariton experiment control computer (control room)
-IP_RPTR = '127.0.0.1'
-IP_RFSOC_1 = '127.0.0.1'
+IP_RFSOC_0 = '127.0.0.1'
+IP_RPDAC_0 = '127.0.0.1'
+IP_RPDOG_0 = '127.0.0.1'
 
-# RYDBURGER PORTS
-PORT_REMOTECTRL = 60000 # Remote front panel control (disabled)
-PORT_DIGITAL    = 50001 # 60615 # National Instrument digital card (in the control computer)
-PORT_ANALOG     = 60616 # National Instrument analog card (in the control computer)
-PORT_DDS1       = 60617 # DDS box 1 (laser room top rack)
-PORT_DDS2       = 60624 # DDS box 2 (laser room top rack)
-PORT_DDSPDH     = 60618 # DDS PHD locking box (vacuum room lower rack)
-PORT_PCOUNTER   = 60621 # Photon counter FPGA (control room under table rack)
-PORT_PTIMER     = 60623 # Photon timer FPGA (control room under table rack)
-PORT_PTIMER2    = 60625 # Photon timer FPGA (control room under table rack); TimerMcTimeFace
-PORT_PTIMER3    = 60626 # Photon timer FPGA (control room under table rack); TimerMcTimeFace
-PORT_AD1		= 60701 # Analog Devices ADF435X, for microwave generation
-# RYDFRIES PORTS
-PORT_CAMERA     = 60614 # Chameleon camera (side or vertical imaging system, chamber table)
-PORT_LB1        = 60615 # Lab Brick 1, for the detuning of the 1529 carrier
-PORT_LB2        = 60616 # Lab Brick 1, for the detuning of the 1529 carrier
-PORT_LB3        = 60617 # Lab Brick 1, for the detuning of the 1529 carrier
-# RPDDS PORTS
-PORT_RPTR       = 60631
+# RYDRAMEN PORTS 
+
+# RPDOG PORTS
+PORT_DIGITAL      = 50001
 # RPDAC PORTS
-PORT_RPDAC      = 60632 # Used by Henry for testing currently
-
-#RFSOC PORTS
-PORT_RFSOC = 60617 # RFSOC 1 Box
+PORT_ANALOG       = 60616
+# RFSOC PORTS
+PORT_DDS          = 60003
