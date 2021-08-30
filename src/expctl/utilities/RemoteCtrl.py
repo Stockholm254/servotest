@@ -8,7 +8,7 @@ from threading import Thread
 from .util import *
 from ..config.config import * # control suite preference
 
-HOST = IP_RYDBURGER
+HOST = IP_RYDRAMEN
 PORT = PORT_REMOTECTRL
 
 def WriteFile(fdir, fname, txt):
