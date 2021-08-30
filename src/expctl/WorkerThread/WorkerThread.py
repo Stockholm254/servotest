@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+from os import name
 import time
 import wx
 import sys
@@ -21,7 +22,6 @@ from ..sequencer.intervaler import Intervaler, TimeInterval # Interval object
 from ..utilities.util import *
 from ..utilities.Feedback import FBControlMV
 
-
 from ..config.config import * # System configuration (log directory, etc)
 from ..utilities.FilenameGenerator import * # Generate formated file name
 
@@ -29,6 +29,11 @@ from ..dat.all_channels import *
 from ..dat import Electrodes as electrodes ###TODO: MOVE INTO MACHINE PARAMETER FILE IN DAT###
 from ..dat import Rubidium as Rb ###TODO: MOVE INTO MACHINE PARAMETER FILE IN DAT###
 from ..dat.SharedFunctions import * # Standard code for varies sequence actions
+
+# import expdatabase.conf as conf
+# from pymongo import MongoClient
+from expdatabase.db import updateRunMVs
+from bson import ObjectId
 
 Unit = jGlobals.UnitsModule() # Units used in sequence file
 
@@ -54,6 +59,7 @@ RUNMODE_DEBUG  = 5 # Sequence debug mode
 ############################
 EVT_RESULT_ID = wx.NewId()
 EVT_UPDATE_ID = wx.NewId()
+EVT_PLOT_TIMES_ID = wx.NewId()
 
 # Magic code binds events so our worker thread will return data and invoke a function
 def EVT_RESULT(win, func):
@@ -61,6 +67,9 @@ def EVT_RESULT(win, func):
 
 def EVT_UPDATE(win, func):
   win.Connect(-1, -1, EVT_UPDATE_ID, func)
+
+def EVT_PLOT_TIMES(win, func):
+  win.Connect(-1, -1, EVT_PLOT_TIMES_ID, func)
 
 class ResultEvent(wx.PyEvent):
   """Simple event to carry arbitrary result data back to GUI."""
@@ -78,6 +87,14 @@ class UpdateEvent(wx.PyEvent):
       self.data  = data
       self.abort = abort
 
+class PlotEvent(wx.PyEvent):
+  """Simple event to carry plot data (especially times) back to GUI."""
+  def __init__(self, data, success=False):
+      wx.PyEvent.__init__(self)
+      self.SetEventType(EVT_PLOT_TIMES_ID)
+      self.data  = data
+      self.success = success
+
 ######################################################
 ###    Thread class that executes repeated runs    ###
 ######################################################
@@ -85,7 +102,7 @@ class WorkerThread(Thread):
   def __init__(
                self, notify_window, loop=0, delay=5.0, 
                prerun=0, startval=0, stopval=10, random=0, 
-               runflag=0
+               runflag=0, saveswitch=0, IntervalerObj=None
                ):
       
       Thread.__init__(self)
@@ -101,8 +118,17 @@ class WorkerThread(Thread):
       self.startval       = startval          # Start value of loop run counter
       self.finalval       = stopval           # Stop value of loop run counter
       self.random         = random            # Randomize loop run order
-
+      self.saveswitch = saveswitch # 0: don't save any data (for pre-runs), 1: save live data, 2: save permanent
       self.time_now = datetime.datetime.now() # Run time
+      self.IntervalerObj = IntervalerObj
+      # try:
+      #   self._client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_AUTH)
+      # except:
+      #   print("Database connection could not be established!")
+      #   self.client = None
+      # else:
+      #   print("Database connection established.")
+      self._client = self._notify_window.client
       
       self.start() # This starts the thread running on creation
 
@@ -113,23 +139,31 @@ class WorkerThread(Thread):
 
   # save mv used in the run to a log file
   def __SaveLog__(self, counter):
-    log_dir = GenDTDir(DIR_LOG, dt=self.time_now)
-    if not os.path.exists(log_dir):
-      os.makedirs(log_dir)
+    # log_dir = GenDTDir(DIR_LOG, dt=self.time_now)
+    # if not os.path.exists(log_dir):
+    #   os.makedirs(log_dir)
 
-    log_fname = log_dir/GenFname(header='LOGFP', dt=self.time_now, post=str(counter))
+    # log_fname = log_dir/GenFname(header='LOGFP', dt=self.time_now, post=str(counter))
     
-    # write log file
-    MV_code = self._notify_window.GenerateMVCode(date_time=self.time_now) # Generate log text
-    f = open(log_fname, 'w')
-    f.write(MV_code)
-    f.close()
-
+    # # write log file
+    # MV_code = self._notify_window.GenerateMVCode(date_time=self.time_now) # Generate log text
+    # f = open(log_fname, 'w')
+    # f.write(MV_code)
+    # f.close()
     return 1
 
   def __UpdateRunName__(self, counter, FB=False):
+    #Now also add run_id
     for seq in all_sequences:
         seq.foldername = self._notify_window.dir_data # Data folder
+        seq.run_id = self._notify_window.run_id #Add run_id to sequence
+        seq.counter = counter
+        # don't save pre-runs!
+        # this seems the best place to implement that since no args are passed to this function
+        if self.loop == RUNMODE_PRE:
+          seq.saveswitch = 0
+        else:
+          seq.saveswitch = self.saveswitch
         if FB:
           seq.foldername+="/FB"
         seq.runname = GenFname(header='', dt=self.time_now, post=str(counter))
@@ -163,6 +197,10 @@ class WorkerThread(Thread):
         exec(self._notify_window.loop_code)
       exec(self._notify_window.staticcode)
       print("Executed Loop/Static Code")
+      # get Intervaler object from sequence for plotting
+      if self.loop==RUNMODE_DEBUG:
+        self.IntervalerObj['Intervaler'] = eval("times") #times
+
       return 1
     except SetError as e:
       printError("SetError: "+e.msg)
@@ -181,11 +219,9 @@ class WorkerThread(Thread):
   # function contains all steps of a single run
   def __RunExp__(self, counter, savelog=True, FB=False):
     tstart = time.time()
-    ClearTerminal() # Clear terminal
+    # ClearTerminal() # Clear terminal
     ResetAll(self._dm) # Reset all sequence
     
-    
-
     if savelog: # do not save log for idle mode
       self.__SaveLog__(counter)
     self.__GetRunTime__() # Update time
@@ -206,9 +242,6 @@ class WorkerThread(Thread):
       else:
         trace_full_dir = DIR_DATA + trace_dir + FolderName + '/FB/'
         FB_longterm_dir = DIR_DATA + trace_dir + FolderName + '/FBold/'
-
-
-      
 
     if FB: # when about to make a new FB measurement
       # Keep the FB folder clean; should only contain the latest shot
@@ -245,20 +278,15 @@ class WorkerThread(Thread):
         if FBMV.FF_ctrl.GetValue():
           FBMV.feedbackIteration(trace_full_dir, MVs=self._notify_window.metavariables_fb)
 
-
-
     tend = time.time()
     print("__RunExp__ took "+str(tend-tstart)+" seconds")
     print("__ExecSeqCode__ took "+str(texec-tprelim)+" seconds")
-
-
-     
 
     return finish
 
   # function for sequence debugging
   def __Debug__(self):
-    ClearTerminal() # Clear concole
+    # ClearTerminal() # Clear concole
     ResetAll(self._dm) # Reset all sequence
     e = self.__ExecSeqCode__(0) # Execute sequence file and MV values
     if e==0: # Return if the sequence has a bug
@@ -285,7 +313,12 @@ class WorkerThread(Thread):
       sequence_run_counter = sequence_runs.pop(0)
       sequence_finished_num = 0
     runs_for_FB = 0 # a new counter to determine when FB cycles occur
-      
+    
+    # create a reference MV dict to track changes through "notify update" during IDLE
+    #if self.loop==RUNMODE_IDLE:
+    if self.loop!=RUNMODE_DEBUG:
+      sMVs_old, lMVs_old = self._notify_window.GenerateMVDict()
+
     while(1):
       loopprevstart = loopstart
       loopstart = time.time()
@@ -370,6 +403,17 @@ class WorkerThread(Thread):
       if self._need_update:
         for _mv in self._notify_window.metavariables:
           exec(_mv.name+"="+str(_mv.value))
+
+        sMVs_new, lMVs_new = self._notify_window.GenerateMVDict()
+        # find MVs that have changed
+        updoc = {ka: sMVs_new[ka] for ka, va in sMVs_old.items() if va!=sMVs_new[ka] }
+        if len(updoc)>0: # the "_need_update" flag is not properly synchronized with the fp so check that actual change happened
+          _updoc = {'j': sequence_run_counter}
+          _updoc.update(updoc)
+          #print("MV {} has changed to {}".format(updoc.keys(),updoc.values()))
+          ret = updateRunMVs(client=self._client, run_id=ObjectId(self._notify_window.run_id), update_doc=_updoc, save=self._notify_window.savedata_switch)
+
+          sMVs_old, lMVs_old = sMVs_new, lMVs_new
         self._need_update = 0
       time.sleep(1e-3*self.delay) # Time gap between runs
   
@@ -443,32 +487,6 @@ def RunExperiment(dm):
   CopyChans() # Copy the bright sequence to the corresponding dark sequence
   
   # Start sending data to device servers and check if they finish parsing the data
-  #_socks = {} # Dict for temporarily hold all the open sockets
-  # Send and queue all sequence
-  #tqueuestart = time.time()
-  # for seq in seqs:
-  #   print(seq.name+" (Length: "+str(seq.TIME_STOP/1e6)+"s):")
-  #   print('\tSending...')
-  #   r = dm.Send(seq)
-
-  #   if seq != MasterSequence: # Queue the sequence unless is master sequence
-  #     _socks[seq.name] = dm.Queue(seq) # Collect the open socket for later use
-  #     if _socks[seq.name] != -1:
-  #       print(seq.name + " queued")
-  #   else:
-  #     print('\tMaster sequence, will run after all sequences have been queued...')
-  #tqueueend = time.time()
-
-  # e_prep = True
-  # for seq in seqs: # Check if sequence finish parsing the data
-  #   if seq != MasterSequence:
-  #     print("checking "+seq.name)
-  #     if _socks[seq.name] != -1:
-  #       e = dm.PrepFinish(_socks[seq.name])
-  #       if e == 0: 
-  #         printError(seq.name+' failed in the preperation!')
-  #         e_prep = False
-  # tcheckprepend = time.time()
   tsend = dm.SendSequences()
   e_prep, tqueue, tprep = dm.QueueSequences(MasterSequence, timeout=3.)
 
@@ -480,7 +498,6 @@ def RunExperiment(dm):
   if not e_prep:
     return e_prep
 
-  #FinishRun = WaitForAllToFinish(dm) # Wait for all sequence to finish
   FinishRun = dm.WaitForAllToFinish() # Wait for all sequence to finish
   tend = time.time()
 
@@ -497,9 +514,5 @@ def SendData(dm):
   seq_length = DefineEndings(seqs) # Match the end time of all sequences
   CopyChans() # Copy the bright sequence to the corresponding dark sequence
   # Send and queue all sequence
-  # for seq in seqs:
-  #   print(seq.name+" (Length: "+str(seq.TIME_STOP/1e6)+"s):")
-  #   print('\tSending...')
-  #   dm.Send(seq)
   dm.SendSequences()
   return 1

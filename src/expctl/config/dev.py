@@ -8,7 +8,8 @@ from pathlib import Path
 DIR_SEQ  = Path(__file__).parent.parent/"usr/sequences" # defaulst sequences files
 DIR_MV   = Path(__file__).parent.parent/"usr/snippets" # default MV files
 DIR_TEMP = Path(__file__).parent.parent/"temp" # front panel temperary file directory
-DIR_DATA = Path(__file__).parent.parent.parent.parent/"TestOutput/Data/" # experiment data
+#DIR_DATA = Path(__file__).parent.parent.parent.parent/"TestOutput/Data/" # experiment data
+DIR_DATA = Path("E:/Data") # experiment data for realz
 DIR_LOG  = Path(__file__).parent.parent.parent.parent/"TestOutput/Logs/" # experiment run log
 DIR_REM  = Path(__file__).parent.parent/"usr/Remote"  #Path("./usr/Remote") # Remote uploaded file
 

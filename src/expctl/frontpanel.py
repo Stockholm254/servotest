@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 import time
 import datetime
 import os
@@ -15,6 +14,8 @@ import pickle
 import winsound
 from pathlib import Path, WindowsPath
 import shelve
+from numpy.lib.npyio import save
+import secrets
 
 import wx
 import wx.lib.agw.floatspin as FS
@@ -23,8 +24,6 @@ from wx.lib.buttons import *
 # GUI helper functions
 from .utilities import PlotSeq
 from .utilities import BkpData
-#import .utilities.PlotSeq as PlotSeq
-#import .utilities.BkpData as BkpData
 from .utilities.ReadMV import ReadMV as ReadMV, CompareMV
 from .utilities.ReadMV import ChkScriptName
 from .utilities.LoadSequence import seq_parser
@@ -44,9 +43,22 @@ from .dat.all_channels import * #THIS IS WHERE WE DEFINE SEQUENCES AND CHANNELS 
 from .sequencer.sequence import *
 
 from .DeviceManager.DeviceManager import DeviceManager
-from .WorkerThread.WorkerThread import WorkerThread, EVT_RESULT, EVT_UPDATE
+from .WorkerThread.WorkerThread import WorkerThread, EVT_RESULT, EVT_UPDATE, EVT_PLOT_TIMES
 
 from .config.config import * # control suite preference
+import coloredlogs, logging
+
+#Experiment database connection
+import expdatabase.conf as conf
+from pymongo import MongoClient
+from expdatabase.db import createRun, finalizeRun, updateRunMVs
+from expdatabase.types import RunIdle, RunLooped
+from bson import ObjectId
+import zlib
+
+# Create a logger object.
+logger = logging.getLogger(__name__)
+coloredlogs.install(level='DEBUG')
 
 ######################
 #     UTILITIES      #
@@ -73,8 +85,6 @@ FPMODE_SSV = 0 # SSV mode
 FPMODE_SEQ = 1 # regular mode
 FPMODE_REM = 2 # remote control mode (TODO not developed yet!)
 FPMODE_FB  = 3 # set feedback MV mode
-
-
 
 SOUND_FOLDER = Path(__file__).parent/"dat/sounds/"
 SOUND_LIST = ['1.wav']
@@ -120,6 +130,16 @@ class FrontPanel(wx.Frame):
     self.script_name = "sequence"  # sequence name used by "Load" button
     # Configuration files
     self.fp_cfg = "FrontPanel.cfg"  # GUI property file to persist for each run
+
+    self.run_id = None
+    #Initialize experiment database connection
+    try:
+      self.client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_AUTH)
+    except:
+      logger.exception("Database connection could not be established!")
+      self.client = None
+    else:
+      logger.info("Database connection established.")
 
     FONT_MONO = wx.Font(8, wx.MODERN, wx.NORMAL, wx.NORMAL, False, 'Consolas')
     
@@ -236,8 +256,9 @@ class FrontPanel(wx.Frame):
     ## Buttons and MV Tabs ##
     # Run Buttons
     self.btn_run          = wx.Button(self.panel,     wx.ID_ANY, 'Run Single')
-    self.btn_run_repeated = wx.Button(self.panel,     wx.ID_ANY, 'Run Repeatedly')
+    #self.btn_run_repeated = wx.Button(self.panel,     wx.ID_ANY, 'Run Repeatedly')
     self.btn_run_idle     = wx.Button(self.panel,     wx.ID_ANY, 'Run Idle')
+    #self.chkbox_savedata   = wx.CheckBox(self.panel,   wx.ID_ANY, 'Save Data')
     self.txt_rungap       = wx.StaticText(self.panel, wx.ID_ANY, 'Run Gap (ms):')
     self.txtctrl_rungap   = wx.TextCtrl(self.panel,   wx.ID_ANY, size=(55, -1), value=str(5))
     self.ln_runsetting    = wx.StaticLine(self.panel, wx.ID_ANY)
@@ -262,10 +283,9 @@ class FrontPanel(wx.Frame):
     # self.sizer_runbtns.Add(self.btn_run_repeated, 0, flag=wx.ALL|wx.ALIGN_TOP|wx.ALIGN_RIGHT, border=5)
     # self.sizer_runbtns.Add(self.btn_run_idle,     0, flag=wx.ALL|wx.ALIGN_TOP|wx.ALIGN_RIGHT, border=5)
     self.sizer_runbtns.Add(self.btn_run,          0, flag=wx.ALL|wx.ALIGN_TOP|wx.LEFT, border=5)
-    self.sizer_runbtns.Add(self.btn_run_repeated, 0, flag=wx.ALL|wx.ALIGN_TOP|wx.LEFT, border=5)
+    #self.sizer_runbtns.Add(self.btn_run_repeated, 0, flag=wx.ALL|wx.ALIGN_TOP|wx.LEFT, border=5)
     self.sizer_runbtns.Add(self.btn_run_idle,     0, flag=wx.ALL|wx.ALIGN_TOP|wx.LEFT, border=5)
-
-
+    #self.sizer_runbtns.Add(self.chkbox_savedata,        0, flag=wx.ALL|wx.EXPAND, border=5)
     self.sizer_runpref.Add(self.txt_rungap,     pos=(0,0), flag=wx.ALL|wx.ALIGN_TOP|wx.ALIGN_LEFT, border=5)
     self.sizer_runpref.Add(self.txtctrl_rungap, pos=(0,1), flag=wx.ALL|wx.ALIGN_TOP|wx.ALIGN_LEFT, border=5)
     self.sizer_RunCtrl.Add(self.sizer_runbtns,   0, flag=wx.LEFT|wx.ALIGN_TOP,               border=5)
@@ -470,7 +490,7 @@ class FrontPanel(wx.Frame):
     self.Bind(wx.EVT_BUTTON, self.LoadSeq,           self.btn_reload_file)
     self.Bind(wx.EVT_BUTTON, self.OnLoadMV,          self.btn_load_MV)
     self.Bind(wx.EVT_BUTTON, self.OnRunSingle,       self.btn_run)
-    self.Bind(wx.EVT_BUTTON, self.OnRunRepeated,     self.btn_run_repeated)
+    #self.Bind(wx.EVT_BUTTON, self.OnRunRepeated,     self.btn_run_repeated)
     self.Bind(wx.EVT_BUTTON, self.OnRunIdle,         self.btn_run_idle)
     self.Bind(wx.EVT_BUTTON, self.OnRunLooped,       self.btn_run_looped)
     self.Bind(wx.EVT_BUTTON, self.OnChooseLoopedVar, self.btn_update_loopMV)
@@ -489,7 +509,7 @@ class FrontPanel(wx.Frame):
     '''TODO: AUTO DETECT GUI OBJECTS'''
     self.all_btn = [
                     self.btn_run, 
-                    self.btn_run_repeated, 
+                    #self.btn_run_repeated, 
                     self.btn_run_idle,
                     self.btn_run_looped,  
                     self.btn_load_file, 
@@ -517,6 +537,7 @@ class FrontPanel(wx.Frame):
     ### Call this function when the thread returns. ###
     EVT_RESULT(self, self.OnReturnFromRun) # Run result
     EVT_UPDATE(self, self.OnUpdateRunInfo) # Run info real time update
+    EVT_PLOT_TIMES(self, self.OnReturnFromDebug) # Event for return Interlaver timing object from worker
 
     ### Reload the Front Panel ###
     self.InitFP()
@@ -721,7 +742,7 @@ class FrontPanel(wx.Frame):
 
     self.notebook = notebook
     self.SetupFBMVs()
-    self.CorrectPCSaveSwitch()
+    #self.CorrectPCSaveSwitch()
 
     
   def CorrectPCSaveSwitch(self):
@@ -1169,6 +1190,28 @@ class FrontPanel(wx.Frame):
       else:
         text += metavarname+" = "+loop_vars[metavarname]+"\n"
     return text
+
+  # Generate a MV dict using MVs in the variable area and looping variable in the loop run text box
+  def GenerateMVDict(self):
+    looped_vars = self.txtctrl_loopcode.GetValue().splitlines()
+    loop_vars = {}
+    for line in looped_vars:
+      if re.match(r'^\s*$', line): continue# Check for empty lines
+      var_name, var_val = line.replace(" ", "").split("=")
+      loop_vars[var_name] = var_val
+    
+    sMVs = {} #static MVs
+    lMVs = {} #loop MVs
+    for x in range(0, len(self.metavariables)):
+      metavarname = self.metavariables[x].name
+      metavarval  = self.metavariables[x].value
+      if not self.metavariables[x].name in loop_vars:
+        #text += metavarname+" = "+metavarval+"\n"
+        sMVs[metavarname] = float(metavarval)
+      else:
+        #text += metavarname+" = "+loop_vars[metavarname]+"\n"
+        lMVs[metavarname] = loop_vars[metavarname]
+    return sMVs, lMVs
     
   # Save loop code at their current values to a text file
   def ExportLoopedCode(self, event, flag=1):
@@ -1243,7 +1286,7 @@ class FrontPanel(wx.Frame):
     # Restore button label
     self.btn_run.SetLabel("Run")
     self.btn_run_looped.SetLabel("Looped Run")
-    self.btn_run_repeated.SetLabel("Run Repeatedly")
+    #self.btn_run_repeated.SetLabel("Run Repeatedly")
     self.btn_run_idle.SetLabel("Idle")
     
     # Enable all buttons
@@ -1262,7 +1305,7 @@ class FrontPanel(wx.Frame):
     if is_number(text):
       mv.value = float(text)
       if self.worker != None:
-        self.worker._need_update = 1;
+        self.worker._need_update = 1
 
   # Run a sequence one time. We keep things as close to the looping runs as possible.
   def OnRunSingle(self, event):
@@ -1294,7 +1337,7 @@ class FrontPanel(wx.Frame):
   
     self.statusbar.SetStatusText('Running repeatedly.')
     wx.BeginBusyCursor()
-    self.__DisableBtn__(self.btn_run_repeated, label='Abort')
+    #self.__DisableBtn__(self.btn_run_repeated, label='Abort')
     self.worker = WorkerThread(self, loop=1, delay=time_delay, runflag=1)
   
   # Run a sequence repeatedly without saving log
@@ -1313,12 +1356,33 @@ class FrontPanel(wx.Frame):
       self.statusbar.Error("'Time between runs' must be positive.")
       return -1
   
+    # Here the actual looped run is entered, create run in DB
+    sMVs, lMVs = self.GenerateMVDict()
+    # Read and compress sequence and info
+    path_seq = self.dir_seq / self.fname_seq
+    with open(path_seq, 'r') as fs:
+      seq_bin = zlib.compress(fs.read().encode())
+    loop_fname  = self.txtctrl_dirname.GetValue()
+    run_time = datetime.datetime.now()
+
+    text_info = self.txtctrl_expinfo.GetValue()
+    _loop_name = loop_fname
+    if _loop_name =='':
+      _loop_name = secrets.token_hex(8)
+    idle_name = "IDLE_{}".format(_loop_name)
+    run_doc = RunIdle(name=idle_name, date=run_time, initMVs=sMVs, updateMVs=[], sequence=seq_bin, info=text_info)
+    #self.savedata_switch = bool(self.chkbox_savedata.GetValue())
+    self.savedata_switch = 0
+    _run_id = createRun(self.client, run=run_doc, save=False)
+    self.run_id = str(_run_id) #cast BSON Object ID into string
+
     self.statusbar.SetStatusText('Running repeatedly.')
     wx.BeginBusyCursor()
     self.__DisableBtn__(self.btn_run_idle, label='Abort')
     # pdb.set_trace()
-    self.worker = WorkerThread(self, loop=4, delay=time_delay, runflag=1)
-  
+    
+    self.worker = WorkerThread(self, loop=4, delay=time_delay, runflag=1, saveswitch=1)
+
   # Run a sequence using the loop code and parameters    
   def OnRunLooped(self, event=None):
     if self.worker:
@@ -1368,7 +1432,24 @@ class FrontPanel(wx.Frame):
     
     # Create loop code
     self.loop_code = self.GenerateLoopCode()
-    
+
+    # Here the actual looped run is entered, create run in DB
+    sMVs, lMVs = self.GenerateMVDict()
+    Nshots = int(loop_stop-loop_start+1)
+    sMVs.update({'j_min': loop_start, 'j_max': loop_stop})
+    # Read and compress sequence and info
+    path_seq = self.dir_seq / self.fname_seq
+    with open(path_seq, 'r') as fs:
+      seq_bin = zlib.compress(fs.read().encode())
+
+    text_info = self.txtctrl_expinfo.GetValue()
+    run_doc = RunLooped(name=loop_fname, date=run_time, Nshots=Nshots,
+                        staticMVs=sMVs, loopMVs=lMVs, sequence=seq_bin, info=text_info)
+    self.savedata_switch = True #bool(self.chkbox_savedata.GetValue())
+    logger.debug("Loopen run with save_switch {}".format(self.savedata_switch))
+    _run_id = createRun(self.client, run=run_doc, save=self.savedata_switch)
+    self.run_id = str(_run_id) #cast BSON Object ID into string
+
     # Trigger the worker thread unless it's already busy
     self.statusbar.Error("Loop from "+str(loop_start)+" to "+str(loop_stop))
     self.statusbar.SetStatusText('Running loop.')
@@ -1376,12 +1457,9 @@ class FrontPanel(wx.Frame):
     self.__DisableBtn__(self.btn_run_looped, label='Abort') # disable UI
     wx.BeginBusyCursor()
     
-    self.worker = WorkerThread(self, loop=2, delay=time_delay, startval=loop_start, stopval=loop_stop, prerun=loop_prerun, runflag=1)
+    self.worker = WorkerThread(self, loop=2, delay=time_delay, startval=loop_start, stopval=loop_stop, 
+                              prerun=loop_prerun, runflag=1, saveswitch=(2 if self.savedata_switch else 1))
     
-
-
-
-
   # Called when we return from a run thread: update status bar, re-enable UI  
   def OnReturnFromRun(self, event):
     # Show Result Status
@@ -1394,7 +1472,9 @@ class FrontPanel(wx.Frame):
     # Clear worker thread
     self.worker = None
     '''TODO: GARBAGE COLLECTION'''
-
+    # TODO set run in DB as done
+    if self.run_id is not None:
+      finalizeRun(self.client, run_id=ObjectId(self.run_id), save=self.savedata_switch)
     # Re-enable UI
     wx.EndBusyCursor()
     if not self.RemoteServer:
@@ -1420,6 +1500,14 @@ class FrontPanel(wx.Frame):
         self.ShowMessage(event.data)
     else:
         self.statusbar.SetStatusText(event.data)
+
+  def OnReturnFromDebug(self, event):
+    if event.abort:
+        self.worker.abort()
+        self.ShowMessage(event.data)
+    else:
+        self.statusbar.SetStatusText(event.data)
+  
   
   #######################################
   ###         Utility Methods         ###
@@ -1606,10 +1694,16 @@ class FrontPanel(wx.Frame):
     self.debug_done = 0
 
     wx.BeginBusyCursor()
-    self.worker = WorkerThread(self, loop=5) # Execute the sequence file
+    IntervalTime = {'times': None}
+    self.worker = WorkerThread(self, loop=5, IntervalerObj=IntervalTime) # Execute the sequence file
     self.worker.join()
-    #IntervalTime = self.worker.IntervalTime()
-    PlotSeq.PlotSeq_DeviceValue(self.dm) # Plot the actual device value
+    try:
+      _IntervalTime = IntervalTime['Intervaler']
+    except KeyError:
+      _IntervalTime = None
+    logger.debug("IntervalTime {}".format(_IntervalTime))
+
+    PlotSeq.PlotSeq_DeviceValue(self.dm, IntervalTime=_IntervalTime) # Plot the actual device value
     '''TODO: PLOT SEQUENCE VALUES. FUNCTION IS DONE, ONLY NEED GUI OBJECT'''
     #time.sleep(.5) # wait the code to be executed by the WorkerThread
     #PlotSeq.PlotSeq_SeqValue(self.dm, IntervalTime) # Plot the sequence data
@@ -1724,7 +1818,8 @@ class MyStatusBar(wx.StatusBar):
 ### Run the Front Panel ###
 ###########################
 if __name__ == '__main__':
-    app = wx.App(redirect=False)
-    FrontPanel()
-    app.MainLoop()
+
+  app = wx.App(redirect=False)
+  FrontPanel()
+  app.MainLoop()
   

@@ -9,8 +9,12 @@ from .ServerClass import Server, logger
 from ..utilities.util import formatTimeUnits
 import datetime
 from pathlib import Path
+import expdatabase.conf as conf
+from expdatabase.db import insertCounter
+from expdatabase.types import ShotCounter
+from pymongo import MongoClient
+from bson import ObjectId
 
-#DIR_DATA = "E:/Data/"
 from ..config.config import DIR_DATA
 DIR_BITFILE = Path(__file__).parent/"FPGA_bit_file/"
 
@@ -19,12 +23,12 @@ fullpath = "" #os.path.abspath(inspect.getfile(inspect.currentframe()))
 # Variables for configuring Verilog to FPGA
 dev = ok.okCFrontPanel()
 pll = ok.okCPLL22150()
-# code = r"C:\Users\Simonlab\Programming\dev\photons_counter\photon_count_DAC_comp_v_clock\counters.bit"
-# code = r"C:\Users\Simonlab\Programming\Control Suite\servers\FPGA_bit_file\counters_TwoSPCM.bit"
 code = DIR_BITFILE/"counters.bit" #"C:\ExperimentSoftwares\Control_Suite_X\servers\FPGA_bit_file\counters.bit"
+print(str(code))
 fpga_clk = 100 # desired FPGA clk speed (in MHz)[must be in {200/n: n is a positive integer}]
-FPGAsn = '14290008XL'
-
+# FPGAsn = '14290008XL'
+FPGAsn = '1616000EJK'
+# FPGAsn = '1744000K5K'
 ## Functions to help Configure the FPGA
 # Function to turn time bin from any type (convertible to int) into bytearray
 def dec_to_bytearray(no):
@@ -90,16 +94,20 @@ def SetBinSize(binsize, maxrate=20):
 	print("FPGA Clk rate =", f, "MHz")
 	T_bins_cycs = int(ceil(binsize * f)) - 1 # How high must t count in Verilog code to reach t_bins
 	T_bins_rounded = (T_bins_cycs + 1) / f
+	logger.debug(f"T_bins_cycs: {T_bins_cycs}, T_bins_rounded {T_bins_rounded}, binsize: {binsize} us")
 	print("I've rounded your desired time bin size to ", T_bins_rounded, " microseconds.")
 	T_bins_array = dec_to_bytearray(T_bins_cycs)
 	
 	# Prepare to configure DAC scaling factor; max laser freq ~ max counts per time bin
 	maxF_lsr_usr    = 1.0*maxrate # Max count rate (MHz)
 	count_scale_dec = 65535/(maxF_lsr_usr*binsize) if binsize!=0 else 1. # Avoid zero probe time
+	if count_scale_dec > 65535:
+		count_scale_dec = 65535 # clip count_scale_dec, when this value is larger than 16 bit, 
+								# it causes 3 bytes to be written to the FPGA which causes the DAC to not work!!!
 	# count_scale_dec = 6e4
 	# fractional scaling of total counts per bin such that we can see it from DACout
 	count_scale = dec_to_bytearray(count_scale_dec)
-	
+	logger.debug(f"count_scale_dec {count_scale_dec}, count_scale {count_scale}")
 	# Start FPGA's state machine, Configure binsize, scalefact
 	dev.SetWireInValue(0x00, 1) # WireIn: FPGA start running Verilog
 	dev.UpdateWireIns()
@@ -208,7 +216,19 @@ def SaveDataWithCLK(FolderName, SeqRunName, DataCLK):
 			for item in data:
 					f.write("{}\n".format(item))
 	f.close()
-		
+
+def SaveDataDB(client, run_id, counter, DataCLK, save):
+	if client is not None:
+		data, clk = DataCLK
+		data = np.asarray(data)
+		clk = int(clk)
+		j = int(counter)
+		run_id_bson = ObjectId(run_id)
+		run_time = datetime.datetime.now()
+		shot = ShotCounter(run_time, j, clk, data)
+		insertCounter(client=client, run_id=run_id_bson, shot=shot, save=save)
+		logger.info("Saved shot to DB")
+
 def RunServer(seq, autostart = 1):
 	TIME_START = time.time()
 	
@@ -257,8 +277,9 @@ def RunServer(seq, autostart = 1):
 				
 		if NumOfTrace > 0:
 			MaxTraceLength = max(TraceLength)
+			MaxTraceLength = round(MaxTraceLength, 4)
 			BinSize = MaxTraceLength / MaxSampleNum
-			print("Bin size:", BinSize, "us")
+			logger.debug(f"MaxTraceLength: {MaxTraceLength}, Bin size: {BinSize} us")
 			e = SetBinSize(BinSize, max_count_rate)
 			
 			if e == 1:
@@ -275,7 +296,11 @@ def RunServer(seq, autostart = 1):
 		return TIME_STOP - TIME_START
 			
 
-class FPGAServer(Server):
+class CounterServer(Server):
+
+	def __init__(self, name, port, message, client):
+		super().__init__(name, port, message)
+		self.client = client
 
 	def cmd_queue(self):
 		if self.seq is None:
@@ -288,14 +313,17 @@ class FPGAServer(Server):
 				logger.debug('Sequence has been queued... Trigger it whenever!')
 				self.send_msg(self.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
 				logger.debug(f'Acquire: {acquire_data}, Save: {save_data}')
+				# Get the save switch from the sequence
+				save_switch = self.seq.saveswitch
+				logger.info(f"Saving according to save_switch {save_switch}")
 				if acquire_data == 1:
 					data = Acquire()
 					if data == -1:
-						#server.sock.close() # If the FPGA returns nothing, then kill the server
 						logger.error("FPGA returned nothing")
-					if save_data == 1:
-						#SaveData(server.seq.foldername, server.seq.runname, data[0])
+					if save_switch > 0:
 						SaveDataWithCLK(self.seq.foldername, self.seq.runname, data)
+						save = True if save_switch==2 else False
+						SaveDataDB(client=self.client, run_id=self.seq.run_id, counter=self.seq.counter, DataCLK=data, save=save)
 			except:
 				logger.exception("Failed to acquire data from FPGA.")
 
@@ -311,6 +339,15 @@ if __name__ == '__main__':
 	===========================================
 	Maximum Number of Data Points: 1024
 	"""
+	#Initialize experiment database connection
+	try:
+		client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_AUTH)
+	except:
+		logger.exception("Database connection could not be established!")
+		client = None
+	else:
+		logger.info("Database connected.")
+
 	Config_FPGA()
-	server = FPGAServer("SOut1", 60621, message=message)
+	server = CounterServer("SOut1", 60621, message=message, client=client)
 	server.main_loop()

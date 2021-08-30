@@ -69,7 +69,6 @@ Analog15   = analog_seq.newChannel(15,  "Analog15",        system='Test',    ste
 # The properties of the channel (id, name, steady_state_value, max_value, and graph) should be set in this section
 
 
-
 ###########################################################################################################
 ###   AUTO DETECT SEQUENCE AND CHANNEL TYPE AND CREATE HELPER LIST THAT IS USEFUL FOR THE FRONT PANEL   ###
 ###   IMPORTANT: NAMES ARE BEING CALLED BY OTHER MODULES, BE CAREFUL WHEN CHENGING THEM                 ###

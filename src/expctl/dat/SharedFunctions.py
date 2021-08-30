@@ -101,20 +101,29 @@ def TOF(times, TimeOfFly):
 	
 	return times_TOF
 	
-def Transport(times, acc, dist, Lat1_f=80., Lat2_f=80., Max_df=10., mode=0, twoAoms=0, Npts=32):
+def Transport(times,  acc, dist, chanA=None, chanB=None, Lat1_f=80., Lat2_f=80., Max_df=10., mode=0, twoAoms=0, Npts=32):
+	# channels chanA and chanB should be channel objects
 	# Use computer front panel to control the DDS ramping frequency, and use the ramp
 	# direction register to change ramp direction
+	if chanA is None:
+		raise RuntimeError("You have to specify a chanA!")
 	mode = int(mode)
 	twoAoms = int(twoAoms)
 	Npts = int(Npts)
 
-	Lat1_MHz = Lat1_f*1e6
-	Lat2_MHz = Lat2_f*1e6
+	unit_MHz = 1.0
+	Lat1_MHz = Lat1_f*unit_MHz
+	Lat2_MHz = Lat2_f*unit_MHz
+	
 	
 	wavelength = 784e-9 # m
 	g = 9.81 #m/s^2
 	dfMax = Max_df*Unit.MHz() # Maximum velocity = 3.91m/s
-	MHz = 1e6
+	MHz = 1e6 #This needs to be here for physical calcualtions involving actual Hz and not the unit system
+	# TODO: Fix this whole transport function to coherenty use MHz or Hz
+
+	if chanB is None:
+		twoAoms = False
 
 	#Calculating transporatation time and frequency difference
 	if acc == 0.:
@@ -129,19 +138,19 @@ def Transport(times, acc, dist, Lat1_f=80., Lat2_f=80., Max_df=10., mode=0, twoA
 
 		if abs(df) <= dfMax:
 			# maximum df won't be reached, triangle
-			df_MHz = -df*1e6
+			df_MHz = -df*unit_MHz
 			# Add time interval
 			times_acc = times.append(trans_time, "Acc")
 			times_dac = times.append(trans_time, "Dac")
 			# Frequency Ramp
 			if twoAoms:
-				RP_trans_a.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+0.5*df_MHz)
-				RP_trans_a.SetInterval(times_dac, Lat1_MHz+0.5*df_MHz, Lat1_MHz)
-				RP_trans_b.SetInterval(times_acc, Lat1_MHz, Lat1_MHz-0.5*df_MHz)
-				RP_trans_b.SetInterval(times_dac, Lat1_MHz-0.5*df_MHz, Lat1_MHz)
+				chanA.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+0.5*df_MHz)
+				chanA.SetInterval(times_dac, Lat1_MHz+0.5*df_MHz, Lat1_MHz)
+				chanB.SetInterval(times_acc, Lat1_MHz, Lat1_MHz-0.5*df_MHz)
+				chanB.SetInterval(times_dac, Lat1_MHz-0.5*df_MHz, Lat1_MHz)
 			else:
-				RP_trans_a.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+df_MHz)
-				RP_trans_a.SetInterval(times_dac, Lat1_MHz+df_MHz, Lat1_MHz)
+				chanA.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+df_MHz)
+				chanA.SetInterval(times_dac, Lat1_MHz+df_MHz, Lat1_MHz)
 			# Print parameters
 			print("Total transport time:", trans_time*2/1e3, "ms")
 			print("Acceleration time:", trans_time/1e3, "ms")
@@ -150,7 +159,7 @@ def Transport(times, acc, dist, Lat1_f=80., Lat2_f=80., Max_df=10., mode=0, twoA
 			# maximum df reached, trapezoid
 			Vmax = dfMax*MHz*wavelength #Factor of 2 coming from the double pass AOM pre-04/27/18
 			df = sign * dfMax
-			df_MHz = -df*1e6
+			df_MHz = -df*unit_MHz
 			trans_time_max = Vmax/acc
 			trans_time_cv = (abs(dist)*1e-3-Vmax*trans_time_max)/Vmax
 			print(Vmax, trans_time_max, trans_time_cv)
@@ -160,16 +169,16 @@ def Transport(times, acc, dist, Lat1_f=80., Lat2_f=80., Max_df=10., mode=0, twoA
 			times_dac = times.append(trans_time_max*Unit.s(), "Dac")
 			# Frequency Ramp
 			if twoAoms:
-				RP_trans_a.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+0.5*df_MHz)
-				RP_trans_a.SetInterval(times_cv, Lat1_MHz+0.5*df_MHz, Lat1_MHz+0.5*df_MHz)
-				RP_trans_a.SetInterval(times_dac, Lat1_MHz+0.5*df_MHz, Lat1_MHz)
-				RP_trans_b.SetInterval(times_acc, Lat2_MHz, Lat2_MHz-0.5*df_MHz)
-				RP_trans_b.SetInterval(times_cv, Lat2_MHz-0.5*df_MHz, Lat2_MHz-0.5*df_MHz)
-				RP_trans_b.SetInterval(times_dac, Lat2_MHz-0.5*df_MHz, Lat2_MHz)
+				chanA.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+0.5*df_MHz)
+				chanA.SetInterval(times_cv, Lat1_MHz+0.5*df_MHz, Lat1_MHz+0.5*df_MHz)
+				chanA.SetInterval(times_dac, Lat1_MHz+0.5*df_MHz, Lat1_MHz)
+				chanB.SetInterval(times_acc, Lat2_MHz, Lat2_MHz-0.5*df_MHz)
+				chanB.SetInterval(times_cv, Lat2_MHz-0.5*df_MHz, Lat2_MHz-0.5*df_MHz)
+				chanB.SetInterval(times_dac, Lat2_MHz-0.5*df_MHz, Lat2_MHz)
 			else:
-				RP_trans_a.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+df_MHz)
-				RP_trans_a.SetInterval(times_cv, Lat1_MHz+df_MHz, Lat1_MHz+df_MHz)
-				RP_trans_a.SetInterval(times_dac, Lat1_MHz+df_MHz, Lat1_MHz)
+				chanA.SetInterval(times_acc, Lat1_MHz, Lat1_MHz+df_MHz)
+				chanA.SetInterval(times_cv, Lat1_MHz+df_MHz, Lat1_MHz+df_MHz)
+				chanA.SetInterval(times_dac, Lat1_MHz+df_MHz, Lat1_MHz)
 			# Print parameters
 			print("Total transport time:", (trans_time_max*2+trans_time_cv)*1000, "ms", "(Maximum speed reached!)")
 			print("Acceleration time:", trans_time_max*1e3, "ms")
@@ -177,7 +186,7 @@ def Transport(times, acc, dist, Lat1_f=80., Lat2_f=80., Max_df=10., mode=0, twoA
 	else: # sine ramp
 		print("Sine ramp!")
 		dist_m = dist*1e-3
-		df_max = Max_df*1e6
+		df_max = Max_df*1e6#*unit_MHz
 		df0 = sqrt(2.*abs(dist_m)*acc/pi)/wavelength #max detuning required to do distance in one continous ramp
 		print("Maximum detuning {:.3e}".format(df0))
 		if df0<=df_max:
@@ -202,23 +211,23 @@ def Transport(times, acc, dist, Lat1_f=80., Lat2_f=80., Max_df=10., mode=0, twoA
 			fs2 = df0*0.5*(np.cos(phis2)+1)
 			ts = np.concatenate([ts1, ts2])
 			fs = -sign*np.concatenate([fs1, fs2])
-						
+
+		fs *= 1e-6	
 		#turn np arrays into sequence format:
 		for i in range(1, len(ts)):
 			dt = ts[i] - ts[i-1]
 			times_i = times.append(dt*Unit.s(), "dt_{:d}".format(i))
 			
 			if twoAoms:
-				RP_trans_a.SetInterval(times_i, Lat1_MHz+0.5*fs[i-1], Lat1_MHz+0.5*fs[i])
-				RP_trans_b.SetInterval(times_i, Lat2_MHz-0.5*fs[i-1], Lat2_MHz-0.5*fs[i])
+				chanA.SetInterval(times_i, Lat1_MHz+0.5*fs[i-1], Lat1_MHz+0.5*fs[i])
+				chanB.SetInterval(times_i, Lat2_MHz-0.5*fs[i-1], Lat2_MHz-0.5*fs[i])
 			else:
-				RP_trans_a.SetInterval(times_i, Lat1_MHz+fs[i-1], Lat1_MHz+fs[i])
+				chanA.SetInterval(times_i, Lat1_MHz+fs[i-1], Lat1_MHz+fs[i])
 
 			if i==1:
 				times_ramp = times_i
 			else:
 				times_ramp = times_ramp & times_i
-		#print(RP_trans_a.GetHardwareValues())
 		return times_ramp
 
 def Transport_DDSRampMode(times, acc, dist, Lat1_f=80, Lat2_f=80, Max_df=5.):
@@ -294,9 +303,22 @@ def Imaging(times, mode,
 	MOT0_ttl.SetInterval(times_Prep, 0)
 	REP0_ttl.SetInterval(times_Prep, 0)
 
-	LAT0_ttl.SetInterval(times_Prep.afterStart(0), 0)
-	LAT1_ttl.SetInterval(times_Prep.afterStart(0), 0)
-	LAT2_ttl.SetInterval(times_Prep.afterStart(0), 0)
+	LAT0_ttl.SetInterval(times_Prep.afterStart(t_prep).afterward(0), 0)
+	LAT1_ttl.SetInterval(times_Prep.afterStart(t_prep).afterward(0), 0)
+	LAT2_ttl.SetInterval(times_Prep.afterStart(t_prep).afterward(0), 0)
+
+	# Ramp off LAT0_pwr so don't heat atoms with abrupt turnoff (which can artificially scale up the measured temperature in TOF)
+	#LAT0_pwr.SetInterval(times_Prep.afterStart(100), LAT0_pwr.GetLastValue(), 0)
+	#LAT0_pwr.SetInterval(times_Prep.afterStart(1000), LAT0_pwr.GetLastValue(), 0)
+	LAT0_pwr.SetLogRamp(times_Prep.afterStart(t_prep), LAT0_pwr.GetLastValue(), 0, sample_rate=0.04)
+	Sacher2_pwr.SetLogRamp(times_Prep.afterStart(t_prep), Sacher2_pwr.GetLastValue(), 0, sample_rate=0.04)
+	Sacher2_ttl.SetInterval(times_Prep.afterward(0), 0)
+	#ODT2_ttl.SetInterval(times_Prep.afterward(0), 0)
+
+	# Ramp off LAT0_pwr so don't heat atoms with abrupt turnoff (which can artificially scale up the measured temperature in TOF)
+	#LAT0_pwr.SetInterval(times_Prep.afterStart(100), LAT0_pwr.GetLastValue(), 0)
+	#LAT0_pwr.SetInterval(times_Prep.afterStart(1000), LAT0_pwr.GetLastValue(), 0)
+	#LAT0_pwr.SetLogRamp(times_Prep.afterStart(1000), LAT0_pwr.GetLastValue(), 0, sample_rate=0.04)
 
 	if mode == 1: # Fluorescence imaging
 		times_img1 = times.append(t_img, 'ForeGnd')
@@ -325,6 +347,7 @@ def Imaging(times, mode,
 		# Set lattice during imaging time, it is turned off during drop atoms
 		SetLatTTL(times_img1, Lat, Lat, Lat)
 		SetLatTTL(times_img2, Lat, Lat, Lat)
+
 		# Trigger the camera
 		Cam_trig.SetInterval(times_img1, 0)
 		Cam_trig.SetInterval(times_img1.afterward(0), 1)

@@ -51,7 +51,7 @@ class TimeInterval:
       raise IndexError('Interval index must be 0 or 1')
   
   def __repr__(self):
-    return '('+str(self._start) + ', '+str(self._stop)+')'
+    return (self._name or "Interval")+'('+str(self._start) + ', '+str(self._stop)+')'
   
   def __bool__(self):
     return self.length() > 0
