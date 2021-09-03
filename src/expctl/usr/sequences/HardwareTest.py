@@ -4,6 +4,7 @@ import copy
 from math import floor
 
 from expctl.dat.all_channels import TriggerOut
+from expctl.sequencer.sequence import Interval
 
 #### Modifiable Variables ####
 # Note: values must be integers or floats.
@@ -102,8 +103,8 @@ analog_freq_interval = times.append(Analog_freq_time_ms*Unit.ms(), name="Analog 
 ### Initiation ###
 
 # Trigger
-TriggerOut.SetInterval(TimeInterval(trigger.start_t(), trigger.start_t()), 0, 1)
-TriggerOut.SetInterval(TimeInterval(trigger.end_t(), trigger.end_t()), 1, 0)
+TriggerOut.SetInterval(trigger, 0)
+TriggerOut.SetInterval(trigger.afterward(10*Unit.us()), 1)
 
 
 # Digital seq
@@ -122,36 +123,36 @@ Digital12.SetInterval(digital_val_interval, DCh12_val)
 Digital13.SetInterval(digital_val_interval, DCh13_val)
 Digital14.SetInterval(digital_val_interval, DCh14_val)
 
-dch01mod = [[0, 0, 0, 1], [0.5/DCh01_MHz/Unit.MHz(), 1, 0.5/DCh01_MHz/Unit.MHz(), 0], [0.5/DCh01_MHz/Unit.MHz(), 0, 1./DCh01_MHz/Unit.MHz(), 0]]
-dch02mod = [[0, 0, 0, 1], [0.5/DCh02_MHz/Unit.MHz(), 1, 0.5/DCh02_MHz/Unit.MHz(), 0], [0.5/DCh02_MHz/Unit.MHz(), 0, 1./DCh02_MHz/Unit.MHz(), 0]]
-dch03mod = [[0, 0, 0, 1], [0.5/DCh03_MHz/Unit.MHz(), 1, 0.5/DCh03_MHz/Unit.MHz(), 0], [0.5/DCh03_MHz/Unit.MHz(), 0, 1./DCh03_MHz/Unit.MHz(), 0]]
-dch04mod = [[0, 0, 0, 1], [0.5/DCh04_MHz/Unit.MHz(), 1, 0.5/DCh04_MHz/Unit.MHz(), 0], [0.5/DCh04_MHz/Unit.MHz(), 0, 1./DCh04_MHz/Unit.MHz(), 0]]
-dch05mod = [[0, 0, 0, 1], [0.5/DCh05_MHz/Unit.MHz(), 1, 0.5/DCh05_MHz/Unit.MHz(), 0], [0.5/DCh05_MHz/Unit.MHz(), 0, 1./DCh05_MHz/Unit.MHz(), 0]]
-dch06mod = [[0, 0, 0, 1], [0.5/DCh06_MHz/Unit.MHz(), 1, 0.5/DCh06_MHz/Unit.MHz(), 0], [0.5/DCh06_MHz/Unit.MHz(), 0, 1./DCh06_MHz/Unit.MHz(), 0]]
-dch07mod = [[0, 0, 0, 1], [0.5/DCh07_MHz/Unit.MHz(), 1, 0.5/DCh07_MHz/Unit.MHz(), 0], [0.5/DCh07_MHz/Unit.MHz(), 0, 1./DCh07_MHz/Unit.MHz(), 0]]
-dch08mod = [[0, 0, 0, 1], [0.5/DCh08_MHz/Unit.MHz(), 1, 0.5/DCh08_MHz/Unit.MHz(), 0], [0.5/DCh08_MHz/Unit.MHz(), 0, 1./DCh08_MHz/Unit.MHz(), 0]]
-dch09mod = [[0, 0, 0, 1], [0.5/DCh09_MHz/Unit.MHz(), 1, 0.5/DCh09_MHz/Unit.MHz(), 0], [0.5/DCh09_MHz/Unit.MHz(), 0, 1./DCh09_MHz/Unit.MHz(), 0]]
-dch10mod = [[0, 0, 0, 1], [0.5/DCh10_MHz/Unit.MHz(), 1, 0.5/DCh10_MHz/Unit.MHz(), 0], [0.5/DCh10_MHz/Unit.MHz(), 0, 1./DCh10_MHz/Unit.MHz(), 0]]
-dch11mod = [[0, 0, 0, 1], [0.5/DCh11_MHz/Unit.MHz(), 1, 0.5/DCh11_MHz/Unit.MHz(), 0], [0.5/DCh11_MHz/Unit.MHz(), 0, 1./DCh11_MHz/Unit.MHz(), 0]]
-dch12mod = [[0, 0, 0, 1], [0.5/DCh12_MHz/Unit.MHz(), 1, 0.5/DCh12_MHz/Unit.MHz(), 0], [0.5/DCh12_MHz/Unit.MHz(), 0, 1./DCh12_MHz/Unit.MHz(), 0]]
-dch13mod = [[0, 0, 0, 1], [0.5/DCh13_MHz/Unit.MHz(), 1, 0.5/DCh13_MHz/Unit.MHz(), 0], [0.5/DCh13_MHz/Unit.MHz(), 0, 1./DCh13_MHz/Unit.MHz(), 0]]
-dch14mod = [[0, 0, 0, 1], [0.5/DCh14_MHz/Unit.MHz(), 1, 0.5/DCh14_MHz/Unit.MHz(), 0], [0.5/DCh14_MHz/Unit.MHz(), 0, 1./DCh14_MHz/Unit.MHz(), 0]]
+# dch01mod = [[0, 0, 0, 1], [0.5/DCh01_MHz/Unit.MHz(), 1, 0.5/DCh01_MHz/Unit.MHz(), 0], [0.5/DCh01_MHz/Unit.MHz(), 0, 1./DCh01_MHz/Unit.MHz(), 0]]
+# dch02mod = [[0, 0, 0, 1], [0.5/DCh02_MHz/Unit.MHz(), 1, 0.5/DCh02_MHz/Unit.MHz(), 0], [0.5/DCh02_MHz/Unit.MHz(), 0, 1./DCh02_MHz/Unit.MHz(), 0]]
+# dch03mod = [[0, 0, 0, 1], [0.5/DCh03_MHz/Unit.MHz(), 1, 0.5/DCh03_MHz/Unit.MHz(), 0], [0.5/DCh03_MHz/Unit.MHz(), 0, 1./DCh03_MHz/Unit.MHz(), 0]]
+# dch04mod = [[0, 0, 0, 1], [0.5/DCh04_MHz/Unit.MHz(), 1, 0.5/DCh04_MHz/Unit.MHz(), 0], [0.5/DCh04_MHz/Unit.MHz(), 0, 1./DCh04_MHz/Unit.MHz(), 0]]
+# dch05mod = [[0, 0, 0, 1], [0.5/DCh05_MHz/Unit.MHz(), 1, 0.5/DCh05_MHz/Unit.MHz(), 0], [0.5/DCh05_MHz/Unit.MHz(), 0, 1./DCh05_MHz/Unit.MHz(), 0]]
+# dch06mod = [[0, 0, 0, 1], [0.5/DCh06_MHz/Unit.MHz(), 1, 0.5/DCh06_MHz/Unit.MHz(), 0], [0.5/DCh06_MHz/Unit.MHz(), 0, 1./DCh06_MHz/Unit.MHz(), 0]]
+# dch07mod = [[0, 0, 0, 1], [0.5/DCh07_MHz/Unit.MHz(), 1, 0.5/DCh07_MHz/Unit.MHz(), 0], [0.5/DCh07_MHz/Unit.MHz(), 0, 1./DCh07_MHz/Unit.MHz(), 0]]
+# dch08mod = [[0, 0, 0, 1], [0.5/DCh08_MHz/Unit.MHz(), 1, 0.5/DCh08_MHz/Unit.MHz(), 0], [0.5/DCh08_MHz/Unit.MHz(), 0, 1./DCh08_MHz/Unit.MHz(), 0]]
+# dch09mod = [[0, 0, 0, 1], [0.5/DCh09_MHz/Unit.MHz(), 1, 0.5/DCh09_MHz/Unit.MHz(), 0], [0.5/DCh09_MHz/Unit.MHz(), 0, 1./DCh09_MHz/Unit.MHz(), 0]]
+# dch10mod = [[0, 0, 0, 1], [0.5/DCh10_MHz/Unit.MHz(), 1, 0.5/DCh10_MHz/Unit.MHz(), 0], [0.5/DCh10_MHz/Unit.MHz(), 0, 1./DCh10_MHz/Unit.MHz(), 0]]
+# dch11mod = [[0, 0, 0, 1], [0.5/DCh11_MHz/Unit.MHz(), 1, 0.5/DCh11_MHz/Unit.MHz(), 0], [0.5/DCh11_MHz/Unit.MHz(), 0, 1./DCh11_MHz/Unit.MHz(), 0]]
+# dch12mod = [[0, 0, 0, 1], [0.5/DCh12_MHz/Unit.MHz(), 1, 0.5/DCh12_MHz/Unit.MHz(), 0], [0.5/DCh12_MHz/Unit.MHz(), 0, 1./DCh12_MHz/Unit.MHz(), 0]]
+# dch13mod = [[0, 0, 0, 1], [0.5/DCh13_MHz/Unit.MHz(), 1, 0.5/DCh13_MHz/Unit.MHz(), 0], [0.5/DCh13_MHz/Unit.MHz(), 0, 1./DCh13_MHz/Unit.MHz(), 0]]
+# dch14mod = [[0, 0, 0, 1], [0.5/DCh14_MHz/Unit.MHz(), 1, 0.5/DCh14_MHz/Unit.MHz(), 0], [0.5/DCh14_MHz/Unit.MHz(), 0, 1./DCh14_MHz/Unit.MHz(), 0]]
     
 
-Digital01.SetModulation(digital_freq_interval, dch01mod)
-Digital02.SetModulation(digital_freq_interval, dch02mod)
-Digital03.SetModulation(digital_freq_interval, dch03mod)
-Digital04.SetModulation(digital_freq_interval, dch04mod)
-Digital05.SetModulation(digital_freq_interval, dch05mod)
-Digital06.SetModulation(digital_freq_interval, dch06mod)
-Digital07.SetModulation(digital_freq_interval, dch07mod)
-Digital08.SetModulation(digital_freq_interval, dch08mod)
-Digital09.SetModulation(digital_freq_interval, dch09mod)
-Digital10.SetModulation(digital_freq_interval, dch10mod)
-Digital11.SetModulation(digital_freq_interval, dch11mod)
-Digital12.SetModulation(digital_freq_interval, dch12mod)
-Digital13.SetModulation(digital_freq_interval, dch13mod)
-Digital14.SetModulation(digital_freq_interval, dch14mod)
+# Digital01.SetModulation(digital_freq_interval, dch01mod)
+# Digital02.SetModulation(digital_freq_interval, dch02mod)
+# Digital03.SetModulation(digital_freq_interval, dch03mod)
+# Digital04.SetModulation(digital_freq_interval, dch04mod)
+# Digital05.SetModulation(digital_freq_interval, dch05mod)
+# Digital06.SetModulation(digital_freq_interval, dch06mod)
+# Digital07.SetModulation(digital_freq_interval, dch07mod)
+# Digital08.SetModulation(digital_freq_interval, dch08mod)
+# Digital09.SetModulation(digital_freq_interval, dch09mod)
+# Digital10.SetModulation(digital_freq_interval, dch10mod)
+# Digital11.SetModulation(digital_freq_interval, dch11mod)
+# Digital12.SetModulation(digital_freq_interval, dch12mod)
+# Digital13.SetModulation(digital_freq_interval, dch13mod)
+# Digital14.SetModulation(digital_freq_interval, dch14mod)
 
 
 # Analog seq
@@ -172,36 +173,36 @@ Analog13.SetInterval(analog_val_interval, 0, ACh13_val)
 Analog14.SetInterval(analog_val_interval, 0, ACh14_val)
 Analog15.SetInterval(analog_val_interval, 0, ACh15_val)
 
-ach00mod = [[0, -1, 0.5/ACh00_kHz/Unit.kHz(), 1], [0.5/ACh00_kHz/Unit.kHz(), 1, 1./ACh00_kHz/Unit.kHz(), -1]]
-ach01mod = [[0, -1, 0.5/ACh01_kHz/Unit.kHz(), 1], [0.5/ACh01_kHz/Unit.kHz(), 1, 1./ACh01_kHz/Unit.kHz(), -1]]
-ach02mod = [[0, -1, 0.5/ACh02_kHz/Unit.kHz(), 1], [0.5/ACh02_kHz/Unit.kHz(), 1, 1./ACh02_kHz/Unit.kHz(), -1]]
-ach03mod = [[0, -1, 0.5/ACh03_kHz/Unit.kHz(), 1], [0.5/ACh03_kHz/Unit.kHz(), 1, 1./ACh03_kHz/Unit.kHz(), -1]]
-ach04mod = [[0, -1, 0.5/ACh04_kHz/Unit.kHz(), 1], [0.5/ACh04_kHz/Unit.kHz(), 1, 1./ACh04_kHz/Unit.kHz(), -1]]
-ach05mod = [[0, -1, 0.5/ACh05_kHz/Unit.kHz(), 1], [0.5/ACh05_kHz/Unit.kHz(), 1, 1./ACh05_kHz/Unit.kHz(), -1]]
-ach06mod = [[0, -1, 0.5/ACh06_kHz/Unit.kHz(), 1], [0.5/ACh06_kHz/Unit.kHz(), 1, 1./ACh06_kHz/Unit.kHz(), -1]]
-ach07mod = [[0, -1, 0.5/ACh07_kHz/Unit.kHz(), 1], [0.5/ACh07_kHz/Unit.kHz(), 1, 1./ACh07_kHz/Unit.kHz(), -1]]
-ach08mod = [[0, -1, 0.5/ACh08_kHz/Unit.kHz(), 1], [0.5/ACh08_kHz/Unit.kHz(), 1, 1./ACh08_kHz/Unit.kHz(), -1]]
-ach09mod = [[0, -1, 0.5/ACh09_kHz/Unit.kHz(), 1], [0.5/ACh09_kHz/Unit.kHz(), 1, 1./ACh09_kHz/Unit.kHz(), -1]]
-ach10mod = [[0, -1, 0.5/ACh10_kHz/Unit.kHz(), 1], [0.5/ACh10_kHz/Unit.kHz(), 1, 1./ACh10_kHz/Unit.kHz(), -1]]
-ach11mod = [[0, -1, 0.5/ACh11_kHz/Unit.kHz(), 1], [0.5/ACh11_kHz/Unit.kHz(), 1, 1./ACh11_kHz/Unit.kHz(), -1]]
-ach12mod = [[0, -1, 0.5/ACh12_kHz/Unit.kHz(), 1], [0.5/ACh12_kHz/Unit.kHz(), 1, 1./ACh12_kHz/Unit.kHz(), -1]]
-ach13mod = [[0, -1, 0.5/ACh13_kHz/Unit.kHz(), 1], [0.5/ACh13_kHz/Unit.kHz(), 1, 1./ACh13_kHz/Unit.kHz(), -1]]
-ach14mod = [[0, -1, 0.5/ACh14_kHz/Unit.kHz(), 1], [0.5/ACh14_kHz/Unit.kHz(), 1, 1./ACh14_kHz/Unit.kHz(), -1]]
-ach15mod = [[0, -1, 0.5/ACh15_kHz/Unit.kHz(), 1], [0.5/ACh15_kHz/Unit.kHz(), 1, 1./ACh15_kHz/Unit.kHz(), -1]]
+# ach00mod = [[0, -1, 0.5/ACh00_kHz/Unit.kHz(), 1], [0.5/ACh00_kHz/Unit.kHz(), 1, 1./ACh00_kHz/Unit.kHz(), -1]]
+# ach01mod = [[0, -1, 0.5/ACh01_kHz/Unit.kHz(), 1], [0.5/ACh01_kHz/Unit.kHz(), 1, 1./ACh01_kHz/Unit.kHz(), -1]]
+# ach02mod = [[0, -1, 0.5/ACh02_kHz/Unit.kHz(), 1], [0.5/ACh02_kHz/Unit.kHz(), 1, 1./ACh02_kHz/Unit.kHz(), -1]]
+# ach03mod = [[0, -1, 0.5/ACh03_kHz/Unit.kHz(), 1], [0.5/ACh03_kHz/Unit.kHz(), 1, 1./ACh03_kHz/Unit.kHz(), -1]]
+# ach04mod = [[0, -1, 0.5/ACh04_kHz/Unit.kHz(), 1], [0.5/ACh04_kHz/Unit.kHz(), 1, 1./ACh04_kHz/Unit.kHz(), -1]]
+# ach05mod = [[0, -1, 0.5/ACh05_kHz/Unit.kHz(), 1], [0.5/ACh05_kHz/Unit.kHz(), 1, 1./ACh05_kHz/Unit.kHz(), -1]]
+# ach06mod = [[0, -1, 0.5/ACh06_kHz/Unit.kHz(), 1], [0.5/ACh06_kHz/Unit.kHz(), 1, 1./ACh06_kHz/Unit.kHz(), -1]]
+# ach07mod = [[0, -1, 0.5/ACh07_kHz/Unit.kHz(), 1], [0.5/ACh07_kHz/Unit.kHz(), 1, 1./ACh07_kHz/Unit.kHz(), -1]]
+# ach08mod = [[0, -1, 0.5/ACh08_kHz/Unit.kHz(), 1], [0.5/ACh08_kHz/Unit.kHz(), 1, 1./ACh08_kHz/Unit.kHz(), -1]]
+# ach09mod = [[0, -1, 0.5/ACh09_kHz/Unit.kHz(), 1], [0.5/ACh09_kHz/Unit.kHz(), 1, 1./ACh09_kHz/Unit.kHz(), -1]]
+# ach10mod = [[0, -1, 0.5/ACh10_kHz/Unit.kHz(), 1], [0.5/ACh10_kHz/Unit.kHz(), 1, 1./ACh10_kHz/Unit.kHz(), -1]]
+# ach11mod = [[0, -1, 0.5/ACh11_kHz/Unit.kHz(), 1], [0.5/ACh11_kHz/Unit.kHz(), 1, 1./ACh11_kHz/Unit.kHz(), -1]]
+# ach12mod = [[0, -1, 0.5/ACh12_kHz/Unit.kHz(), 1], [0.5/ACh12_kHz/Unit.kHz(), 1, 1./ACh12_kHz/Unit.kHz(), -1]]
+# ach13mod = [[0, -1, 0.5/ACh13_kHz/Unit.kHz(), 1], [0.5/ACh13_kHz/Unit.kHz(), 1, 1./ACh13_kHz/Unit.kHz(), -1]]
+# ach14mod = [[0, -1, 0.5/ACh14_kHz/Unit.kHz(), 1], [0.5/ACh14_kHz/Unit.kHz(), 1, 1./ACh14_kHz/Unit.kHz(), -1]]
+# ach15mod = [[0, -1, 0.5/ACh15_kHz/Unit.kHz(), 1], [0.5/ACh15_kHz/Unit.kHz(), 1, 1./ACh15_kHz/Unit.kHz(), -1]]
 
-Analog00.SetModulation(analog_freq_interval, ach00mod)
-Analog01.SetModulation(analog_freq_interval, ach01mod)
-Analog02.SetModulation(analog_freq_interval, ach02mod)
-Analog03.SetModulation(analog_freq_interval, ach03mod)
-Analog04.SetModulation(analog_freq_interval, ach04mod)
-Analog05.SetModulation(analog_freq_interval, ach05mod)
-Analog06.SetModulation(analog_freq_interval, ach06mod)
-Analog07.SetModulation(analog_freq_interval, ach07mod)
-Analog08.SetModulation(analog_freq_interval, ach08mod)
-Analog09.SetModulation(analog_freq_interval, ach09mod)
-Analog10.SetModulation(analog_freq_interval, ach10mod)
-Analog11.SetModulation(analog_freq_interval, ach11mod)
-Analog12.SetModulation(analog_freq_interval, ach12mod)
-Analog13.SetModulation(analog_freq_interval, ach13mod)
-Analog14.SetModulation(analog_freq_interval, ach14mod)
-Analog15.SetModulation(analog_freq_interval, ach15mod)
+# Analog00.SetModulation(analog_freq_interval, ach00mod)
+# Analog01.SetModulation(analog_freq_interval, ach01mod)
+# Analog02.SetModulation(analog_freq_interval, ach02mod)
+# Analog03.SetModulation(analog_freq_interval, ach03mod)
+# Analog04.SetModulation(analog_freq_interval, ach04mod)
+# Analog05.SetModulation(analog_freq_interval, ach05mod)
+# Analog06.SetModulation(analog_freq_interval, ach06mod)
+# Analog07.SetModulation(analog_freq_interval, ach07mod)
+# Analog08.SetModulation(analog_freq_interval, ach08mod)
+# Analog09.SetModulation(analog_freq_interval, ach09mod)
+# Analog10.SetModulation(analog_freq_interval, ach10mod)
+# Analog11.SetModulation(analog_freq_interval, ach11mod)
+# Analog12.SetModulation(analog_freq_interval, ach12mod)
+# Analog13.SetModulation(analog_freq_interval, ach13mod)
+# Analog14.SetModulation(analog_freq_interval, ach14mod)
+# Analog15.SetModulation(analog_freq_interval, ach15mod)
