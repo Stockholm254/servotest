@@ -21,8 +21,9 @@ class dataBackup:
     
     self.host     = "//FILESERVER/backup"              # Bakkup server host name
     self.drive    = Path("Z:/")  #Path("../../TestOutput/backup")                                     # Net work drive
-    self.bkpPath  = "Rydberg Experiment Data/"+self.date_dir # Backup folder on server
-    
+    #self.bkpPath  = "Rydberg Experiment Data/"+self.date_dir # Backup folder on server
+    self.bkpPath  = "Loadlock Experiment Data/"+self.date_dir
+
     self.folders = []
     self.fileNum = 0
     

@@ -81,6 +81,7 @@ def RunServer(seq, rp, autostart = 1):
 	TIME_STOP = time.time()
 	return TIME_STOP-TIME_START
 
+
 class RpDDSServer(Server):
 
 	def __init__(self, name, port, message, bitfile, maxevents):

@@ -75,7 +75,7 @@ def DataForPlot(seq):
 	samps_per_channel = int(math.ceil(sample_rate * seq_duration) + 1) # MHz * us (+ 1 for the steady_state_value)
 
 	parsedDatas = ParseData(seq, samps_per_channel) # Get the machine readable data
-	parsedDatas = parsedDatas.reshape(32, samps_per_channel) # Partition the data according to channel
+	parsedDatas = parsedDatas.reshape(16, samps_per_channel) # Partition the data according to channel
 	
 	ind_diff = np.nonzero(np.diff(parsedDatas, axis=1))[1] # Detect the update point
 	ind_diff = np.unique(ind_diff) # We only need to know the time indices when things are updated, this get rid of the redundant ind in the list
