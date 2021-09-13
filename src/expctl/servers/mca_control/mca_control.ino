@@ -1,10 +1,11 @@
-int CLK = 3;
-int DATA = 4;
-int LATCH = 5;
-int incomingData = 0;
-  
+int CLK = 4;
+int DATA = 13;
+int LATCH = 8;
+int incomingByte;
+ 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(19200);
+  Serial.setTimeout(0.5);
   pinMode(CLK, OUTPUT);
   pinMode(DATA, OUTPUT);
   pinMode(LATCH, OUTPUT);
@@ -32,11 +33,14 @@ void set_val(int val) {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  if (Serial.available() > 0) 
+  if (Serial.available())
   {
-    incomingData = Serial.parseInt();
-    while (Serial.available() > 0) {Serial.read();}
-    set_val(incomingData);
-    Serial.println(incomingData);
+    incomingByte = Serial.read();
+    if (incomingByte!=-1) 
+    {
+      set_val(incomingByte);
+      Serial.write(incomingByte);
+    }
   }
+
 }
