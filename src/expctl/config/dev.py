@@ -8,7 +8,8 @@ from pathlib import Path
 DIR_SEQ  = Path(__file__).parent.parent/"usr/sequences" # defaulst sequences files
 DIR_MV   = Path(__file__).parent.parent/"usr/snippets" # default MV files
 DIR_TEMP = Path(__file__).parent.parent/"temp" # front panel temperary file directory
-DIR_DATA = Path(__file__).parent.parent.parent.parent/"TestOutput/Data/" # experiment data
+#DIR_DATA = Path(__file__).parent.parent.parent.parent/"TestOutput/Data/" # experiment data
+DIR_DATA = Path("E:/Data") # experiment data for realz
 DIR_LOG  = Path(__file__).parent.parent.parent.parent/"TestOutput/Logs/" # experiment run log
 DIR_REM  = Path(__file__).parent.parent/"usr/Remote"  #Path("./usr/Remote") # Remote uploaded file
 
@@ -28,6 +29,8 @@ IP_LABSERVER = '127.0.0.1' # Simonlab data backup server (lab office behind the 
 IP_RYDNUGGET = '127.0.0.1' # New rydberg polariton experiment control computer (control room)
 IP_RPTR = '127.0.0.1'
 IP_RFSOC_1 = '127.0.0.1'
+IP_RYDSHAKE = '127.0.0.1'
+IP_RPCOUNTER = '127.0.0.1'
 
 # RYDBURGER PORTS
 PORT_REMOTECTRL = 60000 # Remote front panel control (disabled)
@@ -41,6 +44,7 @@ PORT_PTIMER     = 60623 # Photon timer FPGA (control room under table rack)
 PORT_PTIMER2    = 60625 # Photon timer FPGA (control room under table rack); TimerMcTimeFace
 PORT_PTIMER3    = 60626 # Photon timer FPGA (control room under table rack); TimerMcTimeFace
 PORT_AD1		= 60701 # Analog Devices ADF435X, for microwave generation
+
 # RYDFRIES PORTS
 PORT_CAMERA     = 60614 # Chameleon camera (side or vertical imaging system, chamber table)
 PORT_CAMERA2    = 60613 # Chameleon camera (side or vertical imaging system, chamber table)
@@ -56,3 +60,9 @@ PORT_RPTR       = 60631
 
 #RFSOC PORTS
 PORT_RFSOC = 60617 # RFSOC 1 Box
+
+# RYDSHAKE PORTS
+PORT_DMD = 60651
+
+# RPCOUNTER PORTS
+PORT_RPTR       = 60621

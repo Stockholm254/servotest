@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import copy
 from math import floor
-from ..dat.Rubidium import groundHF
+
 #### Modifiable Variables ####
 # Note: values must be integers or floats.
 
@@ -14,7 +14,6 @@ MV(PDH1560_freq, min=0.0, max=2500.0, init=309.65, inc=0.1, digits=2)
 MV(PDH960_freq, min=0.0, max=2500.0, init=580.6, inc=0.1, digits=2)
 MV(PDH780_freq, min=0.0, max=2500.0, init=470.0, inc=0.1, digits=2)
 MV(CavPrb_FreqOffset_MHz, min=0.0, max=2500.0, init=209.0, inc=1, digits=2)
-MV(PDH785_freq_MHz, min=1.0, max=2000.0, init=550.0, inc=0.1, digits=2) #Was OP rep freq, but now is used for 785 PDH
 # Tab:SPCM_setting
 DetMode = 1.0
 PC_save_switch = 0.0
@@ -92,11 +91,11 @@ MV(dRSC_MOT_BiasY_G, min=-3.0, max=3.0, init=0.0205, inc=5e-3, digits=4)
 MV(dRSC_MOT_BiasZ_G, min=-3.0, max=3.0, init=0.371, inc=5e-3, digits=4)
 # Tab:Lattice
 LAT_SWITCH = 1.0
-LHT = 1.0 # previously LBT
-LVT = 1.0 # previously LTT
-LMP = 4.4 
-LHP = 4.8 # previously LBP
-LVP = 4.8 # previously LTP
+LBT = 1.0
+LTT = 1.0
+LMP = 4.4
+LBP = 4.8
+LTP = 4.8
 # Tab:Wait
 Wait0_ms = 0.0
 Wait1_ms = 0.0
@@ -131,10 +130,6 @@ MV(Trans_PGC_MOTpwr, min=0, max=5.0, init=4.15, inc=0.005, digits=4)
 MV(Trans_PGC_REPPwr, min=0, max=5.0, init=2.8, inc=0.005, digits=4)
 Trans_GDEP_ttl = 1
 Trans_GDEP_pwr = 5
-Trans_ParamHeat_switch = 0
-MV(ParamHeat_freq_kHz, min=0, max=40000.0, init=110, inc=0.1, digits=3)
-Shutter_open_switch = 0
-MV(Shutter_delay_ms, min=0, max=10, init=2.5, inc=0.1, digits=2)
 # Tab:dRSC
 dRSC_switch   = 1
 dRSC1_repetitions = 1
@@ -146,16 +141,13 @@ dRSC_HLAT_pwr = 4.7
 dRSC_ELAT_ttl = 0
 dRSC_ELAT_pwr = 0.0
 dRSC_Pump_ttl = 1
-# dRSC_2to2p_ttl = 1
 dRSC_Pump_pwr = 4.5
-dRSC_OP_REP_EarlyEnd_ms = 0.0
 dRSC_LAT_rampON_us = 200 
 dRSC_LAT_rampOFF_us = 500 
-MV(dRSC_B_G, min=0, max=7.9, init=0.00, inc=1e-2, digits=4)
-MV(dRSC_B_theta_deg, min=0, max=180, init=0.00, inc=1, digits=4)
-MV(dRSC_B_phi_deg, min=0, max=360, init=0.00, inc=1, digits=4)
+MV(dRSC_Bx_G, min=-5.0, max=5.0, init=0.20, inc=1e-3, digits=4)
+MV(dRSC_By_G, min=-3.5, max=3.5, init=0.18, inc=1e-3, digits=4)
+MV(dRSC_Bz_G, min=-5.0, max=5.0, init=0.00, inc=1e-3, digits=4)
 dRSC_PGC_switch = 0
-dRSC_ParamHeat_switch = 0
 c1_hold_time_ms = 0.6
 c1_VLAT_ttl = 1
 c1_VLATmain_pwr = 4.6
@@ -203,29 +195,24 @@ TrapRamp_PGC_switch = 1
 # Tab:BField_OP_DEP
 BRamp1_ttl = 1
 BRamp1_ms = 5
-MV(B_1_G, min=0, max=7.9, init=0.00, inc=1e-2, digits=4)
-MV(B_1_theta_deg, min=0, max=180, init=0.00, inc=1, digits=4)
-MV(B_1_phi_deg, min=0, max=360, init=0.00, inc=1, digits=4)
+MV(Bx_1_G, min=-5.0, max=5.0, init=0.20, inc=1e-3, digits=4)
+MV(By_1_G, min=-5.0, max=5.0, init=0.10, inc=1e-3, digits=4)
+MV(Bz_1_G, min=-5.0, max=5.0, init=0.00, inc=1e-3, digits=4)
 BRamp1_settle_ms = 0
 OP_REP_ttl = 1
 OP_REP_pwr = 5
 OP_REP_ms = 1.0
-OP_REP_12_EarlyEnd_ms = 0
 OP_REP_RF_type = 1
-OP_REP_RF_freq_MHz = 0.0 #TODO MV
-OP_REP_RF_pwr_dBm = 0.0
+MV(OP_REP_RF_MHz, min=1.0, max=2000.0, init=550.0, inc=0.1, digits=2)
 BRamp2_ttl = 1
 BRamp2_ms = 5
-MV(B_2_G, min=0, max=7.9, init=0.00, inc=1e-2, digits=4)
-MV(B_2_theta_deg, min=0, max=180, init=0.00, inc=1, digits=4)
-MV(B_2_phi_deg, min=0, max=360, init=0.00, inc=1, digits=4)
+MV(Bx_2_G, min=-5.0, max=5.0, init=0.20, inc=1e-3, digits=4)
+MV(By_2_G, min=-5.0, max=5.0, init=0.10, inc=1e-3, digits=4)
+MV(Bz_2_G, min=-5.0, max=5.0, init=0.00, inc=1e-3, digits=4)
 GDEP_ttl = 1
 GDEP_ms = 0.1
 GDEP_pwr = 5.0
 MV(GDEP_det_MHz, min=-1000.0, max=1000.0, init=0.0, inc=0.1, digits=2)
-OP_780_switch = 0
-MV(OP_780_f0_MHz, min=0, max=3e3, init=300.0, inc=0.1, digits=3)
-OP_780_pwr = 3.3
 # Tab:CavPrb
 PRB_mode = 1.0
 PRB_ttl = 1.0
@@ -320,16 +307,6 @@ MV(Prb_U_wait_us, min=0, max=10000, init=0, inc=1, digits=3)
 MV(Prb_U_dur_us, min=0, max=10000, init=0, inc=1, digits=3)
 MV(Prb_L_wait_us, min=0, max=10000, init=0, inc=1, digits=3)
 MV(Prb_L_dur_us, min=0, max=10000, init=0, inc=1, digits=3)
-# Tab:Microwaves
-MV(MW_det_kHz, min=-1000000, max=1000000, init=0, inc=10, digits=1)
-MV(MW_pwr_dBm, min=-40, max=10, init=0, inc=0.1, digits=2) 
-MW_cw_ttl = 1
-MV(MW_time_ms, min=0.0, max=100., init=0., inc=0.1, digits=2)
-MV(MW_BiasX_G, min=-3.0, max=3.0, init=0.120, inc=1e-3, digits=4)
-MV(MW_BiasY_G, min=-3.0, max=3.0, init=0.0205, inc=1e-3, digits=4)
-MV(MW_BiasZ_G, min=-3.0, max=3.0, init=0.371, inc=1e-3, digits=4)
-MV(MW_ramp_ms, min=0, max=100, init=10, inc=0.1, digits=2)
-MV(MW_settle_ms, min=0, max=100, init=10, inc=0.1, digits=2) 
 # Tab:REP_Durations
 MV(REP_frac_1, min=0.0, max=0.5, init=0.5, inc=0.01, digits=2)
 MV(REP_frac_2, min=0.0, max=0.5, init=0.5, inc=0.01, digits=2)
@@ -365,16 +342,6 @@ TREPFreq = Rb.DDS_REP_12(Trans_REP_Det12_MHz)
 #Imaging laser freq
 IMGMOTFREQ = Rb.DDS_MOT_23(Img_det23_MHz)
 IMGREPFREQ = Rb.DDS_REP_12(Img_det12_MHz)
-#BField transformation
-dRSC_Bx_G = dRSC_B_G*np.sin(np.deg2rad(dRSC_B_theta_deg))*np.cos(np.deg2rad(dRSC_B_phi_deg))
-dRSC_By_G = dRSC_B_G*np.sin(np.deg2rad(dRSC_B_theta_deg))*np.sin(np.deg2rad(dRSC_B_phi_deg))
-dRSC_Bz_G = dRSC_B_G*np.cos(np.deg2rad(dRSC_B_theta_deg))
-Bx_1_G = B_1_G*np.sin(np.deg2rad(B_1_theta_deg))*np.cos(np.deg2rad(B_1_phi_deg))
-By_1_G = B_1_G*np.sin(np.deg2rad(B_1_theta_deg))*np.sin(np.deg2rad(B_1_phi_deg))
-Bz_1_G = B_1_G*np.cos(np.deg2rad(B_1_theta_deg))
-Bx_2_G = B_2_G*np.sin(np.deg2rad(B_2_theta_deg))*np.cos(np.deg2rad(B_2_phi_deg))
-By_2_G = B_2_G*np.sin(np.deg2rad(B_2_theta_deg))*np.sin(np.deg2rad(B_2_phi_deg))
-Bz_2_G = B_2_G*np.cos(np.deg2rad(B_2_theta_deg))
 
 
 #### PREPARE STAMPS ####
@@ -449,7 +416,7 @@ if PRB_ttl or PRB_U_ttl or PRB_L_ttl:
 	STP_PRB_freq.append((t_PRB-1, CavPrb_P_f0, t_PRB, CavPrb_P_f0))
 	STP_GATE.append((t_PRB-1, 1, t_PRB, 1))
 
-#Experiment: Trigger RFSoc with each STP_PRB_EOM (TTL) and only write three ramps to save cycle time
+#Exepriment: Trigger RFSoc with each STP_PRB_EOM (TTL) and only write three ramps to save cycle time
 
 # AUX1 should always be zero during PRB; AUX2 switches between OP and DEP
 
@@ -481,40 +448,28 @@ if MOT_dRSC_switch == 1:
 				times_MOTdRSC.append(times.append((remainingtime_ms)*Unit.ms(),"MOT dRSC"))
 times_Wait0 = times.append(Wait0_ms*Unit.ms(), "Wait At MOT")
 
-if MW_cw_ttl:
-	times_MW_bramp = times.append(MW_ramp_ms*Unit.ms(), "MW B Ramp")
-	times_MW_settle = times.append(MW_settle_ms*Unit.ms(), "MW B Settle")
-	times_MW = times.append(MW_time_ms*Unit.ms(), "MW HFS")
-
-### change MOT and REP frequencies
-#times_changeMOTfreq = times.append("length variable","time to change freqs")
-
 ### TRANSPORT
 #times_transport = Transport_DDSRampMode(times, Trans_acc_g, Trans_dist_mm, Max_df=Trans_MaxF_MHz)
 #times_Wait1 = times.append(Wait1_ms*Unit.ms(), "Wait In Cav")
 #if Trans_RoundTrip == 1:
 #	times_transport_back = Transport_DDSRampMode(times, Trans_acc_g, -Trans_distance_mm, Max_df=Trans_MaxF_MHz)
-# The transport sequence got modified to receive the two channel obejct instead of hardcoding them
-# Since we are only using one RFsoc channel for now the other one gets set to None
-#transport 1
-
 
 #transport 1
-times_transport = Transport(times, Trans_acc_g, Trans_dist_mm, chanA=RFSOC1_2, chanB=RFSOC1_3, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
+times_transport = Transport(times, Trans_acc_g, Trans_dist_mm, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
 #wait 1
 #if Trans_hold_1_ms>0.:
 times_Wait1 = times.append(Trans_hold_1_ms*Unit.ms(), "Wait after transport 1")
-times_transport = times_transport & times_Wait1
+times_transport &= times_Wait1
 #transport 2
 if abs(Trans_dist_2_mm)>0.:
-	times_transport_2 = Transport(times, Trans_acc_g, Trans_dist_2_mm, chanA=RFSOC1_2, chanB=RFSOC1_3, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
+	times_transport_2 = Transport(times, Trans_acc_g, Trans_dist_2_mm, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
 	times_transport &= times_transport_2
 #wait 2
 if Trans_hold_2_ms>0.:
 	times_Wait11 = times.append(Trans_hold_2_ms*Unit.ms(), "Wait after transport 2")
 #transport 3
 if abs(Trans_dist_3_mm)>0.:
-	times_transport_3 = Transport(times, Trans_acc_g, Trans_dist_3_mm, chanA=RFSOC1_2, chanB=RFSOC1_3, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
+	times_transport_3 = Transport(times, Trans_acc_g, Trans_dist_3_mm, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
 	times_transport &= times_transport_3
 
 #times_transport = times_transport_1 #& times_transport_2&times_transport_3 HOW to fix this correctly
@@ -542,7 +497,7 @@ times_Wait1p5 = times.append(Wait1p5_ms*Unit.ms(), "Wait In Cav AFTER dRSC")
 if BRamp1_ttl == 1:
 	times_BRamp1 = times.append(BRamp1_ms*Unit.ms(),'B Ramp 1')
 	times_BRamp1_settle = times.append(BRamp1_settle_ms*Unit.ms(),'B Ramp 1 Settle')
-if OP_REP_ttl or OP_780_switch == 1:
+if OP_REP_ttl == 1:
 	times_OP = times.append(OP_REP_ms*Unit.ms(),'Optical Pumping')
 if BRamp2_ttl == 1:
 	times_BRamp2 = times.append(BRamp2_ms*Unit.ms(),'B Ramp 2')
@@ -570,8 +525,8 @@ REP0_ttl.SetInterval(times_Init, 1)
 Scope_trig.SetInterval(times_Init, 0)
 Cam_trig.SetInterval(times_Init, 1)
 UV_ttl.SetInterval(times_Init, 0)
-LAT1_ttl.SetInterval(times_Init, LVT)
-LAT2_ttl.SetInterval(times_Init, LHT)
+LAT1_ttl.SetInterval(times_Init, LTT)
+LAT2_ttl.SetInterval(times_Init, LBT)
 Sacher2_ttl.SetInterval(times_Init, 0)
 V1_ttl.SetInterval(times_Init, V1_main_ttl)
 LAT0_ttl.SetInterval(times_Init.afterward(1.9*Unit.us()), LAT_SWITCH)
@@ -590,8 +545,7 @@ Nufern1_ttl.SetInterval(times_Init, 0)
 EDFA_1529_ttl.SetInterval(times_Init, Floquet_AOM_TTL)
 MOT2_ttl.SetInterval(times_Init, 0)
 dRSC_LAT_ttl.SetInterval(times_Init, 0)
-MWaves_ttl.SetInterval(times_Init, 0)
-#Digi_test.SetInterval(times_Init, 1)
+Digi_test.SetInterval(times_Init, 1)
 # Analog seq
 MOT0_pwr.SetInterval(times_Init, MOT_MOTPwr)
 REP0_pwr.SetInterval(times_Init, MOT_REPPwr)
@@ -599,8 +553,8 @@ MOTCoil.SetInterval(times_Init, MOT_CoilCurr)
 BiasX.SetInterval(times_Init, MOT_BiasX_G)
 BiasY.SetInterval(times_Init, MOT_BiasY_G)
 BiasZ.SetInterval(times_Init, MOT_BiasZ_G)
-LAT1_pwr.SetInterval(times_Init, LHP)
-LAT2_pwr.SetInterval(times_Init, LVP)
+LAT1_pwr.SetInterval(times_Init, LBP)
+LAT2_pwr.SetInterval(times_Init, LTP)
 Sacher2_pwr.SetInterval(times_Init, 0)
 LAT0_pwr.SetInterval(times_Init, LMP)
 Blue_pwr.SetInterval(times_Init, PRB_Ctrl_pwr)
@@ -642,14 +596,8 @@ DDS_OptPump1.SetInterval(times_Init, 80.0)
 DDS_PDH1560.SetInterval(times_Init, PDH1560_freq*Unit.MHz())
 DDS_PDH960.SetInterval(times_Init, PDH960_freq*Unit.MHz())
 DDS_PDH780.SetInterval(times_Init, PDH780_freq*Unit.MHz())
-# RFSOC1
 RFSOC1_CavPrbEom.SetInterval(times_Init, PRB_f0_MHz*Unit.MHz())
-RFSOC1_2.SetInterval(times_Init, 80.0*Unit.MHz())
-RFSOC1_3.SetInterval(times_Init, 80.0*Unit.MHz())
-RFSOC1_7.SetInterval(times_Init, PDH785_freq_MHz*Unit.MHz())
-# Red Pitaya 1
-#RP1_DDS_0.SetInterval(times_Init, ParamHeat_freq_kHz*Unit.kHz())
-RP1_DDS_0.SetInterval(times_Init, 0.01*Unit.kHz())
+RFSOC1_7.SetInterval(times_Init, OP_REP_RF_MHz*Unit.MHz())
 DDS_HalfRng.SetInterval(times_Init, 0)
 # SPCM seq
 PC_bin_num.SetInterval(times_Init, PC_bin_number)
@@ -661,19 +609,12 @@ elif DetMode == 2:
 	PC_save.SetInterval(times_Init, 0)
 	PT_save.SetInterval(times_Init, PC_save_switch)
 # Lab Bricks 
-print(f'frequency we are trying for:{groundHF() + MW_det_kHz*Unit.kHz()}')
-LB1_freq.SetInterval(times_Init, groundHF() + MW_det_kHz*Unit.kHz())
-LB1_pow.SetInterval(times_Init, MW_pwr_dBm)
-LB1_ttl.SetInterval(times_Init, MW_cw_ttl)
 LB2_freq.SetInterval(times_Init, Floq_SB1_Freq_MHz)
 LB2_pow.SetInterval(times_Init, Floq_SB1_pwr_dBm)
 LB2_ttl.SetInterval(times_Init, 1)
 # LB3_freq.SetInterval(times_Init, MWaves_Freq_MHz)
 # LB3_pow.SetInterval(times_Init, MWaves_pwr_dBm)
 # LB3_ttl.SetInterval(times_Init, MW_CW_ttl)
-LB4_freq.SetInterval(times_Init, OP_REP_RF_freq_MHz)
-LB4_pow.SetInterval(times_Init, OP_REP_RF_pwr_dBm)
-LB4_ttl.SetInterval(times_Init, 1)
 # ADF435X
 #AD1_freq.SetInterval(times_Init, MWaves_Freq_MHz)
 #AD1_pow.SetInterval(times_Init, MWaves_pwr_dBm)
@@ -681,20 +622,7 @@ LB4_ttl.SetInterval(times_Init, 1)
 #Camera
 Camera_gain.SetInterval(times_Init, Img_gain_dB)
 Camera_save.SetInterval(times_Init, Img_save)
-Shut_MOT_ttl.SetInterval(times_Init, 1) # TTL=1 is open
-Shut_abs_ttl.SetInterval(times_Init, 0) # TTL=0 is closed
 
-# Microwaves for HFS spectroscopy
-if MW_cw_ttl:
-		#Ramp B field to dRSC pump direction
-	BiasX.SetInterval(times_MW_bramp,PGC_BiasX_G,MW_BiasX_G)
-	BiasY.SetInterval(times_MW_bramp,PGC_BiasY_G,MW_BiasY_G)
-	BiasZ.SetInterval(times_MW_bramp,PGC_BiasZ_G,MW_BiasZ_G)
-	MWaves_ttl.SetInterval(times_MW, 1)
-	MWaves_ttl.SetInterval(times_MW.afterward(0), 0)
-### Change MOT freq
-#DDS_MOT.SetInterval(times_transport.afterStart(PGC_FreqRamp_ms*Unit.ms()),DDS_MOT.GetLastValue(),TMOTFreq)
-#DDS_REP.SetInterval(times_transport.afterStart(PGC_FreqRamp_ms*Unit.ms()),DDS_REP.GetLastValue(),TREPFreq)
 
 ### dRSC in MOT ###
 if MOT_dRSC_switch == 1:
@@ -787,10 +715,9 @@ if Trans_PGC_switch == 1:
 	### Bias Field Ramp ###
 #print(times_transport)
 #print(times_transport.afterStart(times_transport.length()/2.0))
-else:
-	BiasX.SetInterval(times_transport.afterStart(times_transport.length()/2.0), PGC_BiasX_G, dRSC_Bx_G)
-	BiasY.SetInterval(times_transport.afterStart(times_transport.length()/2.0), PGC_BiasY_G, dRSC_By_G)
-	BiasZ.SetInterval(times_transport.afterStart(times_transport.length()/2.0), PGC_BiasZ_G, dRSC_Bz_G)
+BiasX.SetInterval(times_transport.afterStart(times_transport.length()/2.0), PGC_BiasX_G, dRSC_Bx_G)
+BiasY.SetInterval(times_transport.afterStart(times_transport.length()/2.0), PGC_BiasY_G, dRSC_By_G)
+BiasZ.SetInterval(times_transport.afterStart(times_transport.length()/2.0), PGC_BiasZ_G, dRSC_Bz_G)
 
 # MOT0_ttl.SetInterval(times_transport.afterward(0), 0)
 #  	REP0_ttl.SetInterval(times_rt.afterward(0), 0)
@@ -819,19 +746,11 @@ LAT0_ttl.SetInterval(times_Wait1, Lat_TTL_Wait1)
 LAT1_ttl.SetInterval(times_Wait1, Lat_TTL_Wait1)
 LAT2_ttl.SetInterval(times_Wait1, Lat_TTL_Wait1)
 
-# Parametric heating during tranport
-if Trans_ParamHeat_switch == 1:
-	RP1_DDS_0.SetInterval(times_Wait1, ParamHeat_freq_kHz*Unit.kHz())
-	RP1_DDS_0.SetInterval(times_Wait1.afterward(0), 0.01*Unit.kHz())
 
 ### Depump during transport
 MOT2_ttl.SetInterval(times_transport, Trans_GDEP_ttl)
 MOT2_ttl.SetInterval(times_transport.afterward(0), 0)
 MOT2_pwr.SetInterval(times_transport, Trans_GDEP_pwr)
-
-### Shutter to block MOT light
-if times_transport.length() > 5*Unit.ms():
-	Shut_MOT_ttl.SetInterval(times_transport.afterStart(Shutter_delay_ms*Unit.ms()).afterward(0), Shutter_open_switch)
 
 ### degenerate Raman sideband cooling 
 if dRSC_switch == 1:
@@ -842,7 +761,6 @@ if dRSC_switch == 1:
 		# Use proper RF source for driving the EOM
 		AUX_ttl.SetInterval(this_time, 1) # dRSC
 		AUX2_ttl.SetInterval(this_time, 1) # MUST BE ONE TO ENSURE THAT LAB BRICK IS TRIGGERED ON
-		AUX2_ttl.SetInterval(this_time.beforeEnd(dRSC_OP_REP_EarlyEnd_ms*Unit.ms()), 0)
 
 		# PGC
 		MOT0_ttl.SetInterval(this_time, dRSC_PGC_switch)
@@ -860,10 +778,6 @@ if dRSC_switch == 1:
 		dRSC_LAT_pwr.SetLogRamp(this_time.beforeEnd(dRSC_LAT_rampOFF_us*Unit.us()), dRSC_HLAT_pwr, c1_HLAT_pwr)
 		dRSC_LAT_ttl.SetInterval(this_time.beforeEnd(dRSC_LAT_rampOFF_us*Unit.us()), np.maximum(dRSC_HLAT_ttl,c1_HLAT_ttl))
 		dRSC_LAT_ttl.SetInterval(this_time.afterward(0), c1_HLAT_ttl)
-		# Parametric heating with HLAT
-		if dRSC_ParamHeat_switch == 1:
-			RP1_DDS_0.SetInterval(this_time, ParamHeat_freq_kHz*Unit.kHz())
-			#RP1_DDS_0.SetInterval(this_time.afterward(0), 0.01*Unit.kHz())
 		# Vertical lattice
 		LAT0_ttl.SetInterval(this_time.afterStart(0), dRSC_VLAT_ttl)
 		LAT1_ttl.SetInterval(this_time.afterStart(0), dRSC_VLAT_ttl)
@@ -969,22 +883,9 @@ if OP_REP_ttl == 1:
 	elif OP_REP_RF_type == 1: # typically for O P | want quite weak repump sideband and strong pumping carrier, use attenuated version of LabBrick 5626 signal.
 		AUX_ttl.SetInterval(times_OP, 0)
 		AUX2_ttl.SetInterval(times_OP, 1)
-		AUX2_ttl.SetInterval(times_OP.beforeEnd(OP_REP_12_EarlyEnd_ms*Unit.ms()), 0)
 	elif OP_REP_RF_type == 2: # typically for depumping | turn off 1->2' sideband, turn on ~2->2' resonant light (crapbox RF @ 550 MHz)
 		AUX_ttl.SetInterval(times_OP, 0)
 		AUX2_ttl.SetInterval(times_OP, 0) 
-
-# 780 optical pumping
-if OP_780_switch == 1:
-
-	PRB_pwr_ttl.SetInterval(times_OP, 1)
-	PRB_pwr_ttl.SetInterval(times_OP.afterward(0), 0)
-	RFSOC1_CavPrbEom.SetInterval(times_OP.beforeStart(1.0*Unit.ms()), PRB_f0_MHz*Unit.MHz(),OP_780_f0_MHz*Unit.MHz())
-	Nufern0_pwr.SetInterval(times_OP.beforeStart(1.0*Unit.ms()),OP_780_pwr)
-	Nufern0_pwr.SetInterval(times_OP.afterward(0.),PRB_pwr_low)
-	Nufern0_ttl.SetInterval(times_OP,OP_780_switch)
-	Nufern0_ttl.SetInterval(times_OP.afterward(0),0)
-	RFSOC1_CavPrbEom.SetInterval(times_OP.afterward(0.), OP_780_f0_MHz*Unit.MHz(), PRB_f0_MHz*Unit.MHz())
 
 
 # ramp B-field to probe value, AFTER optical pumping
@@ -1031,7 +932,7 @@ if PRB_mode == 1: # Static cloud in the cavity
 	#MOT
 	MOTCoil.SetInterval(times_Prb, PRB_MOTcoil)
 	# trigger the AWG for probing (sometimes applicable)
-	#AWG_trig.SetInterval(times_Prb, 1)
+	AWG_trig.SetInterval(times_Prb, 1)
 	
 	# AUX1 should always be zero during PRB; AUX2 switches between OP and DEP
 	AUX_ttl.SetInterval(times_Prb, 0)
@@ -1123,8 +1024,6 @@ elif PRB_mode == 2: # for hot wire, Moving the cloud through the cavity waist (O
 
 if Img_switch == 1: # Fluorescence imaging
 	times_IMG = Imaging(times, 1, Img_prep_time_us*Unit.us(), Img_TOF_ms*Unit.ms(), Img_time_us*Unit.us(), Img_drop_time_ms*Unit.ms(), Img_horz_pwr, Img_REP_pwr, IMGMOTFREQ, IMGREPFREQ, img_dep_time = Img_DEPMOT_time_us*Unit.us())
-	#Shut_MOT_ttl.SetInterval(times_transport.beforeEnd(0*Unit.ms()), 1)
-	Shut_MOT_ttl.SetInterval(times_IMG.beforeStart(2.5*Unit.ms()), 1)
 	AUX_ttl.SetInterval(times_IMG.afterStart((Img_prep_time_us+Img_DEPMOT_time_us+1000.0*Img_TOF_ms)*Unit.us()).afterward(0),Img_RF_ttl)
 	AUX_ttl.SetInterval(times_IMG.afterward(0),0)
 if Img_switch == 2: # Absorption imaging
@@ -1141,11 +1040,7 @@ DDS_trig.Set([(0, 1, 10*Unit.us(), 1),(10*Unit.us(),0,times_FinalWait[1],0)])
 
 ### Depump the MOT for vertical absorption imaging ###
 if Img_switch == 2:
-	
-	# open MOT shutter
-	Shut_MOT_ttl.SetInterval(times_IMG_DEP.beforeStart(2.5*Unit.ms()), 1)
-	#Shut_MOT_ttl.SetInterval(times_transport.beforeEnd(0*Unit.ms()), 1)
-
+	# 
 	if Img_FRAMP_switch == 1:
 		DDS_MOT.SetInterval(times_IMG_FRAMP,TMOTFreq,IMGMOTFREQ)
 		DDS_REP.SetInterval(times_IMG_FRAMP,TREPFreq,IMGREPFREQ)
@@ -1153,9 +1048,6 @@ if Img_switch == 2:
 	# depump at end of transport
 	MOT0_ttl.SetInterval(times_IMG_DEPMOT, 1)
 	MOT0_ttl.SetInterval(times_IMG_DEPMOT.afterward(0), 0)
-	# open absorption shutter
-	#Shut_abs_ttl.SetInterval(times_transport.beforeEnd(0*Unit.ms()), 1)
-	Shut_abs_ttl.SetInterval(times_IMG.beforeStart(5*Unit.ms()), 1)
 	# turn off ELAT during imaging
 	Sacher2_ttl.SetInterval(times_IMG, 0)
 	Sacher2_pwr.SetInterval(times_IMG, 0)
@@ -1168,8 +1060,6 @@ if Img_switch == 2:
 		D1Laser1_ttl.SetInterval(times_IMG_REP, 1)
 		D1Laser1_pwr.SetInterval(times_IMG_REP, Img_REP_atend_pwr)
 		D1Laser1_ttl.SetInterval(times_IMG_REP.afterward(0), 0)
-	# close absorption shutter
-	Shut_abs_ttl.SetInterval(times_IMG.afterward(2.5*Unit.ms()), 0)
 	
 
 
@@ -1231,10 +1121,8 @@ Nufern1_ttl.SetSteadyStateValue(0)
 EDFA_1529_ttl.SetSteadyStateValue(Floquet_SteadyState_TTL)
 MOT2_ttl.SetSteadyStateValue(0)
 dRSC_LAT_ttl.SetSteadyStateValue(0)
-Shut_MOT_ttl.SetSteadyStateValue(1)
-Shut_abs_ttl.SetSteadyStateValue(0)
-#AWG_trig.SetSteadyStateValue(0)
-#Digi_test.SetSteadyStateValue(1)
+AWG_trig.SetSteadyStateValue(0)
+Digi_test.SetSteadyStateValue(1)
 # Analog Seq
 MOT0_pwr.SetSteadyStateValue(MOT_MOTPwr)
 REP0_pwr.SetSteadyStateValue(MOT_REPPwr)
@@ -1242,8 +1130,8 @@ MOTCoil.SetSteadyStateValue(MOT_CoilCurr)
 BiasX.SetSteadyStateValue(MOT_BiasX_G)
 BiasY.SetSteadyStateValue(MOT_BiasY_G)
 BiasZ.SetSteadyStateValue(MOT_BiasZ_G)
-LAT1_pwr.SetSteadyStateValue(LVP)
-LAT2_pwr.SetSteadyStateValue(LHP)
+LAT1_pwr.SetSteadyStateValue(LTP)
+LAT2_pwr.SetSteadyStateValue(LBP)
 Sacher2_pwr.SetSteadyStateValue(0)
 LAT0_pwr.SetSteadyStateValue(LMP)
 Blue_pwr.SetSteadyStateValue(PRB_Ctrl_pwr)
@@ -1271,14 +1159,11 @@ DDS_MOT.SetSteadyStateValue(MOTFREQ)
 #DDS_LAT1.SetSteadyStateValue(ModeSort3_MHz*Unit.MHz())
 #DDS1_2.SetSteadyStateValue(PSC_lock1_MHz*Unit.MHz())
 # DDS PDH seq
-RP1_DDS_0.SetSteadyStateValue(ParamHeat_freq_kHz*Unit.kHz())
-RP1_DDS_1.SetSteadyStateValue(10*Unit.MHz())
 DDS_PDH1560.SetSteadyStateValue(PDH1560_freq)
 DDS_PDH960.SetSteadyStateValue(PDH960_freq)
 DDS_PDH780.SetSteadyStateValue(PDH780_freq)
 RFSOC1_CavPrbEom.SetSteadyStateValue(PRB_f0_MHz)
-#RFSOC1_6.SetSteadyStateValue(80*Unit.MHz())
-RFSOC1_7.SetSteadyStateValue(PDH785_freq_MHz*Unit.MHz())
+RFSOC1_7.SetSteadyStateValue(OP_REP_RF_MHz)
 DDS_HalfRng.SetSteadyStateValue(5)
 # DDS seq 2
 DDS_CavPrbAOM.SetSteadyStateValue(CavPrb_FreqOffset_MHz*Unit.MHz())
@@ -1286,16 +1171,16 @@ DDS_chan1.SetSteadyStateValue(80)
 DDS_OptPump1.SetSteadyStateValue(80)
 #DDS2_3.SetSteadyStateValue(ModeSort1_MHz*Unit.MHz())
 # Lab Bricks
-LB1_freq.SetSteadyStateValue(groundHF() + MW_det_kHz*Unit.kHz())
-LB1_pow.SetSteadyStateValue(MW_pwr_dBm)
-LB1_ttl.SetSteadyStateValue(MW_cw_ttl)
+#LB1_freq.SetSteadyStateValue(MWaves_Freq_MHz)
+#LB1_pow.SetSteadyStateValue(MWaves_pwr_dBm)
+LB1_ttl.SetSteadyStateValue(0)
 LB2_freq.SetSteadyStateValue(Floq_SB1_Freq_MHz)
 LB2_pow.SetSteadyStateValue(Floq_SB1_pwr_dBm)
 LB2_ttl.SetSteadyStateValue(1)
 # LB3_freq.SetSteadyStateValue(MWaves_Freq_MHz)
 # LB3_pow.SetSteadyStateValue(MWaves_pwr_dBm)
 # LB3_ttl.SetSteadyStateValue(0)
-MWaves_ttl.SetSteadyStateValue(0)
+# MWaves_ttl.SetSteadyStateValue(0)
 # ADF435X
 #AD1_freq.SetSteadyStateValue(MWaves_Freq_MHz)
 #AD1_pow.SetSteadyStateValue(MWaves_pwr_dBm)

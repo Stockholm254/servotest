@@ -28,6 +28,8 @@ IP_LABSERVER = '192.168.1.101' # Simonlab data backup server (lab office behind 
 IP_RYDNUGGET = '192.168.1.120' # New rydberg polariton experiment control computer (control room)
 IP_RPTR = '192.168.1.11'
 IP_RFSOC_1 = '192.168.1.160'
+IP_RYDSHAKE = '192.168.1.109'
+IP_RPCOUNTER = '192.168.1.125'
 
 # RYDBURGER PORTS
 PORT_REMOTECTRL = 60000 # Remote front panel control (disabled)
@@ -57,3 +59,9 @@ PORT_RPTR       = 60631
 
 #RFSOC PORTS
 PORT_RFSOC = 60617 # RFSOC 1 Box
+
+# RYDSHAKE PORTS
+PORT_DMD = 60651
+
+# RPCOUNTER PORTS
+PORT_RPTR       = 60621

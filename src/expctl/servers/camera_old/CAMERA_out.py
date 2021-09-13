@@ -112,6 +112,7 @@ class GP_camera:
 		img_dir = DIR_DATA/self.date_dir/self.folder_name
 		# img_dir += "IMG_"+self.run_name+"\\" # Add subfolder for each run
 		self.img_dir = img_dir
+		logger.debug("saving to {}".format(self.img_dir))
 		
 		img_name = []
 		for pic in range(0, self.num_of_images):

@@ -20,12 +20,12 @@ all_sequences = ([
   Sequence("Camera sequence",         host=IP_RYDFRIES,  port=PORT_CAMERA,   max_channels=4 , graph=0),
   Sequence("Camera 2 sequence",       host=IP_RYDFRIES,  port=PORT_CAMERA2,  max_channels=4 , graph=0),
   Sequence("DDS 1 sequence",          host=IP_RYDNUGGET, port=PORT_DDS1,     max_channels=4 , graph=0),
-  Sequence("DDS PDH sequence",        host=IP_RYDNUGGET, port=PORT_DDSPDH,   max_channels=7 , graph=0), #
+  Sequence("DDS PDH sequence",        host=IP_RYDNUGGET, port=PORT_DDSPDH,   max_channels=7 , graph=0),
   Sequence("DDS 2 sequence",          host=IP_RYDNUGGET, port=PORT_DDS2,     max_channels=4 , graph=0),
   Sequence("Photon Timer sequence",   host=IP_RYDNUGGET, port=PORT_PTIMER,   max_channels=2 , graph=0),
   Sequence("Photon Timer 2 sequence", host=IP_RYDNUGGET, port=PORT_PTIMER2,  max_channels=2 , graph=0),
   Sequence("Photon Timer 3 sequence", host=IP_RYDNUGGET, port=PORT_PTIMER3,  max_channels=2 , graph=0),
-  Sequence("Photon Counter sequence", host=IP_RYDNUGGET, port=PORT_PCOUNTER, max_channels=4 , graph=0),
+  Sequence("Photon Counter sequence", host=IP_RPCOUNTER, port=PORT_PCOUNTER, max_channels=4 , graph=0),
   Sequence("LabBrick 1 sequence",     host=IP_RYDFRIES,  port=PORT_LB1,      max_channels=3 , graph=0),
   Sequence("LabBrick 2 sequence",     host=IP_RYDFRIES,  port=PORT_LB2,      max_channels=3 , graph=0),
   Sequence("LabBrick 3 sequence",     host=IP_RYDFRIES,  port=PORT_LB3,      max_channels=3 , graph=0),
@@ -33,9 +33,12 @@ all_sequences = ([
   Sequence("ADF435X sequence",        host=IP_RYDFRIES,  port=PORT_AD1,      max_channels=3 , graph=0),
   Sequence("RFSOC 1 sequence",        host=IP_RFSOC_1,   port=PORT_RFSOC,    max_channels=8 , graph=0),
   Sequence("RP DDS Transport sequence", host=IP_RPTR,    port=PORT_RPTR,     max_channels=2 , graph=0),
+  Sequence("Kinesis Lambda 2",        host=IP_RYDFRIES,  port=PORT_KINESIS_2,max_channels=1 , graph=0),
+  Sequence("Kinesis Lambda 4",        host=IP_RYDFRIES,  port=PORT_KINESIS_4,max_channels=1 , graph=0),
+  Sequence("DMD sequence",            host=IP_RYDSHAKE,  port=PORT_DMD      ,max_channels=10, graph=0)
   ])
 
-digital_seq1, analog_seq1, cam, cam2, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, photon_counter, lb_1, lb_2, lb_3, lb_4, ad_1, rfsoc_1, rp_ddds_1 = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
+digital_seq1, analog_seq1, cam, cam2, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, photon_counter, lb_1, lb_2, lb_3, lb_4, ad_1, rfsoc_1, rp_ddds_1, kinesis_2, kinesis_4, dmd = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
 
 #=======================================Channel Definitions=========================================
 # NEXT ADD ALL OF THE CHANNELS TO THEM! ##Note: the name in quotes must have 1 < length < 31
@@ -54,7 +57,7 @@ V1_ttl        = digital_seq1.newChannel(9,  "V1 TTL",           system='EField',
 LAT0_ttl      = digital_seq1.newChannel(10, "Lat Main TTL",     system='LAT',     steady_state_value=0, max_value=1, graph=1, transform_t=tran.LatAOMDelay)
 MOT1_ttl      = digital_seq1.newChannel(11, "MOTdRSC Pump TTL", system='dRSC',    steady_state_value=0, max_value=1, graph=1)
 Blue_ttl      = digital_seq1.newChannel(12, "Blue TTL",         system='Blue',    steady_state_value=0, max_value=1, graph=1, transform_t=tran.BlueAOMDelay)
-ODT2_ttl      = digital_seq1.newChannel(13, "Cav DTrap TTL",    system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.BlueAOMDelay)
+ODT2_ttl      = digital_seq1.newChannel(13, "Cav DTrap TTL",    system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.LatAOMDelay)
 Nufern0_ttl   = digital_seq1.newChannel(14, "Cav Prb TTL",      system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_t=tran.CavPrbAOMDelay)
 PRB_pwr_ttl   = digital_seq1.newChannel(15, "Cav Prb Power TTL",system='CavPrb',  steady_state_value=0, max_value=1, graph=1) #, transform_t=tran.CavPrbAOMDelay
 Timer_trig    = digital_seq1.newChannel(16, "Timer Trig",       system='Debug',   steady_state_value=0, max_value=1, graph=1, ctype='Slave', master=Scope_trig)
@@ -135,7 +138,7 @@ DDS2_3  = dds_2.newChannel(3, "Mode Sorter 1 Freq",    system='CavPrb', steady_s
 
 
 # Photon counter
-PC_bin_num  = photon_counter.newChannel(1, "Counter Bin Num",  system='CavPrb', steady_state_value=100, max_value=1024, graph=0)
+PC_bin_num  = photon_counter.newChannel(1, "Counter Bin Num",  system='CavPrb', steady_state_value=100, max_value=32767, graph=0)
 PC_save     = photon_counter.newChannel(2, "Counter Save",     system='CavPrb', steady_state_value=0,   max_value=1,    graph=0)
 PC_max_rate = photon_counter.newChannel(3, "Counter Max Rate", system='CavPrb', steady_state_value=20,  max_value=20,   graph=0)
 
@@ -187,9 +190,25 @@ RFSOC1_7 = rfsoc_1.newChannel(7, "RFSOC 1 Chan 7",   system='CavPrb', steady_sta
 RP1_DDS_0 = rp_ddds_1.newChannel(0, "RedPitaya 1 Chan 0",   system='Debug', steady_state_value=10e6, max_value=40e6, graph=0)
 RP1_DDS_1 = rp_ddds_1.newChannel(1, "RedPitaya 1 Chan 1",   system='Debug', steady_state_value=10e6, max_value=40e6, graph=0)
 
+# Thorlabs Kinesis waveplate rotational stages
+KINESIS_LAM_2 = kinesis_2.newChannel(0, "Lambda 2 angle", system='dRSC', steady_state_value=355.5, max_value=360.0, graph=0)
+KINESIS_LAM_4 = kinesis_4.newChannel(0, "Lambda 4 angle", system='dRSC', steady_state_value=355.5, max_value=360.0, graph=0)
+
 #Camera Gain channel
 Camera_gain = cam.newChannel(0, "Camera gain", system='IMG', steady_state_value=24.0, max_value=24.0, graph=0)
 Camera_save = cam.newChannel(2, "Camera save", system='IMG', steady_state_value=0, max_value=1, graph=0)
+
+# DMD
+DMD_waist_x   = dmd.newChannel(0, "DMD waist x",  system='CavPrb', steady_state_value=0.5, max_value=10.0, graph=0)
+DMD_waist_y   = dmd.newChannel(1, "DMD waist y",  system='CavPrb', steady_state_value=0.5, max_value=10.0, graph=0)
+DMD_p         = dmd.newChannel(2, "DMD P",        system='CavPrb', steady_state_value=0.0, max_value=30.0, graph=0)
+DMD_l         = dmd.newChannel(3, "DMD L",        system='CavPrb', steady_state_value=0.0, max_value=30.0, graph=0)
+DMD_rotation  = dmd.newChannel(4, "DMD rotation", system='CavPrb', steady_state_value=75, max_value=360, graph=0)
+DMD_center_x  = dmd.newChannel(5, "DMD center x", system='CavPrb', steady_state_value=90, max_value=300.0, graph=0)
+DMD_center_y  = dmd.newChannel(6, "DMD center y", system='CavPrb', steady_state_value=75, max_value=300.0, graph=0)
+DMD_defocus   = dmd.newChannel(7, "DMD defocus",  system='CavPrb', steady_state_value=-0.5, max_value=10.0, graph=0)
+DMD_tilt_x    = dmd.newChannel(8, "DMD tilt x",   system='CavPrb', steady_state_value=-0.5, max_value=10.0, graph=0)
+DMD_tilt_y    = dmd.newChannel(9, "DMD tilt y",   system='CavPrb', steady_state_value=0.5, max_value=10.0, graph=0)
 
 #=====================================End Channel Definitions=======================================
 
