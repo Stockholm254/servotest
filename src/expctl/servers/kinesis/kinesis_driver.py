@@ -13,6 +13,7 @@ class Kinesis:
     def __init__(self, serial: str, milliseconds = 100) -> None:
         self.serial_no = c_char_p(bytes(serial, "utf-8"))
         self.milliseconds = c_int(milliseconds)
+        self.pos_prev = None
 
         if kdc.CC_Open(self.serial_no) == 0:
             print("Starting polling ", kdc.CC_StartPolling(self.serial_no, self.milliseconds ))
@@ -47,7 +48,14 @@ class Kinesis:
         else:
             return pos
 
-    def moveToPosition(self, pos, real=True, eps=2):
+    def moveToPosition(self, pos, *args, **kwargs):
+        #only move if the position sent changes to avoid overhead
+        if (self.pos_prev is None) or (self.pos_prev != pos):
+            self.pos_prev = pos
+            self._moveToPosition(pos, *args, **kwargs)
+    
+
+    def _moveToPosition(self, pos, real=True, eps=2):
         # Set the position of the stage in degrees if real=True otherwise device units
 
         if real==True:
