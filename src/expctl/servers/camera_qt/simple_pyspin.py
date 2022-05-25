@@ -197,6 +197,11 @@ class Camera:
         '''
 
         img = self.cam.GetNextImage(wait)
+        if img.IsIncomplete():
+            print('Image incomplete with image status %s ...\n' % img.GetImageStatus())
+
+        # Retrieve Frame ID
+        print('Frame ID: %d' % img.GetFrameID())
 
         if get_chunk:
             return img.GetNDArray(), img.GetChunkData()

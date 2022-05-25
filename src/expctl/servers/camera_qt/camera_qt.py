@@ -13,19 +13,19 @@ import numpy as np
 import os
 import time
 from scipy.optimize import curve_fit
-# try:
-#     import PyCapture2
-# except:
-#     from .gpcamera import Mock_GP_camera as Camera
-# else:
-#     from .gpcamera import GP_camera as Camera
-
 try:
-    import PySpin
+    import PyCapture2
 except:
-    from .spincamera import Mock_GP_camera as Camera
+    from .gpcamera import Mock_GP_camera as Camera
 else:
-    from .spincamera import GP_camera as Camera
+    from .gpcamera import GP_camera as Camera
+
+# try:
+#     import PySpin
+# except:
+#     from .spincamera import Mock_GP_camera as Camera
+# else:
+#     from .spincamera import GP_camera as Camera
 
 from ..ServerClass import logger, Server
 from copy import deepcopy

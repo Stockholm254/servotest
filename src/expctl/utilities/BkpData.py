@@ -19,7 +19,7 @@ class dataBackup:
     self.file_dir = self.home_dir/self.date_dir               # Full data directory
     self.log_dir  = DIR_LOG #Path("../../TestOutput/Log/DataBkp")#"E:/Log/DataBkp"  # Backup log folder
     
-    self.host     = "//SIMONLABSERVER/backup"              # Bakkup server host name
+    self.host     = "//FILESERVER/backup"              # Bakkup server host name
     self.drive    = Path("Z:/")  #Path("../../TestOutput/backup")                                     # Net work drive
     self.bkpPath  = "Rydberg Experiment Data/"+self.date_dir # Backup folder on server
     
