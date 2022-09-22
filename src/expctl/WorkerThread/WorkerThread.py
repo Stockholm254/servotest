@@ -477,7 +477,7 @@ def ResetAll(dm):
 
 # This will send data to the device and check if all servers finished running
 def RunExperiment(dm):
-  tstart = time.time()
+  tstart = time.perf_counter() #time.time()
   '''This sends all sequences, queues all but the master, and runs the master! It should block until the master finishes!'''
 
   seqs = dm.seq_act # Get all active devices from the DeviceManager
@@ -488,10 +488,23 @@ def RunExperiment(dm):
   
   # Start sending data to device servers and check if they finish parsing the data
   tsend = dm.SendSequences()
-  e_prep, tqueue, tprep = dm.QueueSequences(MasterSequence, timeout=3.)
-
+  e_prep, tqueue, tprep = dm.QueueSequences(MasterSequence, timeout=10.)
   UpdatePreviousValue(seqs) # UPDATE THE PREVIOUS VALUE WITH STEADY STATE VALUE AFTER THE SEQUENCE
   print('Running the Master Sequence')
+
+  # EXPERIMENT
+  # Stabilize the experiment duty cycle due to fluctuations in software runtime during MOT load
+  # Usual time for sending, queing and waiting ~ 20ms + 7ms + 40ms = 67ms -> ~120ms measured externally
+  # Allow for extra time in slow cases but don't increase run_gap too much: try 150 ms first
+  tmax = 120e-3
+  tsoft = time.perf_counter() - tstart
+  twait = tmax-tsoft
+  print('Running everything before master trigger took {:.2f} ms, waiting {:.2f} ms'.format(tsoft*1e3, twait*1e3))
+  
+  if twait<0:
+    print("ERROR, preparing the devices took too long this time!")
+  else:
+    time.sleep(twait)
   dm.Run(MasterSequence) # RUN THE SEQUENCE THAT HARDWARE TRIGGERS THE OTHERS.
 
   # If some server failed in the preperation process, then do not check for finish, quit with error
@@ -499,7 +512,7 @@ def RunExperiment(dm):
     return e_prep
 
   FinishRun = dm.WaitForAllToFinish() # Wait for all sequence to finish
-  tend = time.time()
+  tend = time.perf_counter() #time.time()
 
   print("RunExperiment took "+str(tend-tstart)+" seconds")
   print("Sending data to servers took "+str(1000.0*(tsend))+" milliseconds")

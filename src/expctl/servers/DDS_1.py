@@ -292,7 +292,7 @@ class DDSServer(Server):
 			logger.debug("DDS Loaded")
 			self.send_msg(self.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
 			ret = RunServer(self, self.seq, dev, RUNMODE, autostart=0)
-			logger.debug("DDS Qeued")
+			logger.debug("DDS Queued")
 
 	def run(self):
 		RunServer(self, self.seq, dev, LOADMODE)

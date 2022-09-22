@@ -54,6 +54,7 @@ PORT_LB3        = 60617 # Lab Brick 1, for the detuning of the 1529 carrier
 PORT_LB4        = 60618 # Lab Brick 4, for repump sideband of 795 OP
 PORT_KINESIS_2  = 60641 # Thorlabs Kinesis stage for lambda/2 waveplates
 PORT_KINESIS_4  = 60642 # Thorlabs Kinesis stage for lambda/4 waveplates
+PORT_ATT = 60651 # Minicircuits attenuator
 
 # RPDDS PORTS
 PORT_RPTR       = 60631
@@ -66,3 +67,5 @@ PORT_DMD = 60651
 
 # RPCOUNTER PORTS
 PORT_RPTR       = 60621
+
+

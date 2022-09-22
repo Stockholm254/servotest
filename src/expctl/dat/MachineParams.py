@@ -14,15 +14,9 @@ N780_Prob_EOM   = -320.0    # Cavity probe EOM frequence. Red sideband
 ##########################################
 ### Blue Laser PDH Locking Frequencies ###
 ##########################################
-# These nmbers might change due to the EM field
-Blue_PDH_40S = 682.5   # Blue PDH locking freq for 40S
-Blue_PDH_48S = 51.5    # Blue PDH locking freq for 48S
-Blue_PDH_60S = 166.75  # Blue PDH locking freq for 60S (left sideband)
-Blue_PDH_62S = 644.0   # Blue PDH locking freq for 62S
-Blue_PDH_75S = 240.0   # Blue PDH locking freq for 75S (left sideband)
-Blue_PDH_85S = 581.5   # Blue PDH locking freq for 85S (right sideband)
 # With 200 MHz blue AOM
 Blue_PDH_40S  = 727.0 # Blue PDH locking freq for 40S
+Blue_PDH_48S = 191.0  # Blue PDH locking freq for 48S, F'=3 (960.6269nm on wavemeter)
 Blue_PDH_60S  = 228.0 # Blue PDH locking freq for 60S (left sideband), F'=3
 Blue_PDH_60S  = 19.0  # Blue PDH locking freq for 60S (RIGHT sideband), F'=0
 Blue_PDH_58D_3halves = 615.3		# Blue PDH locking freq for 58D_{3/2}, F'=0 (RIGHT sideband)

@@ -48,8 +48,8 @@ def PGC(times, t_Bias, t_Freq, t_PGC, t_Coil, Bx, By, Bz, MOT_pwr, REP_pwr, MOT_
 	times_StepDown = times_CoilRamp.afterStart(t_Coil) # Time for ramping down the MOT coil
 	
 	# Turn off the laser during bias field set duration
-	MOT0_ttl.SetInterval(times_CoilRamp, 0)
-	REP0_ttl.SetInterval(times_CoilRamp, 0)
+	# MOT0_ttl.SetInterval(times_CoilRamp, 0)
+	# REP0_ttl.SetInterval(times_CoilRamp, 0)
 	# Set Bias Field
 	BiasX.SetInterval(times_CoilRamp, Bx)
 	BiasY.SetInterval(times_CoilRamp, By)
@@ -68,9 +68,9 @@ def PGC(times, t_Bias, t_Freq, t_PGC, t_Coil, Bx, By, Bz, MOT_pwr, REP_pwr, MOT_
 	REP0_ttl.Set([(times_Molasses.start_t(),1,times_Molasses.end_t()-t_rep_bef,1)])  # Interval(times_Molasses, 1)
 	# Turn off MOT and REP beams after molasses
 	MOT0_ttl.SetInterval(times_Molasses.afterward(0), 0)
-	# OLD: REP0_ttl.SetInterval(times_Molasses.afterward(0), 0)
+	MOT0_pwr.SetInterval(times_Molasses.afterward(0), 0)
 	REP0_ttl.SetInterval(times_Molasses.beforeEnd(t_rep_bef), 0)
-
+	REP0_pwr.SetInterval(times_Molasses.beforeEnd(t_rep_bef), 0)
 	return times_CoilRamp & times_FreqRamp & times_Molasses
 	
 def SetLatTTL(interval, LMT, LHT, LVT):
@@ -370,6 +370,8 @@ def Imaging(times, mode,
 		Nufern1_ttl.SetInterval(times_img2.afterward(0), 0)
 		Blue_ttl.SetInterval(times_img2, blue_img_ttl)
 		Blue_ttl.SetInterval(times_img2.afterward(0), 0)
+		ODT2_ttl.SetInterval(times_img1.afterward(0), 0)
+		ODT2_pwr.SetInterval(times_img1.afterward(0), 0)
 
 		# Trigger the camera
 		Cam_trig.SetInterval(times_img1, 0)
@@ -381,10 +383,19 @@ def Imaging(times, mode,
 		return times_Prep & times_TOF & times_img1 & times_gap1 & times_img2 & times_gap2 & times_img3
 
 	elif mode == 3: # Single shot image
-		times_img1 = times.append(t_img)
+		times_img1 = times.append(t_img, 'Single Img')
+		# Turn off VLAT during prep
+		LAT0_ttl.SetInterval(times_Prep, 0)
 		# Trigger the camera
 		Cam_trig.SetInterval(times_img1, 0)
 		Cam_trig.SetInterval(times_img1.afterward(0), 1)
+		# Turn blue beam on
+		Blue_ttl.SetInterval(times_img1, blue_img_ttl)
+		Blue_ttl.SetInterval(times_img1.afterward(0), 0)
+		
+		D1Laser1_ttl.SetInterval(times_img1, 1)
+		D1Laser1_pwr.SetInterval(times_img1, 2.5)
+		D1Laser1_ttl.SetInterval(times_img1.afterward(0), 0)
 		return times_img1
 
 

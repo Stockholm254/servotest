@@ -18,6 +18,9 @@ def MOTPrbDelay(t):
   
 def BlueAOMDelay(t):
   return t-1.70
+
+def OPREPAOMDelay(t):
+  return t-1.5
   
 def TopImgAOMDelay(t):
   return t-2.60
@@ -26,31 +29,31 @@ def ElectrodeGain0(V):
   return V*(-1)
   
 def ElectrodeGain1(V):
-  return (-.009 - V)/2.081
+  return (V - 0.007)/2.460
   
 def ElectrodeGain2(V):
-  return (-.009 - V)/2.087
+  return (V - 0.005)/2.465
 
 def ElectrodeGain3(V):
-  return (-.008 - V)/2.090
+  return (V - 0.0037)/2.459
   
 def ElectrodeGain4(V):
-  return (-.009 - V)/2.084
+  return (V - 0.0072)/2.466
   
 def ElectrodeGain5(V):
-  return (-.009 - V)/2.084
+  return (V - 0.0094)/2.460
   
 def ElectrodeGain6(V):
-  return (-.008 - V)/2.087
+  return (V - 0.004)/2.460
   
 def ElectrodeGain7(V):
-  return (-.008 - V)/2.091
-  
+  return (V - 0.0056)/2.459
+
 def ElectrodeGain8(V):
-  return (-.008 - V)/2.089
+  return (V - 0.0055)/2.464
   
 def ElectrodeGain9(V):
-  return (-.007 - V)/2.078
+  return (V - 0.0102)/2.463
 
 def BiasXScale(V):
   return 16.0*V

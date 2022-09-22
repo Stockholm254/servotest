@@ -15,30 +15,33 @@ from . import transformations as tran # Channel value transformation function
 #=======================================Sequence Definitions=========================================
 #FIRST DECLARE ALL SEQUENCES into the all_sequences array, and then give them names for easier assignment!
 all_sequences = ([
-  Sequence("Digital sequence",        host=IP_RYDNUGGET, port=PORT_DIGITAL,  max_channels=32, graph=1, seq_type="MASTER"),  
-  Sequence("Analog sequence",         host=IP_RYDNUGGET, port=PORT_ANALOG,   max_channels=32, graph=1),  
-  Sequence("Camera sequence",         host=IP_RYDFRIES,  port=PORT_CAMERA,   max_channels=4 , graph=0),
-  Sequence("Camera 2 sequence",       host=IP_RYDFRIES,  port=PORT_CAMERA2,  max_channels=4 , graph=0),
-  Sequence("DDS 1 sequence",          host=IP_RYDNUGGET, port=PORT_DDS1,     max_channels=4 , graph=0),
-  Sequence("DDS PDH sequence",        host=IP_RYDNUGGET, port=PORT_DDSPDH,   max_channels=7 , graph=0),
-  Sequence("DDS 2 sequence",          host=IP_RYDNUGGET, port=PORT_DDS2,     max_channels=4 , graph=0),
-  Sequence("Photon Timer sequence",   host=IP_RYDNUGGET, port=PORT_PTIMER,   max_channels=2 , graph=0),
-  Sequence("Photon Timer 2 sequence", host=IP_RYDNUGGET, port=PORT_PTIMER2,  max_channels=2 , graph=0),
-  Sequence("Photon Timer 3 sequence", host=IP_RYDNUGGET, port=PORT_PTIMER3,  max_channels=2 , graph=0),
-  Sequence("Photon Counter sequence", host=IP_RPCOUNTER, port=PORT_PCOUNTER, max_channels=4 , graph=0),
-  Sequence("LabBrick 1 sequence",     host=IP_RYDFRIES,  port=PORT_LB1,      max_channels=3 , graph=0),
-  Sequence("LabBrick 2 sequence",     host=IP_RYDFRIES,  port=PORT_LB2,      max_channels=3 , graph=0),
-  Sequence("LabBrick 3 sequence",     host=IP_RYDFRIES,  port=PORT_LB3,      max_channels=3 , graph=0),
-  Sequence("LabBrick 4 sequence",     host=IP_RYDFRIES,  port=PORT_LB4,      max_channels=3 , graph=0),
-  Sequence("ADF435X sequence",        host=IP_RYDFRIES,  port=PORT_AD1,      max_channels=3 , graph=0),
-  Sequence("RFSOC 1 sequence",        host=IP_RFSOC_1,   port=PORT_RFSOC,    max_channels=8 , graph=0),
-  Sequence("RP DDS Transport sequence", host=IP_RPTR,    port=PORT_RPTR,     max_channels=2 , graph=0),
-  Sequence("Kinesis Lambda 2",        host=IP_RYDFRIES,  port=PORT_KINESIS_2,max_channels=1 , graph=0),
-  Sequence("Kinesis Lambda 4",        host=IP_RYDFRIES,  port=PORT_KINESIS_4,max_channels=1 , graph=0),
-  Sequence("DMD sequence",            host=IP_RYDSHAKE,  port=PORT_DMD      ,max_channels=10, graph=0)
+  Sequence("Digital sequence",          host=IP_RYDNUGGET,   port=PORT_DIGITAL,   max_channels=32, graph=1, seq_type="MASTER"),  
+  Sequence("Analog sequence",           host=IP_RYDNUGGET,   port=PORT_ANALOG,    max_channels=32, graph=1),
+  Sequence("Camera sequence",           host=IP_RYDFRIES,    port=PORT_CAMERA,    max_channels=4 , graph=0),
+  Sequence("Camera 2 sequence",         host=IP_RYDFRIES,    port=PORT_CAMERA2,   max_channels=4 , graph=0),
+  Sequence("DDS 1 sequence",            host=IP_RYDNUGGET,   port=PORT_DDS1,      max_channels=4 , graph=0),
+  Sequence("DDS PDH sequence",          host=IP_RYDNUGGET,   port=PORT_DDSPDH,    max_channels=7 , graph=0),
+  Sequence("DDS 2 sequence",            host=IP_RYDNUGGET,   port=PORT_DDS2,      max_channels=4 , graph=0),
+  Sequence("Photon Timer sequence",     host=IP_RYDNUGGET,   port=PORT_PTIMER,    max_channels=2 , graph=0),
+  Sequence("Photon Timer 2 sequence",   host=IP_RYDNUGGET,   port=PORT_PTIMER2,   max_channels=2 , graph=0),
+  Sequence("Photon Timer 3 sequence",   host=IP_RYDNUGGET,   port=PORT_PTIMER3,   max_channels=2 , graph=0),
+  Sequence("Scope ADC 1 sequence",      host=IP_RYDNUGGET,   port=PORT_ADC,       max_channels=5 , graph=0),
+  Sequence("Photon Counter sequence",   host=IP_RPCOUNTER,   port=PORT_PCOUNTER,  max_channels=5 , graph=0),
+  Sequence("LabBrick 1 sequence",       host=IP_RYDFRIES,    port=PORT_LB1,       max_channels=3 , graph=0),
+  Sequence("LabBrick 2 sequence",       host=IP_RYDFRIES,    port=PORT_LB2,       max_channels=3 , graph=0),
+  Sequence("LabBrick 3 sequence",       host=IP_RYDFRIES,    port=PORT_LB3,       max_channels=3 , graph=0),
+  Sequence("LabBrick 4 sequence",       host=IP_RYDFRIES,    port=PORT_LB4,       max_channels=3 , graph=0),
+  Sequence("ADF435X sequence",          host=IP_RYDFRIES,    port=PORT_AD1,       max_channels=3 , graph=0),
+  Sequence("RFSOC 1 sequence",          host=IP_RFSOC_1,     port=PORT_RFSOC,     max_channels=8 , graph=0),
+  Sequence("RP DDS Transport sequence", host=IP_RPTR,        port=PORT_RPTR,      max_channels=2 , graph=0),
+  Sequence("Kinesis Lambda 2",          host=IP_RYDFRIES,    port=PORT_KINESIS_2, max_channels=1 , graph=0),
+  Sequence("Kinesis Lambda 4",          host=IP_RYDFRIES,    port=PORT_KINESIS_4, max_channels=1 , graph=0),
+  Sequence("Attenuator sequence",       host=IP_RYDFRIES,    port=PORT_ATT,       max_channels=1 , graph=0),
+  Sequence("DMD sequence",              host='192.168.1.34', port=PORT_DMD,       max_channels=10, graph=0),
+  Sequence("SmarAct sequence",          host='192.168.1.34', port=PORT_SMARACT,   max_channels=2 , graph=0)
   ])
 
-digital_seq1, analog_seq1, cam, cam2, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, photon_counter, lb_1, lb_2, lb_3, lb_4, ad_1, rfsoc_1, rp_ddds_1, kinesis_2, kinesis_4, dmd = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
+digital_seq1, analog_seq1, cam, cam2, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, adc_1, photon_counter, lb_1, lb_2, lb_3, lb_4, ad_1, rfsoc_1, rp_ddds_1, kinesis_2, kinesis_4, atten_1, dmd, smaract = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
 
 #=======================================Channel Definitions=========================================
 # NEXT ADD ALL OF THE CHANNELS TO THEM! ##Note: the name in quotes must have 1 < length < 31
@@ -64,19 +67,18 @@ Timer_trig    = digital_seq1.newChannel(16, "Timer Trig",       system='Debug', 
 SPCM_ttl      = digital_seq1.newChannel(17, "SPCM Gate TTL",    system='CavPrb',  steady_state_value=0, max_value=1, graph=1, transform_v=tran.DigitalNot)
 dRSC_LAT2_ttl = digital_seq1.newChannel(18, "MOTdRSC Lat TTL",  system='dRSC',    steady_state_value=0, max_value=1, graph=1)
 GATE_ttl      = digital_seq1.newChannel(19, "Timer Gate TTL",   system='CavPrb',  steady_state_value=0, max_value=1, graph=1)
-D1Laser1_ttl  = digital_seq1.newChannel(20, "dRSC Pump TTL",    system='dRSC',    steady_state_value=1, max_value=1, graph=1)
+D1Laser1_ttl  = digital_seq1.newChannel(20, "dRSC Pump TTL",    system='dRSC',    steady_state_value=1, max_value=1, graph=1, transform_t=tran.OPREPAOMDelay)
 AUX2_ttl      = digital_seq1.newChannel(21, "Auxiliary 2 TTL",  system='dRSC',    steady_state_value=0, max_value=1, graph=1)
 EITPrbEOM_ttl = digital_seq1.newChannel(22, "Cav Prb EOM TTL",  system='CavPrb',  steady_state_value=1, max_value=1, graph=1)
 AUX_ttl       = digital_seq1.newChannel(23, "Auxiliary TTL",    system='dRSC',    steady_state_value=0, max_value=1, graph=1)
 Nufern1_ttl   = digital_seq1.newChannel(24, "Vert Img Prb TTL", system='IMG',     steady_state_value=1, max_value=1, graph=1, transform_t=tran.TopImgAOMDelay)
-EDFA_1529_ttl = digital_seq1.newChannel(25, "Floquet TTL",      system='Floquet', steady_state_value=1, max_value=1, graph=1)
+Shut_HLAT_ttl = digital_seq1.newChannel(25, "HLAT shutter",      system='dRSC', steady_state_value=1, max_value=1, graph=1)
 MOT2_ttl      = digital_seq1.newChannel(26, "Global DEP TTL",   system='Slice',   steady_state_value=0, max_value=1, graph=1, transform_t=tran.MOTPrbDelay)
 dRSC_LAT_ttl  = digital_seq1.newChannel(27, "dRSC Lat TTL",     system='dRSC',    steady_state_value=0, max_value=1, graph=1)
 MWaves_ttl    = digital_seq1.newChannel(29, "MWave switch TTL", system='MWaves',  steady_state_value=0, max_value=1, graph=1)
-Shut_abs_ttl  = digital_seq1.newChannel(30, "Abs img shutter",  system='Debug',   steady_state_value=0, max_value=1, graph=1, transform_t = tran.ShutterDelay)
-# AWG_trig      = digital_seq1.newChannel(30, "AWG Trigger",      system='Debug',   steady_state_value=0, max_value=1, graph=1), used to go to F4
+dRSC_OP_freq_ttl  = digital_seq1.newChannel(30, "dRSC OP RF Source TTL",  system='dRSC',   steady_state_value=0, max_value=1, graph=1)
 Shut_MOT_ttl  = digital_seq1.newChannel(31, "MOT shutter",  system='Debug',   steady_state_value=0, max_value=1, graph=1, transform_t = tran.ShutterDelay)
-#Digi_test     = digital_seq1.newChannel(31, "Digital Test",     system='Debug',   steady_state_value=0, max_value=1, graph=1), used to go to B10
+
 
 # Analog card
 MOT0_pwr       = analog_seq1.newChannel(0,  "MOT Pwr",         system='MOT',     steady_state_value=5.0,   max_value=5.0,  graph=1)
@@ -100,15 +102,15 @@ D1Laser1_pwr   = analog_seq1.newChannel(17, "dRSC Pump Pwr",   system='dRSC',   
 dRSC_LAT2_pwr  = analog_seq1.newChannel(18, "MOTdRSC Lat Pwr", system='dRSC',    steady_state_value=5.0,   max_value=5.0,  graph=1)
 MOT1_pwr       = analog_seq1.newChannel(19, "MOTdRSC Pump Pwr",system='dRSC',    steady_state_value=5.0,   max_value=5.0,  graph=1)
 MOT2_pwr       = analog_seq1.newChannel(20, "Global DEP Pwr",  system='Slice',   steady_state_value=5.0,   max_value=5.0,  graph=1)
-EF1            = analog_seq1.newChannel(21, "EFilter 1",       system='EField',  steady_state_value=0.0,   max_value=10.0, graph=1, transform_v=tran.ElectrodeGain1)
-EF2            = analog_seq1.newChannel(22, "EFilter 2",       system='EField',  steady_state_value=0.0,   max_value=10.0, graph=1, transform_v=tran.ElectrodeGain2)
-EF3            = analog_seq1.newChannel(23, "EFilter 3",       system='EField',  steady_state_value=0.0,   max_value=10.0, graph=1, transform_v=tran.ElectrodeGain3)
-EF4            = analog_seq1.newChannel(24, "EFilter 4",       system='EField',  steady_state_value=0.0,   max_value=10.0, graph=1, transform_v=tran.ElectrodeGain4)
-EF5            = analog_seq1.newChannel(25, "EFilter 5",       system='EField',  steady_state_value=0.0,   max_value=10.0, graph=1, transform_v=tran.ElectrodeGain5)
-EF6            = analog_seq1.newChannel(26, "EFilter 6",       system='EField',  steady_state_value=0.0,   max_value=10.0, graph=1, transform_v=tran.ElectrodeGain6)
-EF7            = analog_seq1.newChannel(27, "EFilter 7",       system='EField',  steady_state_value=0.0,   max_value=10.0, graph=1, transform_v=tran.ElectrodeGain7)
-EF8            = analog_seq1.newChannel(28, "EFilter 8",       system='EField',  steady_state_value=0.0,   max_value=10.0, graph=1, transform_v=tran.ElectrodeGain8)
-EF9            = analog_seq1.newChannel(29, "EFilter 9",       system='EField',  steady_state_value=0.0,   max_value=10.0, graph=1, transform_v=tran.ElectrodeGain9)
+EF1            = analog_seq1.newChannel(21, "EFilter 1",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain1)
+EF2            = analog_seq1.newChannel(22, "EFilter 2",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain2)
+EF3            = analog_seq1.newChannel(23, "EFilter 3",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain3)
+EF4            = analog_seq1.newChannel(24, "EFilter 4",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain4)
+EF5            = analog_seq1.newChannel(25, "EFilter 5",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain5)
+EF6            = analog_seq1.newChannel(26, "EFilter 6",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain6)
+EF7            = analog_seq1.newChannel(27, "EFilter 7",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain7)
+EF8            = analog_seq1.newChannel(28, "EFilter 8",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain8)
+EF9            = analog_seq1.newChannel(29, "EFilter 9",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain9)
 dRSC_LAT_pwr   = analog_seq1.newChannel(30, "dRSC LAT Pwr",    system='dRSC',  steady_state_value=0.0,   max_value=10.0, graph=1)
 Anal_test      = analog_seq1.newChannel(31, "Analog Test",     system='Debug',   steady_state_value=0.0,   max_value=5.0,  graph=1)
 
@@ -119,7 +121,7 @@ DDS_REP   = dds_1.newChannel(1, "REP Lock Freq", system='MOT', steady_state_valu
 # DDS_LAT1  = dds_1.newChannel(2, "Lat Hori Freq", system='LAT', steady_state_value=80.0,  max_value=2100, graph=1, transform_v=tran.MHzToHz)
 DDS_OptPump1   = dds_1.newChannel(0, "OptPump AOM1 Freq", system='MOT', steady_state_value=490.0, max_value=2100, graph=1, transform_v=tran.MHzToHz)
 DDS_LAT1  = dds_1.newChannel(3, "Lat Hori Freq", system='LAT', steady_state_value=80.0,  max_value=2100, graph=1, transform_v=tran.MHzToHz) ### CHANNEL 1 GOES NUTS ###
-DDS1_2  = dds_1.newChannel(2, "Mode Sorter 2 Freq", system='CavPrb', steady_state_value=220.0,  max_value=2100, graph=1, transform_v=tran.MHzToHz)
+DDS1_2  = dds_1.newChannel(2, "Blue Cav 960 Offs Lock", system='CavPrb', steady_state_value=220.0,  max_value=2100, graph=1, transform_v=tran.MHzToHz)
 
 
 # DDS PDH box (Ultra-stable cavity PDH locking, cavity probe)
@@ -136,11 +138,15 @@ DDS_MOT  = dds_2.newChannel(2, "MOT Lock Freq",            system='MOT', steady_
 # DDS_OptPump1  = dds_2.newChannel(2, "OptPump AOM1 Freq",   system='OptPump', steady_state_value=80.0, max_value=2100, graph=1, transform_v=tran.MHzToHz)
 DDS2_3  = dds_2.newChannel(3, "Mode Sorter 1 Freq",    system='CavPrb', steady_state_value=300.0, max_value=2100, graph=1, transform_v=tran.MHzToHz)
 
+# ADC scope
+ADC_scope_save = adc_1.newChannel(1, "ADC Save",     system='CavPrb', steady_state_value=0,   max_value=1,    graph=0)
+ADC_ch_save  = adc_1.newChannel(2, "ADC Channel",  system='CavPrb', steady_state_value=1,   max_value=2,    graph=0)
 
 # Photon counter
 PC_bin_num  = photon_counter.newChannel(1, "Counter Bin Num",  system='CavPrb', steady_state_value=100, max_value=32767, graph=0)
 PC_save     = photon_counter.newChannel(2, "Counter Save",     system='CavPrb', steady_state_value=0,   max_value=1,    graph=0)
 PC_max_rate = photon_counter.newChannel(3, "Counter Max Rate", system='CavPrb', steady_state_value=20,  max_value=20,   graph=0)
+PC_n_channels = photon_counter.newChannel(4, "Counter N Channels", system='CavPrb', steady_state_value=1,   max_value=2,    graph=0)
 
 #Photon timer
 PT_save = photon_timer.newChannel(0, "Photon Timer Save", system='CavPrb', steady_state_value=0, max_value=1, graph=0)
@@ -154,7 +160,10 @@ LB1_ttl   = lb_1.newChannel(2, "Lab Brick 1 TTL",   system='MWaves', steady_stat
 
 # Lab Brick 2
 # note Freq is in 10*Hz
-LB2_freq  = lb_2.newChannel(0, "Lab Brick 2 Freq",  system='CavPrb', steady_state_value=8500, max_value=12000, graph=0) # transformation handled in server
+# LB2_freq  = lb_2.newChannel(0, "Lab Brick 2 Freq",  system='CavPrb', steady_state_value=8500, max_value=12000, graph=0) # transformation handled in server
+# LB2_pow   = lb_2.newChannel(1, "Lab Brick 2 Power", system='CavPrb', steady_state_value=0,   max_value=40,    graph=0) # transformation handled in server
+# LB2_ttl   = lb_2.newChannel(2, "Lab Brick 2 TTL",   system='CavPrb', steady_state_value=1,   max_value=1,   graph=0) # transformation handled in server
+LB2_freq  = lb_2.newChannel(0, "Lab Brick 2 Freq",  system='CavPrb', steady_state_value=10000, max_value=20000, graph=0) # transformation handled in server
 LB2_pow   = lb_2.newChannel(1, "Lab Brick 2 Power", system='CavPrb', steady_state_value=0,   max_value=40,    graph=0) # transformation handled in server
 LB2_ttl   = lb_2.newChannel(2, "Lab Brick 2 TTL",   system='CavPrb', steady_state_value=1,   max_value=1,   graph=0) # transformation handled in server
 
@@ -179,12 +188,12 @@ AD1_ttl  = ad_1.newChannel(2, "Microwave TTL",    system='MWaves', steady_state_
 #RFSOC 1 DDS Box
 #RFSOC1_0 = rfsoc_1.newChannel(0, "RFSOC 1 Chan 0",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0) # HF
 #RFSOC1_1 = rfsoc_1.newChannel(1, "RFSOC 1 Chan 1",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
-RFSOC1_2 = rfsoc_1.newChannel(2, "RFSOC 1 Chan 2",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
-RFSOC1_3 = rfsoc_1.newChannel(3, "RFSOC 1 Chan 3",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
-#RFSOC1_4 = rfsoc_1.newChannel(4, "RFSOC 1 Chan 4",   system='CavPrb', steady_state_value=80e6, max_value=3200e6, graph=0)
-#RFSOC1_5 = rfsoc_1.newChannel(5, "RFSOC 1 Chan 5",   system='CavPrb', steady_state_value=120e3, max_value=3200, graph=0)
+RFSOC1_VertTransAOM = rfsoc_1.newChannel(2, "RFSOC 1 Chan 2",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
+RFSOC1_HorzTransAOM = rfsoc_1.newChannel(3, "RFSOC 1 Chan 3",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
+RFSOC1_4 = rfsoc_1.newChannel(4, "RFSOC 1 Chan 4",   system='CavPrb', steady_state_value=2500, max_value=3200, graph=0)
+RFSOC1_5 = rfsoc_1.newChannel(5, "RFSOC 1 Chan 5",   system='CavPrb', steady_state_value=2500, max_value=3200, graph=0)
 RFSOC1_CavPrbEom = rfsoc_1.newChannel(6, "RFSOC 1 Chan 6",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
-RFSOC1_7 = rfsoc_1.newChannel(7, "RFSOC 1 Chan 7",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0) # LF
+RFSOC1_784Lock = rfsoc_1.newChannel(7, "RFSOC 1 Chan 7",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0) # LF
 
 #Red Pitaya Transport DDS
 RP1_DDS_0 = rp_ddds_1.newChannel(0, "RedPitaya 1 Chan 0",   system='Debug', steady_state_value=10e6, max_value=40e6, graph=0)
@@ -199,17 +208,24 @@ Camera_gain = cam.newChannel(0, "Camera gain", system='IMG', steady_state_value=
 Camera_save = cam.newChannel(2, "Camera save", system='IMG', steady_state_value=0, max_value=1, graph=0)
 
 # DMD
-DMD_waist_x   = dmd.newChannel(0, "DMD waist x",  system='CavPrb', steady_state_value=0.5, max_value=10.0, graph=0)
-DMD_waist_y   = dmd.newChannel(1, "DMD waist y",  system='CavPrb', steady_state_value=0.5, max_value=10.0, graph=0)
-DMD_p         = dmd.newChannel(2, "DMD P",        system='CavPrb', steady_state_value=0.0, max_value=30.0, graph=0)
-DMD_l         = dmd.newChannel(3, "DMD L",        system='CavPrb', steady_state_value=0.0, max_value=30.0, graph=0)
-DMD_rotation  = dmd.newChannel(4, "DMD rotation", system='CavPrb', steady_state_value=75, max_value=360, graph=0)
-DMD_center_x  = dmd.newChannel(5, "DMD center x", system='CavPrb', steady_state_value=90, max_value=300.0, graph=0)
-DMD_center_y  = dmd.newChannel(6, "DMD center y", system='CavPrb', steady_state_value=75, max_value=300.0, graph=0)
-DMD_defocus   = dmd.newChannel(7, "DMD defocus",  system='CavPrb', steady_state_value=-0.5, max_value=10.0, graph=0)
-DMD_tilt_x    = dmd.newChannel(8, "DMD tilt x",   system='CavPrb', steady_state_value=-0.5, max_value=10.0, graph=0)
-DMD_tilt_y    = dmd.newChannel(9, "DMD tilt y",   system='CavPrb', steady_state_value=0.5, max_value=10.0, graph=0)
+DMD_waist     = dmd.newChannel(0, "DMD waist x",     system='CavPrb', steady_state_value=30, max_value=3000.0, graph=0)
+DMD_defocus   = dmd.newChannel(1, "DMD defocus",     system='CavPrb', steady_state_value=2500, max_value=100000, graph=0)
+DMD_l         = dmd.newChannel(2, "DMD L",           system='CavPrb', steady_state_value=0.0, max_value=100.0, graph=0)
+DMD_p         = dmd.newChannel(3, "DMD P",           system='CavPrb', steady_state_value=0.0, max_value=30.0, graph=0)
+DMD_center_x  = dmd.newChannel(4, "DMD center x",    system='CavPrb', steady_state_value=0, max_value=200, graph=0)
+DMD_center_y  = dmd.newChannel(5, "DMD center y",    system='CavPrb', steady_state_value=0, max_value=200, graph=0)
+DMD_tilt_x    = dmd.newChannel(6, "DMD tilt x",      system='CavPrb', steady_state_value=0.0, max_value=15.0, graph=0)
+DMD_tilt_y    = dmd.newChannel(7, "DMD tilt y",      system='CavPrb', steady_state_value=0.0, max_value=15.0, graph=0)
+DMD_phi       = dmd.newChannel(8, "DMD phi",         system='CavPrb', steady_state_value=0.0, max_value=10.0, graph=0)
+DMD_eps_phi   = dmd.newChannel(9, "DMD epsilon phi", system='CavPrb', steady_state_value=0.0, max_value=10.0, graph=0)
 
+# Digital attenuator
+ATT_1 = atten_1.newChannel(0, "Attenuation",  system='Floquet', steady_state_value=0.0, max_value=31.5, graph=0)
+
+#SmarAct MKS2 controller
+# so far only voltage scans are implemented
+SMARACT_vx = smaract.newChannel(0, "SmarAct Vx", system='CavPrb', steady_state_value=50, max_value=100.0, graph=0)
+SMARACT_vy = smaract.newChannel(1, "SmarAct Vy", system='CavPrb', steady_state_value=50, max_value=100.0, graph=0)
 #=====================================End Channel Definitions=======================================
 
 #====================================Slave Channel Definitions======================================

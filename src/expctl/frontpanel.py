@@ -303,7 +303,7 @@ class FrontPanel(wx.Frame):
     self.sizer_Title = wx.FlexGridSizer(1, 11, 8, 5) # Title sizer
     ## Buttons and Icons ##
     # Title and icon
-    bmp = wx.BitmapFromImage(wx.Image(str(ICON_FOLDER/"38740-200.png"), wx.BITMAP_TYPE_ANY).Scale(30, 30, wx.IMAGE_QUALITY_HIGH))
+    bmp = wx.Bitmap(wx.Image(str(ICON_FOLDER/"38740-200.png"), wx.BITMAP_TYPE_ANY).Scale(30, 30, wx.IMAGE_QUALITY_HIGH))
     titleIco1 = wx.StaticBitmap(self.panel, wx.ID_ANY, bmp, size=(30, 30))
     titleIco2 = wx.StaticBitmap(self.panel, wx.ID_ANY, bmp, size=(30, 30))
     title = wx.StaticText(self.panel, wx.ID_ANY, 'Simon Lab Software Suite Front Panel 3')
@@ -551,7 +551,7 @@ class FrontPanel(wx.Frame):
     if os.path.exists(new_path):
 
         #ActSeqNames = [] #catch empty ActSeqNames
-        print('Londing Front Panel Configurations!')
+        print('Loading Front Panel Configurations!')
         # f = open(persist_fname, 'r')
         # for line in f.readlines():
         #   #exec(str(line))
@@ -566,14 +566,14 @@ class FrontPanel(wx.Frame):
         self.script_name = d['script_name']
         ActSeqNames = d['ActSeqNames']
         d.close()
-        print(ActSeqNames)
+        # print(ActSeqNames)
         try:
             self.LoadSeq() # Load last sequence
             self.LoadMV(mv_dir=self.temp_dir, mv_fname=self.temp_MV) # Load MVs
         except:
             pass
         seq_new = []
-        print(ActSeqNames)
+        # print(ActSeqNames)
         # Select active sequence in the manu bar and update the device manager using OnCheckServers()
         for ii, seq in enumerate(self.dm.seq_all): # Loop over all available sequence in the device manager
             if seq.name in ActSeqNames:
@@ -581,7 +581,7 @@ class FrontPanel(wx.Frame):
                 seq_new.append(seq)
             else:
                 self.menuBar.Check(self.m_seq[ii].GetId(), False)
-        print(seq_new) 
+        # print(seq_new) 
         self.dm.SetActiveSeq(seq_new)
         self.OnCheckServers(None)
 
@@ -954,9 +954,14 @@ class FrontPanel(wx.Frame):
   def LoadCtrlMVs(self, mv_dir='', mv_fname=''):
     mv_path = Path(mv_dir) / mv_fname
     if mv_path.exists():
+        print("Loading CtrlMV file: "+ mv_fname) 
         f = open(mv_path, 'rb')
-        self.metavariables_controlled = pickle.load(f)
-        f.close()
+        try:
+          self.metavariables_controlled = pickle.load(f)
+        except EOFError:
+          print("CtrlMVs empty, this is probably fine")
+        finally:
+          f.close()
         # go through regular MVs; if they now correspond to a FB MV, set checkbox appropriately AND remove measurement MV if necessary
 
         self.UpdatedCtrlMVs() # ensures that regular and FBMVs are consistent with the new control MVs
