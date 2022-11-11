@@ -189,6 +189,12 @@ class FrontPanel(wx.Frame):
     m_plot.SetBitmap(wx.Bitmap(str((ICON_FOLDER/'graph.png'))))
     menu.Append(m_plot)
     self.Bind(wx.EVT_MENU, self.OnPlotSeq, m_plot)
+
+    m_plot_soft = wx.MenuItem(menu, wx.ID_ANY, "&Plot Software Sequences\tAlt-G", "Generate interactive plot of sequence with PyQtGraph.")
+    m_plot_soft.SetBitmap(wx.Bitmap(str((ICON_FOLDER/'graph.png'))))
+    menu.Append(m_plot_soft)
+    self.Bind(wx.EVT_MENU, self.OnPlotSeqSoft, m_plot_soft)
+
     m_selplot = wx.MenuItem(menu, wx.ID_ANY, "&Select Channels to Plot\tAlt-S", "Select channels for the plotting.")
     menu.Append(m_selplot)
     self.Bind(wx.EVT_MENU, self.OnSelectPlot, m_selplot)
@@ -300,7 +306,7 @@ class FrontPanel(wx.Frame):
     ### Construct Title Bar ###
     ###########################
     ## Sizer ##
-    self.sizer_Title = wx.FlexGridSizer(1, 11, 8, 5) # Title sizer
+    self.sizer_Title = wx.FlexGridSizer(1, 12, 8, 5) # Title sizer
     ## Buttons and Icons ##
     # Title and icon
     bmp = wx.Bitmap(wx.Image(str(ICON_FOLDER/"38740-200.png"), wx.BITMAP_TYPE_ANY).Scale(30, 30, wx.IMAGE_QUALITY_HIGH))
@@ -311,7 +317,8 @@ class FrontPanel(wx.Frame):
     # Buttons
     self.btn_remote      = wx.Button(self.panel,     wx.ID_ANY, 'Remote')
     self.ping_server     = wx.Button(self.panel,     wx.ID_ANY, 'Ping Servers')
-    self.btn_plot_seq    = wx.Button(self.panel,     wx.ID_ANY, 'Plot Sequences')
+    self.btn_plot_seq    = wx.Button(self.panel,     wx.ID_ANY, 'Plot HW Sequences')
+    self.btn_plot_seq_soft  = wx.Button(self.panel,  wx.ID_ANY, 'Plot SW Sequences')
     self.btn_set_ssv     = wx.Button(self.panel,     wx.ID_ANY, 'Set Steady State Values')
     self.btn_load_file   = wx.Button(self.panel,     wx.ID_ANY, 'Load')
     self.btn_reload_file = wx.Button(self.panel,     wx.ID_ANY, 'Reload')
@@ -323,6 +330,7 @@ class FrontPanel(wx.Frame):
     self.sizer_Title.Add(self.btn_remote,      flag=wx.TOP|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL,  border=5)
     self.sizer_Title.Add(self.ping_server,     flag=wx.TOP|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL,  border=5)
     self.sizer_Title.Add(self.btn_plot_seq,    flag=wx.TOP|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL,  border=5)
+    self.sizer_Title.Add(self.btn_plot_seq_soft, flag=wx.TOP|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL,  border=5)
     self.sizer_Title.Add(titleIco1,            flag=wx.TOP|wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, border=5)
     self.sizer_Title.Add(title,                flag=wx.TOP|wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL,  border=8)
     self.sizer_Title.Add(titleIco2,            flag=wx.TOP|wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL,  border=5)
@@ -497,6 +505,7 @@ class FrontPanel(wx.Frame):
     self.Bind(wx.EVT_BUTTON, self.OnBkpData,         self.btn_bkp_data)
     self.Bind(wx.EVT_BUTTON, self.OnPingServers,     self.ping_server)
     self.Bind(wx.EVT_BUTTON, self.OnPlotSeq,         self.btn_plot_seq)
+    self.Bind(wx.EVT_BUTTON, self.OnPlotSeqSoft,     self.btn_plot_seq_soft)
     self.Bind(wx.EVT_BUTTON, self.OnLoadFBMV,        self.btn_FeedLoadMV)
     self.Bind(wx.EVT_BUTTON, self.ExportFBMV,        self.btn_FeedSaveMV)
     self.Bind(wx.EVT_BUTTON, self.OnLoadCtrlMV,      self.btn_CtrlLoadMV)
@@ -521,6 +530,7 @@ class FrontPanel(wx.Frame):
                     self.btn_remote, 
                     self.ping_server, 
                     self.btn_plot_seq,
+                    self.btn_plot_seq_soft,
                     self.btn_save_loopcode,
                     self.btn_FeedLoadMV,
                     self.btn_FeedSaveMV,
@@ -1712,6 +1722,27 @@ class FrontPanel(wx.Frame):
     '''TODO: PLOT SEQUENCE VALUES. FUNCTION IS DONE, ONLY NEED GUI OBJECT'''
     #time.sleep(.5) # wait the code to be executed by the WorkerThread
     #PlotSeq.PlotSeq_SeqValue(self.dm, IntervalTime) # Plot the sequence data
+
+  # Plot the sequence of selected channels. 
+  def OnPlotSeqSoft(self, event):
+    # RUN_FLAG = 0 # Do not run the sequence
+    self.debug_done = 0
+    wx.BeginBusyCursor()
+    IntervalTime = {'times': None}
+    self.worker = WorkerThread(self, loop=5, IntervalerObj=IntervalTime) # Execute the sequence file
+    self.worker.join()
+    try:
+      _IntervalTime = IntervalTime['Intervaler']
+    except KeyError:
+      _IntervalTime = None
+    logger.debug("IntervalTime {}".format(_IntervalTime))
+
+    #PlotSeq.PlotSeq_DeviceValue(self.dm, IntervalTime=_IntervalTime) # Plot the actual device value
+    '''TODO: PLOT SEQUENCE VALUES. FUNCTION IS DONE, ONLY NEED GUI OBJECT'''
+    #time.sleep(.5) # wait the code to be executed by the WorkerThread
+    #PlotSeq.PlotSeq_SeqValue(self.dm, IntervalTime=_IntervalTime) # Plot the sequence data
+    PlotSeq.PlotSeq_SeqValue(SEQUENCES_TO_GRAPH, IntervalTime=_IntervalTime) # Plot the sequence data
+    
 
   # Save current settings before close the program
   def OnClose(self, event):

@@ -16,12 +16,13 @@ N780_Prob_EOM   = -320.0    # Cavity probe EOM frequence. Red sideband
 ##########################################
 # With 200 MHz blue AOM
 Blue_PDH_40S  = 727.0 # Blue PDH locking freq for 40S
-Blue_PDH_48S = 191.0  # Blue PDH locking freq for 48S, F'=3 (960.6269nm on wavemeter)
+Blue_PDH_48S = 191.0  # Blue PDH locking freq for 48S, F'=3 (960.6269nm on wavemeter) #ended up at 118.8
 Blue_PDH_60S  = 228.0 # Blue PDH locking freq for 60S (left sideband), F'=3
 Blue_PDH_60S  = 19.0  # Blue PDH locking freq for 60S (RIGHT sideband), F'=0
 Blue_PDH_58D_3halves = 615.3		# Blue PDH locking freq for 58D_{3/2}, F'=0 (RIGHT sideband)
 Blue_PDH_58D_5halves = 391.9 #397.9 # Blue PDH locking freq for 58D_{5/2}, F'=3   (RIGHT sideband)
 Blue_PDH_58D_5halves = 645.8 # Blue PDH locking freq for 58D_{5/2}, F'=0   (RIGHT sideband)
+Blue_PDH_68D_5halves = 341.1
 Blue_PDH_70D_5halves = 629.26 #632.9 # Blue locking frequency for 70D_{5/2}, F' = 3 (RIGHT sideband, appears as left hand feature)
 Blue_PDH_80D_5halves = 102.0  # 80D_{5/2}, F'=0, RIGHT sideband
 Blue_PDH_80D_5halves = 151  # 80D_{5/2}, F'=3, LEFT sideband
@@ -33,7 +34,7 @@ Blue_PDH_111D_5halves = 127 # 111D_{5/2}, F'=3, RIGHT sideband
 
 
 #######################################
-### Experimental caivity parameters ###
+### Experimental cavity parameters ###
 #######################################
 ### Non planar cavity ###
 Cav_1560_Carrier_00 = 733.8 # 476.2  # LEFT sideband. Lock here to put carrier of 780 on resonance with 00 mode of cavity

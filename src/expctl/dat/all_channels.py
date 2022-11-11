@@ -102,15 +102,15 @@ D1Laser1_pwr   = analog_seq1.newChannel(17, "dRSC Pump Pwr",   system='dRSC',   
 dRSC_LAT2_pwr  = analog_seq1.newChannel(18, "MOTdRSC Lat Pwr", system='dRSC',    steady_state_value=5.0,   max_value=5.0,  graph=1)
 MOT1_pwr       = analog_seq1.newChannel(19, "MOTdRSC Pump Pwr",system='dRSC',    steady_state_value=5.0,   max_value=5.0,  graph=1)
 MOT2_pwr       = analog_seq1.newChannel(20, "Global DEP Pwr",  system='Slice',   steady_state_value=5.0,   max_value=5.0,  graph=1)
-EF1            = analog_seq1.newChannel(21, "EFilter 1",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain1)
-EF2            = analog_seq1.newChannel(22, "EFilter 2",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain2)
-EF3            = analog_seq1.newChannel(23, "EFilter 3",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain3)
-EF4            = analog_seq1.newChannel(24, "EFilter 4",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain4)
-EF5            = analog_seq1.newChannel(25, "EFilter 5",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain5)
-EF6            = analog_seq1.newChannel(26, "EFilter 6",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain6)
-EF7            = analog_seq1.newChannel(27, "EFilter 7",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain7)
-EF8            = analog_seq1.newChannel(28, "EFilter 8",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain8)
-EF9            = analog_seq1.newChannel(29, "EFilter 9",       system='EField',  steady_state_value=0.0,   max_value=24.0, graph=1, transform_v=tran.ElectrodeGain9)
+EF1            = analog_seq1.newChannel(21, "EFilter 1",       system='EField',  steady_state_value=0.0,   max_value=48.0, graph=0, transform_v=tran.ElectrodeGain1)
+EF2            = analog_seq1.newChannel(22, "EFilter 2",       system='EField',  steady_state_value=0.0,   max_value=48.0, graph=0, transform_v=tran.ElectrodeGain2)
+EF3            = analog_seq1.newChannel(23, "EFilter 3",       system='EField',  steady_state_value=0.0,   max_value=48.0, graph=0, transform_v=tran.ElectrodeGain3)
+EF4            = analog_seq1.newChannel(24, "EFilter 4",       system='EField',  steady_state_value=0.0,   max_value=48.0, graph=0, transform_v=tran.ElectrodeGain4)
+EF5            = analog_seq1.newChannel(25, "EFilter 5",       system='EField',  steady_state_value=0.0,   max_value=48.0, graph=0, transform_v=tran.ElectrodeGain5)
+EF6            = analog_seq1.newChannel(26, "EFilter 6",       system='EField',  steady_state_value=0.0,   max_value=48.0, graph=0, transform_v=tran.ElectrodeGain6)
+EF7            = analog_seq1.newChannel(27, "EFilter 7",       system='EField',  steady_state_value=0.0,   max_value=48.0, graph=0, transform_v=tran.ElectrodeGain7)
+EF8            = analog_seq1.newChannel(28, "EFilter 8",       system='EField',  steady_state_value=0.0,   max_value=48.0, graph=0, transform_v=tran.ElectrodeGain8)
+EF9            = analog_seq1.newChannel(29, "EFilter 9",       system='EField',  steady_state_value=0.0,   max_value=48.0, graph=0, transform_v=tran.ElectrodeGain9)
 dRSC_LAT_pwr   = analog_seq1.newChannel(30, "dRSC LAT Pwr",    system='dRSC',  steady_state_value=0.0,   max_value=10.0, graph=1)
 Anal_test      = analog_seq1.newChannel(31, "Analog Test",     system='Debug',   steady_state_value=0.0,   max_value=5.0,  graph=1)
 
@@ -192,7 +192,7 @@ RFSOC1_VertTransAOM = rfsoc_1.newChannel(2, "RFSOC 1 Chan 2",   system='CavPrb',
 RFSOC1_HorzTransAOM = rfsoc_1.newChannel(3, "RFSOC 1 Chan 3",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
 RFSOC1_4 = rfsoc_1.newChannel(4, "RFSOC 1 Chan 4",   system='CavPrb', steady_state_value=2500, max_value=3200, graph=0)
 RFSOC1_5 = rfsoc_1.newChannel(5, "RFSOC 1 Chan 5",   system='CavPrb', steady_state_value=2500, max_value=3200, graph=0)
-RFSOC1_CavPrbEom = rfsoc_1.newChannel(6, "RFSOC 1 Chan 6",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0)
+RFSOC1_CavPrbEom = rfsoc_1.newChannel(6, "RFSOC 1 Chan 6",   system='CavPrb', steady_state_value=80, max_value=3200, graph=1)
 RFSOC1_784Lock = rfsoc_1.newChannel(7, "RFSOC 1 Chan 7",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0) # LF
 
 #Red Pitaya Transport DDS
@@ -274,8 +274,9 @@ for ii, _seq in enumerate(all_sequences):
         all_copyChans.append([master_chan, _chan])
         _chan.master = None # This remove the dependence on unused modules. For example, camera slave to cam_trig, and cam_trig.seq is digital sequence which requires dat.transformation
       
-  for jj, _chan in enumerate(_seq.channelsToGraph): # Graph channels
-    SEQUENCES_TO_GRAPH.append(_chan)
+  # for jj, _chan in enumerate(_seq.channelsToGraph): # Graph channels
+  #   SEQUENCES_TO_GRAPH.append(_chan)
+  SEQUENCES_TO_GRAPH.append(_seq)
 
 # Check for the master channel
 if len(MasterSequence) < 1:
