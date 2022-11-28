@@ -31,7 +31,8 @@ def setLastBit(N,x):
 def getFTW(freq):
 	#freq in MHz from Seq!
 	#convert into Hz
-	return np.int64(((1e6*freq)/(10**6*SAMPLE_CLK)*(2**64)))
+	#return np.int64(((1e6*freq)/(10**6*SAMPLE_CLK)*(2**64)))
+	return np.int64((freq/(SAMPLE_CLK)*(2**64)))
 
 def getCycles(t):
 	#t in us
@@ -221,21 +222,20 @@ class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager
 		cyclesbuffer.close()
 		
 	def resetDoneRegister(self,channel):
-	   self.ddss[channel].resetDoneRegister()
-	   
+		self.ddss[channel].resetDoneRegister()
+
 	def isSequenceDone(self,channel_list):
 		isdone = 1
-		
 		#check if all channels are done.
 		for i in channel_list:
 			isdone = isdone and self.ddss[i].rampsFinished()
 		
 		return isdone
 	
-	def setNyquistZone(self, channel, zone = 1):
+	def setNyquistZone(self, channel, zone=1):
 		block = self.rf.dac_tiles[channel//4].blocks[channel%4]
 		assert zone < 3	
-		block.NyquistZone =  int(zone)
+		block.NyquistZone = int(zone)
 	
 		
 		
