@@ -7,12 +7,13 @@ Ash
 from pynq import Overlay
 import xrfclk
 import numpy as np
-from pynq import Xlnk
+#from pynq import Xlnk
+from pynq import allocate
 import xrfdc
 DDS_CLK = 409.6 #MHz #This is the clock of the DDS. Each DDS generates 16 samples per this clock.
 #pynq needs this number specifically to start the clock.
 
-CAL_DDS_CLK = 409.6025 #The actual calibrated clock. Calibrate with an accurate spectrum analyzer .
+CAL_DDS_CLK = 409.6 #025 #The actual calibrated clock. Calibrate with an accurate spectrum analyzer .
 #Actually I am not sure where the error comes from, The PLLs on ZCU111 board or those on DAC tiles.
 
 SEQUENCER_CLK = CAL_DDS_CLK/2 #This is the clock for sequencer. This clock is hardwired on the FPGA to be DDS_CLK/2
@@ -119,7 +120,7 @@ class ddsmanager: #class to manage a dds channel.
 		self.sequencer.write(self.config_add,self.CASE_KILL)
 
 class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager itself.
-	xlnk=Xlnk()
+	#xlnk=Xlnk()
 	
 	#Trigger manager addresses
 	
@@ -153,7 +154,8 @@ class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager
 		
 	def startClocks(self):
 		print("Starting RFSOC clocks...\n")
-		xrfclk.set_all_ref_clks(DDS_CLK)
+		# xrfclk.set_all_ref_clks(DDS_CLK)
+		xrfclk.set_ref_clks(lmk_freq=122.88, lmx_freq=409.6)
 		print("Clocks Started\n")
 	
 	def configureTriggerManager(self, config = 0b1011111111, pulselength = 50000000):
@@ -169,9 +171,12 @@ class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager
 	def writeData(self,channel, seqin, trigger_bits, phase_reset_bits):
 		
 		N_ramps = len(seqin)
-		freqsbuffer = self.xlnk.cma_array(shape=(N_ramps,), dtype=np.int64)
-		cyclesbuffer = self.xlnk.cma_array(shape=(N_ramps,), dtype=np.int64)
-		dfreqsbuffer = self.xlnk.cma_array(shape=(N_ramps,), dtype=np.int64)
+		# freqsbuffer = self.xlnk.cma_array(shape=(N_ramps,), dtype=np.int64)
+		# cyclesbuffer = self.xlnk.cma_array(shape=(N_ramps,), dtype=np.int64)
+		# dfreqsbuffer = self.xlnk.cma_array(shape=(N_ramps,), dtype=np.int64)
+		freqsbuffer = allocate(shape=(N_ramps,), dtype=np.int64)
+		cyclesbuffer = allocate(shape=(N_ramps,), dtype=np.int64)
+		dfreqsbuffer = allocate(shape=(N_ramps,), dtype=np.int64)
 		
 		seqout = []
 		for i in range(0,N_ramps):
@@ -204,9 +209,12 @@ class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager
 	#tone because the sequencer will just keep repeating that ramp. This is only true if phase reset bit is 0.
 	#Otherwise, the sequencer will reset the phase at the beginning of the ramp and you get zero.
 		
-		freqsbuffer = self.xlnk.cma_array(shape=(1,), dtype=np.int64)
-		cyclesbuffer = self.xlnk.cma_array(shape=(1,), dtype=np.int64)
-		dfreqsbuffer = self.xlnk.cma_array(shape=(1,), dtype=np.int64)
+		# freqsbuffer = self.xlnk.cma_array(shape=(1,), dtype=np.int64)
+		# cyclesbuffer = self.xlnk.cma_array(shape=(1,), dtype=np.int64)
+		# dfreqsbuffer = self.xlnk.cma_array(shape=(1,), dtype=np.int64)
+		freqsbuffer = allocate(shape=(1,), dtype=np.int64)
+		cyclesbuffer = allocate(shape=(1,), dtype=np.int64)
+		dfreqsbuffer = allocate(shape=(1,), dtype=np.int64)
 		
 		FTW = getFTW(freq)
 		freqsbuffer[0]=setLastBit(FTW,0)
