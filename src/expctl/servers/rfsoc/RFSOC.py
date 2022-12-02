@@ -25,7 +25,8 @@ SAMPLE_CLK = CAL_DDS_CLK*16 #This is the clock for the DACs. Again, hardwired to
 numDDS = 8
 first_trigger = 0
 MAX_RAMPS= 10000 
-trigger_config = 0b1011111111 #if MSB-1 is 0, a hardware trigger on the PMODs is required and the other bits don't matter
+#trigger_config = 0b1011111111 #if MSB-1 is 0, a hardware trigger on the PMODs is required and the other bits don't matter
+trigger_config = 0b0011111111
 # MSB | MSB-1
 #-------------
 #  0  |   0     separate HW triggers
@@ -40,7 +41,7 @@ NumRamps = []  #Total Number of ramps for each channel
 counter = 0
 def RunServer(seq, rf, autostart=1, UPDATE_RAM=1):
 	TIME_START = time.time()
-	global counter
+	global counter, active_chans
 
 	## Convert seq to get all the times and frequencies, and save to buffers to pass to FPGA Block RAM
 	rf.configureTriggerManager(config = trigger_config)
@@ -60,8 +61,9 @@ def RunServer(seq, rf, autostart=1, UPDATE_RAM=1):
 				continue
 
 			active_chans.append(chan_shuffler[chanid])
-			ssvalHz = chan.GetHardwareSSV() #steady_state_value
-			ssvalFTW = getFTW(ssvalHz)
+			ssvalMHz = chan.GetHardwareSSV() #steady_state_value
+			logger.debug(f"Steady state value  {ssvalMHz}")
+			ssvalFTW = getFTW(ssvalMHz)
 			#seq = chan.GetHardwareValues()
 			chanValues = chan.GetHardwareValues()
 			seq = []
@@ -73,14 +75,27 @@ def RunServer(seq, rf, autostart=1, UPDATE_RAM=1):
 					stamps = interval[4]
 					stamp_length = interval[5]
 					mod_num = int(interval[6])
-					for ii in range(mod_num):
-						for stamp in stamps:
-							seq.append((interval[0]+stamp[0]+stamp_length*ii, stamp[1], interval[0]+stamp[2]+stamp_length*ii, stamp[3]))
-
-			#print(seq)
+					# for ii in range(mod_num):
+					# 	for stamp in stamps:
+					# 		seq.append((interval[0]+stamp[0]+stamp_length*ii, stamp[1], interval[0]+stamp[2]+stamp_length*ii, stamp[3]))
+					# HACK for now just append the stamp ones and hint that repeated trigger is required!
+					# TODO fix stamp beginning and end times to start right after trigger, to check when substamps repeat, check start value and end value
+					init_vals = (stamps[0][1], stamps[0][3])
+					n=0
+					for stamp in stamps:
+						if (stamp[1], stamp[3])==init_vals and n>0:
+							print("pattern repeated after {} cycles, breaking".format(n))
+							break
+						seq.append(stamp)
+						n+=1
+			# HACK
+			# seq.pop()
+			print(seq)
+			print("Interpreting seq took {:.3f} s".format(time.time()-TIME_START))
 			convertedSeq = ConvertSeqtoCountsandFTWs(seq) #values)
 			fullSeq = GenerateFullSeq(convertedSeq,ssvalFTW)
-			#print(fullSeq)
+			print(fullSeq)
+			print("Converting seq took {:.3f} s".format(time.time()-TIME_START))
 			N_Ramps = len(fullSeq)
 			fullSeqs.append(fullSeq)
 			NumRamps.append(N_Ramps)
@@ -94,6 +109,7 @@ def RunServer(seq, rf, autostart=1, UPDATE_RAM=1):
 			#ADD RAMPS CHECK
 
 			rf.writeData(chan_shuffler[chanid], fullSeq, trigger_bits, phase_reset_bits)
+			print("Writing seq took {:.3f} s".format(time.time()-TIME_START))
 
 	for chan in active_chans: 
 		rf.resetDoneRegister(chan)
@@ -117,9 +133,34 @@ class RfSocServer(Server):
 	def __init__(self, name, port, message, bitfile):
 		super().__init__(name, port, message)
 		self.rf = rfdriver(bitfile, True)
+		for channel in active_chans:
+			self.rf.setNyquistZone(self, channel, zone=1)
+		self.counter = 0
 
-	def queue(self):
-		return RunServer(self.seq, self.rf, autostart=0)
+	# def queue(self):
+	# 	return RunServer(self.seq, self.rf, autostart=0)
+	def cmd_queue(self):
+		if self.seq is None:
+			logger.error('QUEUE failed. Sequence has not been imported!')
+			self.send_msg(self.ReplyHeader() + 'QUEUE failed. Sequence has not been imported!')
+		else:
+			ret = RunServer(self.seq, self.rf, autostart=0)
+			self.send_msg(self.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
+
+			# This waits for the RFsoc to finish it's ramp, 
+			# was useful for finding right trigger port but slows down sequence since it waits for the whole sequence to have finished
+			# This has to be implemented in some kinf POST command
+			print(active_chans)
+			# t0 = time.time()
+			# while(True):
+			# 	if(self.rf.isSequenceDone(active_chans)):
+			# 		self.counter += 1
+			# 		logger.debug(f"Sequence executed {self.counter} times\n")
+			# 		break
+			# 	if (time.time()-t0 > 1.0):
+			# 		logger.debug("Seqeunce timed out! No trigger received")
+			# 		break
+			
 
 	def run(self):
 		return RunServer(self.seq, self.rf)
