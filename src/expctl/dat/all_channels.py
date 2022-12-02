@@ -94,7 +94,7 @@ LAT0_pwr       = analog_seq1.newChannel(9,  "Lat Main Pwr",    system='LAT',    
 Blue_pwr       = analog_seq1.newChannel(10, "Blue Pwr",        system='Blue',    steady_state_value=4.25,  max_value=5.0,  graph=1)
 EDFA_1529_pwr  = analog_seq1.newChannel(11, "Floquet Pwr",     system='Floquet', steady_state_value=4.25,  max_value=5.0,  graph=1)
 ODT2_pwr       = analog_seq1.newChannel(12, "Cav DTrap Pwr",   system='CavPrb',  steady_state_value=4.80,  max_value=5.0,  graph=1)
-PSC_outOff     = analog_seq1.newChannel(13, "PSC Output Offset",system='CavPrb',  steady_state_value=0.0,   max_value=5.0,  graph=1)
+PSC_outOff     = analog_seq1.newChannel(13, "PSC Output Offset",system='CavPrb', steady_state_value=0.0,   max_value=5.0,  graph=1)
 Nufern0_pwr    = analog_seq1.newChannel(14, "Cav Prb Pwr",     system='CavPrb',  steady_state_value=0.0,   max_value=5.0,  graph=1)
 CavPrbEOM_pwr  = analog_seq1.newChannel(15, "Prb F EOM Pwr",   system='CavPrb',  steady_state_value=2.0,   max_value=10.0,  graph=1)
 VImg_pwr       = analog_seq1.newChannel(16, "Vert Img Pwr",    system='IMG',     steady_state_value=5.0,   max_value=5.0,  graph=1)
@@ -111,8 +111,8 @@ EF6            = analog_seq1.newChannel(26, "EFilter 6",       system='EField', 
 EF7            = analog_seq1.newChannel(27, "EFilter 7",       system='EField',  steady_state_value=0.0,   max_value=48.0, graph=0, transform_v=tran.ElectrodeGain7)
 EF8            = analog_seq1.newChannel(28, "EFilter 8",       system='EField',  steady_state_value=0.0,   max_value=48.0, graph=0, transform_v=tran.ElectrodeGain8)
 EF9            = analog_seq1.newChannel(29, "EFilter 9",       system='EField',  steady_state_value=0.0,   max_value=48.0, graph=0, transform_v=tran.ElectrodeGain9)
-dRSC_LAT_pwr   = analog_seq1.newChannel(30, "dRSC LAT Pwr",    system='dRSC',  steady_state_value=0.0,   max_value=10.0, graph=1)
-Anal_test      = analog_seq1.newChannel(31, "Analog Test",     system='Debug',   steady_state_value=0.0,   max_value=5.0,  graph=1)
+dRSC_LAT_pwr   = analog_seq1.newChannel(30, "dRSC LAT Pwr",    system='dRSC',    steady_state_value=0.0,   max_value=10.0, graph=1)
+UV_pwr         = analog_seq1.newChannel(31, "Ultraviolet pwr", system='EField',  steady_state_value=0.0,   max_value=5.0,  graph=1)
 
 
 # DDS box 1 (MOT, REP, LAT)

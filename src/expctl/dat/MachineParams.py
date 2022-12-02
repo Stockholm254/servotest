@@ -22,8 +22,9 @@ Blue_PDH_60S  = 19.0  # Blue PDH locking freq for 60S (RIGHT sideband), F'=0
 Blue_PDH_58D_3halves = 615.3		# Blue PDH locking freq for 58D_{3/2}, F'=0 (RIGHT sideband)
 Blue_PDH_58D_5halves = 391.9 #397.9 # Blue PDH locking freq for 58D_{5/2}, F'=3   (RIGHT sideband)
 Blue_PDH_58D_5halves = 645.8 # Blue PDH locking freq for 58D_{5/2}, F'=0   (RIGHT sideband)
-Blue_PDH_68D_5halves = 341.1
+Blue_PDH_68D_5halves = 341.1 # Blue PDH locking freq for 68D_{5/2}, F'=3   (---- sideband)
 Blue_PDH_70D_5halves = 629.26 #632.9 # Blue locking frequency for 70D_{5/2}, F' = 3 (RIGHT sideband, appears as left hand feature)
+Blue_PDH_75D_5halves = 28.3 # Blue locking frequency for 75D_{5/2}, F' = 3 (LEFT sideband)
 Blue_PDH_80D_5halves = 102.0  # 80D_{5/2}, F'=0, RIGHT sideband
 Blue_PDH_80D_5halves = 151  # 80D_{5/2}, F'=3, LEFT sideband
 Blue_PDH_90D_5halves = 465.0  # 90D_{5/2}, F'=3, RIGHT sideband (LEFT....)

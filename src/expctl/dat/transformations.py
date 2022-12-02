@@ -29,31 +29,61 @@ def ElectrodeGain0(V):
   return V*(-1)
   
 def ElectrodeGain1(V):
-  return (V - 0.007)/2.460
+  return (V-0.08589)/-4.99052
   
 def ElectrodeGain2(V):
-  return (V - 0.005)/2.465
+  return (V-0.09467)/-4.98856
 
 def ElectrodeGain3(V):
-  return (V - 0.0037)/2.459
+  return (V-0.09644)/-5.01450
   
 def ElectrodeGain4(V):
-  return (V - 0.0072)/2.466
+  return (V-0.08533)/-4.99493
   
 def ElectrodeGain5(V):
-  return (V - 0.0094)/2.460
+  return (V-0.09033)/-5.03693
   
 def ElectrodeGain6(V):
-  return (V - 0.004)/2.460
+  return (V-0.09333)/-4.98482
   
 def ElectrodeGain7(V):
-  return (V - 0.0056)/2.459
+  return (V-0.09300)/-4.98610
 
 def ElectrodeGain8(V):
-  return (V - 0.0055)/2.464
+  return (V-0.08756)/-5.03772
   
 def ElectrodeGain9(V):
-  return (V - 0.0102)/2.463
+  return (V-0.09189)/-4.99482
+
+# def ElectrodeGain0(V):
+#   return V*(-1)
+  
+# def ElectrodeGain1(V):
+#   return (V - 0.007)/2.460
+  
+# def ElectrodeGain2(V):
+#   return (V - 0.005)/2.465
+
+# def ElectrodeGain3(V):
+#   return (V - 0.0037)/2.459
+  
+# def ElectrodeGain4(V):
+#   return (V - 0.0072)/2.466
+  
+# def ElectrodeGain5(V):
+#   return (V - 0.0094)/2.460
+  
+# def ElectrodeGain6(V):
+#   return (V - 0.004)/2.460
+  
+# def ElectrodeGain7(V):
+#   return (V - 0.0056)/2.459
+
+# def ElectrodeGain8(V):
+#   return (V - 0.0055)/2.464
+  
+# def ElectrodeGain9(V):
+#   return (V - 0.0102)/2.463
 
 def BiasXScale(V):
   return 16.0*V
