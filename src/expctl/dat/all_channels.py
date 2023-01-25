@@ -200,8 +200,8 @@ RP1_DDS_0 = rp_ddds_1.newChannel(0, "RedPitaya 1 Chan 0",   system='Debug', stea
 RP1_DDS_1 = rp_ddds_1.newChannel(1, "RedPitaya 1 Chan 1",   system='Debug', steady_state_value=10e6, max_value=40e6, graph=0)
 
 # Thorlabs Kinesis waveplate rotational stages
-KINESIS_LAM_2 = kinesis_2.newChannel(0, "Lambda 2 angle", system='dRSC', steady_state_value=355.5, max_value=360.0, graph=0)
-KINESIS_LAM_4 = kinesis_4.newChannel(0, "Lambda 4 angle", system='dRSC', steady_state_value=355.5, max_value=360.0, graph=0)
+KINESIS_LAM_2 = kinesis_2.newChannel(0, "Lambda 2 angle", system='dRSC', steady_state_value=355.5, max_value=720.0, graph=0)
+KINESIS_LAM_4 = kinesis_4.newChannel(0, "Lambda 4 angle", system='dRSC', steady_state_value=355.5, max_value=720.0, graph=0)
 
 #Camera Gain channel
 Camera_gain = cam.newChannel(0, "Camera gain", system='IMG', steady_state_value=24.0, max_value=24.0, graph=0)
