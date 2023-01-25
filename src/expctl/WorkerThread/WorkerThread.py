@@ -29,11 +29,14 @@ from ..dat.all_channels import *
 from ..dat import Electrodes as electrodes ###TODO: MOVE INTO MACHINE PARAMETER FILE IN DAT###
 from ..dat import Rubidium as Rb ###TODO: MOVE INTO MACHINE PARAMETER FILE IN DAT###
 from ..dat.SharedFunctions import * # Standard code for varies sequence actions
-
+#from ..frontpanel import FrontPanel
 # import expdatabase.conf as conf
 # from pymongo import MongoClient
 from expdatabase.db import updateRunMVs
 from bson import ObjectId
+
+import zmq
+import numpy as np
 
 Unit = jGlobals.UnitsModule() # Units used in sequence file
 
@@ -129,7 +132,24 @@ class WorkerThread(Thread):
       # else:
       #   print("Database connection established.")
       self._client = self._notify_window.client
-      
+
+      self.context = zmq.Context()
+      try:
+        self.socket = self.context.socket(zmq.REQ)
+        self.socket.connect ("tcp://192.168.1.23:7776")
+      except:
+        print("Couldn't connect to FB server!")
+      else:
+        print("Connected to FB server!")
+
+      try:
+        self.pub_socket = self.context.socket(zmq.PUB)
+        self.pub_socket.bind("tcp://*:7788")
+      except:
+        print("Couldn't create MV PUB!")
+      else:
+        print("Created MV PUB!")
+
       self.start() # This starts the thread running on creation
 
   # get current run time
@@ -156,14 +176,22 @@ class WorkerThread(Thread):
     #Now also add run_id
     for seq in all_sequences:
         seq.foldername = self._notify_window.dir_data # Data folder
-        seq.run_id = self._notify_window.run_id #Add run_id to sequence
-        seq.counter = counter
+        # switch out the run_id if we are taking a feedback shot!
+        if FB:
+          seq.run_id = self._notify_window.run_id_fb #Add run_id to sequence
+          seq.counter = counter
+        else:
+          seq.run_id = self._notify_window.run_id #Add run_id to sequence
+          seq.counter = counter
         # don't save pre-runs!
         # this seems the best place to implement that since no args are passed to this function
         if self.loop == RUNMODE_PRE:
           seq.saveswitch = 0
         else:
-          seq.saveswitch = self.saveswitch
+          if FB:
+            seq.saveswitch = (2 if self._notify_window.savedata_switch_fb else 1)
+          else:
+            seq.saveswitch = self.saveswitch
         if FB:
           seq.foldername+="/FB"
         seq.runname = GenFname(header='', dt=self.time_now, post=str(counter))
@@ -180,27 +208,40 @@ class WorkerThread(Thread):
       for _mv in self._notify_window.metavariables:
           exec(_mv.name+"="+str(_mv.value))
       print("Executed Metavariables")
+
+      if self.loop==RUNMODE_LOOP and not FB: # if FB shots, IGNORE loop code
+        exec(self._notify_window.loop_code)
+
       if FB:
         for _mv in self._notify_window.metavariables_fb:
           exec(_mv.name+"="+str(_mv.value))
           print((_mv.name+"="+str(_mv.value)))
         print("Executed Feedback Measurement Metavariables")
+
       for _mv in self._notify_window.metavariables_controlled:
         if _mv.enabled_ctrl.GetValue():
           exec(_mv.name+"="+str(_mv.value))
+          print((_mv.name+"="+str(_mv.value)))
       print("Executed FB Controlled Metavariables")
       # Execute sequence file
       exec(self._notify_window.preamble)
       print("Executed Preamble")
-
-      if self.loop==RUNMODE_LOOP and not FB: # if FB shots, IGNORE loop code
-        exec(self._notify_window.loop_code)
+      print("DBG: preamble: ", self._notify_window.preamble)
+      
       exec(self._notify_window.staticcode)
       print("Executed Loop/Static Code")
       # get Intervaler object from sequence for plotting
       if self.loop==RUNMODE_DEBUG:
         self.IntervalerObj['Intervaler'] = eval("times") #times
 
+      #send MVs via a PUB socket for mock server
+      sMVs = {} #static MVs
+      for _mv in self._notify_window.metavariables:
+        sMVs[_mv.name] = _mv.value
+      for _mv in self._notify_window.metavariables_controlled:
+        sMVs[_mv.name] = _mv.value
+      self.pub_socket.send_pyobj(sMVs)
+      print("DBG: Worker Thread PRB_f0_MHz: {:.4f}".format(eval('PRB_f0_MHz')))
       return 1
     except SetError as e:
       printError("SetError: "+e.msg)
@@ -217,7 +258,7 @@ class WorkerThread(Thread):
       return 0
 
   # function contains all steps of a single run
-  def __RunExp__(self, counter, savelog=True, FB=False):
+  def __RunExp__(self, counter, savelog=True, FB=False, last_FB=False):
     tstart = time.time()
     # ClearTerminal() # Clear terminal
     ResetAll(self._dm) # Reset all sequence
@@ -229,30 +270,6 @@ class WorkerThread(Thread):
     tprelim = time.time()
     e = self.__ExecSeqCode__(counter, FB=FB) # Execute sequence file and MV values
     
-    if FB or self.FB_control_FLAG: # for feedback measurement or control runs
-       # Determine directory
-      run_time = datetime.datetime.now()
-      trace_dir = run_time.strftime("%Y/%m/%d/")
-
-      # import pdb; pdb.set_trace()
-
-      if FolderName[-2:] == 'FB':
-        trace_full_dir = DIR_DATA + trace_dir + FolderName + '/'
-        FB_longterm_dir = DIR_DATA + trace_dir + FolderName[0:-3] + '/FBold/'
-      else:
-        trace_full_dir = DIR_DATA + trace_dir + FolderName + '/FB/'
-        FB_longterm_dir = DIR_DATA + trace_dir + FolderName + '/FBold/'
-
-    if FB: # when about to make a new FB measurement
-      # Keep the FB folder clean; should only contain the latest shot
-      # (so before putting in a new shot, clear out the old one)
-      if not os.path.exists(trace_full_dir):
-        os.makedirs(trace_full_dir)
-      if not os.path.exists(FB_longterm_dir):
-        os.makedirs(FB_longterm_dir)
-      for file in os.listdir(trace_full_dir):
-        shutil.move(trace_full_dir+file, FB_longterm_dir+file)
-
 
     texec = time.time()
     if e == 0:
@@ -262,21 +279,19 @@ class WorkerThread(Thread):
     if not finish: # Terminate the worker if something goes wrong during the run
       wx.PostEvent(self._notify_window, UpdateEvent(data="Failed to run the experiment! Check servers!", abort=True))
     
-
-
     # Should happen if we're still waiting to respond to the latest FB run   
-    if self.FB_control_FLAG and int(self._notify_window.txtctrl_FeedShotsBet.GetValue())>0:
-      # Since we took a feedback run, run the feedback control cycle as well
-      print((os.listdir(trace_full_dir)))
-      if len(os.listdir(trace_full_dir)) > 0:
-        for FBMV in self._notify_window.metavariables_controlled:
-          FBMV.feedbackIteration(trace_full_dir, MVs=self._notify_window.metavariables_fb)
-          # passes FB MVs first, so that if the feedback function is looking for a particular MV, it finds the FB version first
-        self.FB_control_FLAG = False
-    elif self.FB_control_FLAG: # FeedForward Only
+    tfeedback = time.time()
+    if last_FB: # this __RunExp__ is the last FB shot! wait for result to come in!
+
+
       for FBMV in self._notify_window.metavariables_controlled:
         if FBMV.FF_ctrl.GetValue():
-          FBMV.feedbackIteration(trace_full_dir, MVs=self._notify_window.metavariables_fb)
+          #FBMV.feedbackIteration(trace_full_dir, MVs=self._notify_window.metavariables_fb)
+          FBMV.feedbackIteration(socket=self.socket, counter=counter, MVs=self._notify_window.metavariables_fb)
+        else:
+          FBMV.feedbackIteration(socket=self.socket, counter=counter, MVs=self._notify_window.metavariables_fb)
+          #FBMV.feedbackIteration(trace_full_dir, MVs=self._notify_window.metavariables_fb)
+    print("__Waiting for feedback__ took "+str(tfeedback-time.time())+" seconds")
 
     tend = time.time()
     print("__RunExp__ took "+str(tend-tstart)+" seconds")
@@ -384,6 +399,7 @@ class WorkerThread(Thread):
       # Possible Feedback Run
       if self._notify_window.chkbox_FeedOn.GetValue(): # If checkbox is enabled
         FeedShotsBet = self._notify_window.txtctrl_FeedShotsBet.GetValue()
+        FeedShots = int(self._notify_window.txtctrl_FeedShots.GetValue())
         if not is_int(FeedShotsBet):
           print("FB Error: shots between must be an integer!")
         elif int(FeedShotsBet) < 1:
@@ -396,9 +412,15 @@ class WorkerThread(Thread):
             FSB = 1
           if runs_for_FB % FSB == 0: # time for a Feedback run
             print("FB Run!")
-            self.FB_control_FLAG = True # stays true until the controller is able to RESPOND to the FB run (waits for SPCM data to appear)
-            e=self.__RunExp__(runs_for_FB/FSB, FB=True)
+            
+            for k in range(FeedShots): # do multiple feedback shots!
+              time.sleep(1e-3*self.delay) # Time gap between runs, we have to wait since the experiment just ran...
+              e=self.__RunExp__(runs_for_FB/FSB, FB=True, last_FB=True if k==(FeedShots-1) else False)
+              print("done with FB run {:d} out of {:d}".format(k, FeedShots))
+            # only set the feedback flag true after _all_ the FB shots are taken
+            self.FB_control_FLAG = True # stays true until the controller is able to RESPOND to the FB run (waits for SPCM data to appear) 
       runs_for_FB += 1
+
       ''' Update MV values '''
       if self._need_update:
         for _mv in self._notify_window.metavariables:

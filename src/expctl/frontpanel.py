@@ -56,6 +56,14 @@ from expdatabase.types import RunIdle, RunLooped
 from bson import ObjectId
 import zlib
 
+from dataclasses import dataclass
+
+@dataclass
+class Update:
+    observable: str
+    j: int
+    data: np.array
+
 # Create a logger object.
 logger = logging.getLogger(__name__)
 coloredlogs.install(level='DEBUG')
@@ -90,14 +98,15 @@ SOUND_FOLDER = Path(__file__).parent/"dat/sounds/"
 SOUND_LIST = ['1.wav']
 ICON_FOLDER = Path(__file__).parent/"gui_icons/"
 
+
 class FrontPanel(wx.Frame):
   def __init__(self):
     jGlobals.init() # Initialize global variables
 
     # Front panel GUI
-    wx.Frame.__init__(self, None, wx.ID_ANY, title='SimonLab Control Suite 3', size=(1300, 750)) 
+    wx.Frame.__init__(self, None, wx.ID_ANY, title='SimonLab Control Suite 3', size=(1300, 750))
     self.panel = wx.Panel(self, wx.ID_ANY)
-    # self.window_size = self.GetSize()
+    self.window_size = self.GetSize()
     
     ###################################
     ### IMPORTANT PROGRAM VARIABLES ###
@@ -350,6 +359,7 @@ class FrontPanel(wx.Frame):
     self.sizer_FeedMain  = wx.FlexGridSizer(1, 5, 3, 10)
     self.sizer_FeedCol   = wx.BoxSizer(wx.VERTICAL) # the main column for feedback MEASUREMENT settings
     self.sizer_NumBetRow = wx.BoxSizer(wx.HORIZONTAL) # the row with both static and control text
+    self.sizer_NumRow = wx.BoxSizer(wx.HORIZONTAL) # the row with both static and control text
     ### Feedback Measurement Settings:
     # Static label text
     self.txt_FeedLabel   = wx.StaticText(self.panel, wx.ID_ANY, 'Feedback Measurement Settings:')
@@ -363,9 +373,13 @@ class FrontPanel(wx.Frame):
     # Numerical Input
     self.txt_FeedShotsBetLabel = wx.StaticText(self.panel, wx.ID_ANY, 'Shots between feedback: ')
     self.txtctrl_FeedShotsBet  = wx.TextCtrl(self.panel, wx.ID_ANY, size=(55, -1), value=str(9))
+    self.txt_FeedShotsLabel = wx.StaticText(self.panel, wx.ID_ANY, 'Shots per feedback: ')
+    self.txtctrl_FeedShots  = wx.TextCtrl(self.panel, wx.ID_ANY, size=(55, -1), value=str(9))
     # add txt to row
     self.sizer_NumBetRow.Add(self.txt_FeedShotsBetLabel)
     self.sizer_NumBetRow.Add(self.txtctrl_FeedShotsBet)
+    self.sizer_NumRow.Add(self.txt_FeedShotsLabel)
+    self.sizer_NumRow.Add(self.txtctrl_FeedShots)
     # add to main feedback column
     self.sizer_FeedCol.Add(self.txt_FeedLabel, flag=wx.ALL, border=5)
     self.sizer_FeedCol.Add(self.chkbox_FeedOn, flag=wx.ALL, border=5)
@@ -374,6 +388,8 @@ class FrontPanel(wx.Frame):
     self.sizer_FeedCol.Add(self.btn_CtrlLoadMV, flag=wx.ALL, border=5)
     self.sizer_FeedCol.Add(self.btn_CtrlSaveMV, flag=wx.ALL, border=5)
     self.sizer_FeedCol.Add(self.sizer_NumBetRow, flag=wx.ALL, border=5)
+    self.sizer_FeedCol.Add(self.sizer_NumRow, flag=wx.ALL, border=5)
+
     ## add to FeedMain
     # self.sizer_FeedMain.Insert(5, self.sizer_FeedCol, border=5)
     self.sizer_FeedMain.Add(self.sizer_FeedCol, border=5)
@@ -485,9 +501,9 @@ class FrontPanel(wx.Frame):
     # self.SetSizeHints(900, 620, 1920, 1200) # minW, minH, maxW, maxH
     # self.sizer_top.Fit(self) # Resize window/sizers to fit content
     # layout
-    self.Center()
-    # self.Maximize()
+    # self.Center()
     self.Show()
+    self.Maximize(True)
     
     #############################
     ### DO ALL BUTTON BINDING ###
@@ -551,6 +567,8 @@ class FrontPanel(wx.Frame):
 
     ### Reload the Front Panel ###
     self.InitFP()
+    self.Show()
+    self.Maximize(True)
 
   #############################################################################
   #=============================== GUI Methods ===============================#
@@ -644,7 +662,7 @@ class FrontPanel(wx.Frame):
     wx.EndBusyCursor()
 
     # GUI layout
-    self.SetSizeHints(-1, -1, -1, -1) # minW, minH, maxW, maxH
+    # self.SetSizeHints(-1, -1, -1, -1) # minW, minH, maxW, maxH
     self.panel.Layout()
     # self.Maximize()
 
@@ -949,7 +967,7 @@ class FrontPanel(wx.Frame):
   def SaveCtrlMVs(self, fdir, fname):
     # If we first clear out all of the GUI information, then we can pickle the Ctrl MVs, save them, and rebuild the GUI
     fpath = Path(fdir) / fname
-    f = open(fpath, 'w')
+    f = open(fpath, 'wb')
 
     for CtrlMV in self.metavariables_controlled:
         CtrlMV.updateFromGUI() # make sure MV values reflect GUI
@@ -1077,7 +1095,7 @@ class FrontPanel(wx.Frame):
     # Update UI
     self.panel.Layout()
     self.Refresh()
-  
+
   # Choose the active sequence
   def OnCheckServers(self, event):
     self.sizer_server.Clear(True) # Clear server status sizers
@@ -1461,14 +1479,32 @@ class FrontPanel(wx.Frame):
     run_doc = RunLooped(name=loop_fname, date=run_time, Nshots=Nshots,
                         staticMVs=sMVs, loopMVs=lMVs, sequence=seq_bin, info=text_info)
     self.savedata_switch = True #bool(self.chkbox_savedata.GetValue())
-    logger.debug("Loopen run with save_switch {}".format(self.savedata_switch))
+    logger.debug("Looped run with save_switch {}".format(self.savedata_switch))
     _run_id = createRun(self.client, run=run_doc, save=self.savedata_switch)
     self.run_id = str(_run_id) #cast BSON Object ID into string
+
+    if self.chkbox_FeedOn.GetValue():
+      # make a second run for just the feedback data, for now store both the run and the data in the IDLE collections so it get's swept up after a while...
+      # steps:
+      # make a special run and run id here
+      # in the worker thread switch out the run id and save switch that is sent to the servers so they save the feedback shots somewhere else... 
+      FeedShotsBet = int(self.txtctrl_FeedShotsBet.GetValue()) # normal shots between feedback
+      FeedShots = int(self.txtctrl_FeedShots.GetValue()) # shots per feedback 
+      NFeedbacks = Nshots//FeedShotsBet #round down?
+      NFbShots = NFeedbacks*FeedShots # total number of feedback shots
+      initMVs = sMVs.copy()
+      initMVs.update({'FbShots': FeedShots, 'FbShotsBet': FeedShotsBet, 'NFbShots': NFbShots, 'NFb': NFeedbacks}) # XXX
+      self.savedata_switch_fb = False
+      run_fb_doc = RunIdle(name=loop_fname+'_fb', date=run_time, initMVs=initMVs, updateMVs={}, sequence=seq_bin, info='', done=False)
+      _run_id_fb = createRun(self.client, run=run_fb_doc, save=self.savedata_switch_fb)
+      logger.debug("created feedback run doc {}".format(_run_id_fb))
+      self.run_id_fb = str(_run_id_fb) #cast BSON Object ID into string
+
 
     # Trigger the worker thread unless it's already busy
     self.statusbar.Error("Loop from "+str(loop_start)+" to "+str(loop_stop))
     self.statusbar.SetStatusText('Running loop.')
-    self.ExportLoopedCode(None, flag=0)
+    #self.ExportLoopedCode(None, flag=0)
     self.__DisableBtn__(self.btn_run_looped, label='Abort') # disable UI
     wx.BeginBusyCursor()
     
