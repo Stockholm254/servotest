@@ -176,7 +176,7 @@ def VRS_g_fit(data_dir, MVs=None, pguess=None, latest=0): # NEED TO TEST HOW SLO
 # 				'BlueComp_EyTrim_FF': BlueComp_EyTrim_FF,
 # 				'BlueComp_EzTrim_FF': BlueComp_EzTrim_FF
 # 				}
-__FBfunctions__ = {'Cavf0': None}
+__FBfunctions__ = {'Cavf0': None, 'EITpkf0': None} # TODO implement logic to get Observables from Controller/Cache
 
 def is_float(s):
   try:
@@ -201,7 +201,7 @@ class FBControlMV(LoadSequence.MetaVariable):
 		self.FF = False
 
 		self.eval_function = 'Cavf0' # default
-		self.set_point = 1
+		self.set_point = 0
 
 		if self.min == None:
 			self.min = value
@@ -287,10 +287,10 @@ class FBControlMV(LoadSequence.MetaVariable):
 			# First, needs to get the latest values from the GUI objects (if they are valid)
 			self.updateFromGUI()
 
-			print("Getting deefback for observable {}".format(self.eval_function))
+			print("Getting feedback for observable {}".format(self.eval_function))
 
 			#try to get the last feedback value
-			obs_name = 'Cavf0'
+			obs_name = self.eval_function #'Cavf0'
 			trials = 30
 			for i in range(trials):
 				time.sleep(0.02)
@@ -317,23 +317,31 @@ class FBControlMV(LoadSequence.MetaVariable):
 				return
 			print("Got feedback value {}".format(answer['data']))	
 			fb_value = float(answer['data'])
-			if np.isfinite(fb_value) and abs(fb_value)<self.inc:
-				self.latest_eval = fb_value#__FBfunctions__.get(self.eval_function)(data_dir, MVs=MVs, latest=self.latest_eval)
-				self.error_signal = self.latest_eval - self.value
+
+			if np.isfinite(fb_value): # got a value, do the feedback
+				self.latest_eval = fb_value #__FBfunctions__.get(self.eval_function)(data_dir, MVs=MVs, latest=self.latest_eval)
+				#self.error_signal = self.latest_eval - self.value
 				#self.error_tot = self.error_tot + self.error_signal
+				self.error_signal = self.latest_eval - self.set_point
+				
 
 				# Update current value	
 				if self.enabled_ctrl.GetValue():
 					if not self.FF_ctrl.GetValue():
 						# for now abuse P as FF gain so we do sign and scaling!
-						if self.I > 1 and answer['j']>int(self.I): #wait for the first couple shots to bring value there
-							new_value = self.value + self.P*self.latest_eval # what we would do in the current step
+						if (self.I > 1) and (answer['j']>int(self.I)) and (abs(self.P*self.error_signal)<self.inc): #wait for the first couple shots to bring value there
+							new_value = self.value + self.P*self.error_signal # what we would do in the current step
 							#self.value = self.value + (new_value-self.value)/self.I # exponential smoothing didn't work great
 							self.old_values.append(new_value)
 							vals = self.old_values[-min(int(self.I), len(self.old_values)):]
 							self.value = np.mean(vals)
+							#TODO add small step logic here for self.inc
 						else:
-							self.value += self.P*self.latest_eval
+							#self.value += min(self.P*self.latest_eval, self.inc)
+							if abs(self.P*self.error_signal)>self.inc: #we would change the variable by too much! could become unlocked
+								self.value += np.sign(self.P*self.error_signal)*self.inc
+							else:
+								self.value += self.P*self.error_signal
 						
 					else: # FeedForward
 						self.value=self.latest_eval

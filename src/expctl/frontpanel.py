@@ -1246,6 +1246,17 @@ class FrontPanel(wx.Frame):
         lMVs[metavarname] = loop_vars[metavarname]
     return sMVs, lMVs
     
+  
+  def GenerateFBMVDict(self):
+    # make a dict out of the *Feedback measure* MVs for feedback runs
+    FBmMVs = {} #static MVs
+    for _mv in self.metavariables_fb:
+      # exec(_mv.name+"="+str(_mv.value))
+      # print((_mv.name+"="+str(_mv.value)))
+      FBmMVs[_mv.name] = _mv.value
+
+    return FBmMVs
+
   # Save loop code at their current values to a text file
   def ExportLoopedCode(self, event, flag=1):
     folder_name = self.txtctrl_dirname.GetValue()
@@ -1494,6 +1505,9 @@ class FrontPanel(wx.Frame):
       NFbShots = NFeedbacks*FeedShots # total number of feedback shots
       initMVs = sMVs.copy()
       initMVs.update({'FbShots': FeedShots, 'FbShotsBet': FeedShotsBet, 'NFbShots': NFbShots, 'NFb': NFeedbacks}) # XXX
+      FBmMVs = self.GenerateFBMVDict() # take the *Feedback measure* MVs here and update static MVs, or it will mess up the analsis!!
+      initMVs.update(FBmMVs)
+
       self.savedata_switch_fb = False
       run_fb_doc = RunIdle(name=loop_fname+'_fb', date=run_time, initMVs=initMVs, updateMVs={}, sequence=seq_bin, info='', done=False)
       _run_id_fb = createRun(self.client, run=run_fb_doc, save=self.savedata_switch_fb)
@@ -1654,7 +1668,7 @@ class FrontPanel(wx.Frame):
             self.metavariables_controlled.remove(FBMV)            
 
     if MV.label.Get3StateValue() == 2: # if it just became a control MV
-        newMV = FBControlMV(MV.name, P=0, I=0, value=MV.value, typeval=MV.type, minval=MV.min, maxval=MV.max, maxinc=MV.inc)
+        newMV = FBControlMV(MV.name, P=0, I=0, value=MV.value, typeval=MV.type, minval=round(0.8*MV.value, -1), maxval=round(1.2*MV.value, -1), maxinc=MV.inc) #minval=MV.min, maxval=MV.max,
         self.metavariables_controlled.append(newMV)
         print('FB Control MV')
     elif MV.label.Get3StateValue() == 1: # if it just became a feedback measurement MV, make sure it is removed from FB measurement and control    
