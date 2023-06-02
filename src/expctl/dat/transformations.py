@@ -105,4 +105,4 @@ def DigitalNot(TTL):
   return OUT
 
 def ShutterDelay(t):
-  return t-5000.0
+  return t-500.0

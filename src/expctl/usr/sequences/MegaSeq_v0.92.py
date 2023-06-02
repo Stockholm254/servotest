@@ -609,10 +609,10 @@ for i in range(N_subreps):
 
 #Append ghost event to bringe the total length of the stamp to PRB_time in total, since timer.appendMod is a dumb function!
 if PRB_ttl or PRB_U_ttl or PRB_L_ttl:
-    STP_PRB_EOM.append((t_PRB-1, 0, t_PRB, 0.))
-    STP_PRB_PWR_TTL.append((t_PRB-1, 0, t_PRB, 0.))
-    STP_PRB_freq.append((t_PRB-1, CavPrb_P_f0, t_PRB, CavPrb_P_f0))
-    STP_GATE.append((t_PRB-1, 1, t_PRB, 1))
+    STP_PRB_EOM.append((t_PRB-10, 0, t_PRB-1, 0.))
+    STP_PRB_PWR_TTL.append((t_PRB-10, 0, t_PRB-1, 0.))
+    STP_PRB_freq.append((t_PRB-10, CavPrb_P_f0, t_PRB-1, CavPrb_P_f0))
+    STP_GATE.append((t_PRB-10, 1, t_PRB-1, 1))
 
 #Experiment: Trigger RFSoc with each STP_PRB_EOM (TTL) and only write three ramps to save cycle time
 
@@ -777,6 +777,8 @@ elif PRB_mode == 2:
     #Since RFSoc is triggered by PRB_EOM_ttl start it's time interval at "zero" i.e. afer probe gap
     times_Prb_latetrig = TimeInterval(0, times_CavPrb.length())
     print(times_Prb_latetrig)
+else:
+    times_Prb_latetrig = TimeInterval(0, 1*Unit.ms())
 times_Wait2 = times.append(Wait2_ms*Unit.ms(), "Wait After Slice and Probe")
 
 
@@ -824,20 +826,29 @@ ODT2_pwr.SetInterval(times_Init, 0)
 Nufern0_pwr.SetInterval(times_Init, PRB_pwr_low)
 CavPrbEOM_pwr.SetInterval(times_Init, PRB_pwr_high)
 VImg_pwr.SetInterval(times_Init, Img_ABS_pwr)
-MOT2_pwr.SetInterval(times_Init, 0)
 D1Laser1_pwr.SetInterval(times_Init, 0)#dRSC_Pump_pwr
 dRSC_LAT2_pwr.SetInterval(times_Init, 0)
 MOT1_pwr.SetInterval(times_Init, 0)
 MOT2_pwr.SetInterval(times_Init, 0)
-EF1.SetInterval(times_Init, V1)
-EF2.SetInterval(times_Init, V2)
-EF3.SetInterval(times_Init, V3)
-EF4.SetInterval(times_Init, V4)
-EF5.SetInterval(times_Init, V5)
-EF6.SetInterval(times_Init, V6)
-EF7.SetInterval(times_Init, V7)
-EF8.SetInterval(times_Init, V8)
-EF9.SetInterval(times_Init, V9)
+# EF1.SetInterval(times_Init, V1)
+# EF2.SetInterval(times_Init, V2)
+# EF3.SetInterval(times_Init, V3)
+# EF4.SetInterval(times_Init, V4)
+# EF5.SetInterval(times_Init, V5)
+# EF6.SetInterval(times_Init, V6)
+# EF7.SetInterval(times_Init, V7)
+# EF8.SetInterval(times_Init, V8)
+# EF9.SetInterval(times_Init, V9)
+EF1.SetInterval(times_Init, V1_SSV, V1)
+EF2.SetInterval(times_Init, V2_SSV, V2)
+EF3.SetInterval(times_Init, V3_SSV, V3)
+EF4.SetInterval(times_Init, V4_SSV, V4)
+EF5.SetInterval(times_Init, V5_SSV, V5)
+EF6.SetInterval(times_Init, V6_SSV, V6)
+EF7.SetInterval(times_Init, V7_SSV, V7)
+EF8.SetInterval(times_Init, V8_SSV, V8)
+EF9.SetInterval(times_Init, V9_SSV, V9)
+
 dRSC_LAT_pwr.SetInterval(times_Init, 0)
 Anal_test.SetInterval(times_Init, 5.0) # Machine status trigger
 # DDS seq 1
@@ -857,7 +868,7 @@ RFSOC1_VertTransAOM.SetInterval(times_Init, 80.0*Unit.MHz())
 RFSOC1_HorzTransAOM.SetInterval(times_Init, 80.0*Unit.MHz())
 RFSOC1_4.SetInterval(times_Init, PRB_CtrlAOM_f0_MHz*Unit.MHz())
 RFSOC1_5.SetInterval(times_Init, RFSOC1529_HF*Unit.MHz())
-RFSOC1_CavPrbEom.SetInterval(times_Init, PRB_f0_MHz*Unit.MHz())
+RFSOC1_CavPrbEom.SetInterval(times_Prb_latetrig.afterStart(0), PRB_f0_MHz*Unit.MHz())
 RFSOC1_784Lock.SetInterval(times_Init, PDH785_freq_MHz*Unit.MHz())
 # Red Pitaya 1
 #RP1_DDS_0.SetInterval(times_Init, ParamHeat_freq_kHz*Unit.kHz())
@@ -1644,7 +1655,8 @@ if PRB_mode == 1: # Static cloud in the cavity
     else:
         swp_len = times_Prb.length()/PRB_sweep_num
         for sn in range(int(PRB_sweep_num)):
-            RFSOC1_CavPrbEom.SetInterval(times_Prb_latetrig.afterStart(sn*swp_len).afterward(swp_len), CavPrb_f0, CavPrb_f1)
+            RFSOC1_CavPrbEom.SetInterval(times_Prb_latetrig.afterStart(sn*swp_len).afterward(swp_len-10*Unit.us()), CavPrb_f0, CavPrb_f1)
+        # RFSOC1_CavPrbEom.SetInterval(times_Prb_latetrig.afterStart(0).afterward(PRB_time_ms*Unit.ms()-10*Unit.us()), CavPrb_f0, CavPrb_f1)
     # Trigger the scope
     Scope_trig.SetInterval(times_Prb, 1)
     # Scope_trig.SetInterval(times_Prb.beforeEnd(PRB_time_us*Unit.us()), 1)
@@ -1769,7 +1781,16 @@ MOTCoil.SetInterval(times_FinalWait, MOTCoil.GetLastValue(), MOT_CoilCurr)
 BiasX.SetInterval(times_FinalWait, BiasX.GetLastValue(), MOT_BiasX_G)
 BiasY.SetInterval(times_FinalWait, BiasY.GetLastValue(), MOT_BiasY_G)
 BiasZ.SetInterval(times_FinalWait, BiasZ.GetLastValue(), MOT_BiasZ_G)
-
+# ramp to SSV E fields
+EF1.SetInterval(times_FinalWait, V1, V1_SSV)
+EF2.SetInterval(times_FinalWait, V2, V2_SSV)
+EF3.SetInterval(times_FinalWait, V3, V3_SSV)
+EF4.SetInterval(times_FinalWait, V4, V4_SSV)
+EF5.SetInterval(times_FinalWait, V5, V5_SSV)
+EF6.SetInterval(times_FinalWait, V6, V6_SSV)
+EF7.SetInterval(times_FinalWait, V7, V7_SSV)
+EF8.SetInterval(times_FinalWait, V8, V8_SSV)
+EF9.SetInterval(times_FinalWait, V9, V9_SSV)
 
 #### Set steady state values ####
 #### Logan 10/19/18: This is now ALSO where we sort the commands for each channel and check for timing conflicts (i.e. ONCE per channel, at the end of the sequence)

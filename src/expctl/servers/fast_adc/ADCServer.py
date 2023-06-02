@@ -39,10 +39,13 @@ class ADCServer(Server):
                 logger.debug(f'[Acquire_Ch1, Acquire_Ch2]: [{acqCh1}, {acqCh2}], Save: {save_data}')
                 # Get the save switch from the sequence
                 logger.info(f"Saving according to save_switch: {save_data}")
+                # Get the save switch from the sequence
+                save_switch = self.seq.saveswitch
                 if acqCh1 or acqCh2:
                     data, meta = self._acquire(acqCh1, acqCh2)
                     if save_data > 0:
-                        SaveDataDB(client=self.client, run_id=self.seq.run_id, counter=self.seq.counter, data=data, meta=meta, save=True)
+                        save = True if save_switch==2 else False
+                        SaveDataDB(client=self.client, run_id=self.seq.run_id, counter=self.seq.counter, data=data, meta=meta, save=save)
             except:
                 logger.exception("Failed to acquire data from ADC.")
 

@@ -37,8 +37,8 @@ all_sequences = ([
   Sequence("Kinesis Lambda 2",          host=IP_RYDFRIES,    port=PORT_KINESIS_2, max_channels=1 , graph=0),
   Sequence("Kinesis Lambda 4",          host=IP_RYDFRIES,    port=PORT_KINESIS_4, max_channels=1 , graph=0),
   Sequence("Attenuator sequence",       host=IP_RYDFRIES,    port=PORT_ATT,       max_channels=1 , graph=0),
-  Sequence("DMD sequence",              host='192.168.1.34', port=PORT_DMD,       max_channels=10, graph=0),
-  Sequence("SmarAct sequence",          host='192.168.1.34', port=PORT_SMARACT,   max_channels=2 , graph=0)
+  Sequence("DMD sequence",              host='192.168.1.31', port=PORT_DMD,       max_channels=10, graph=0),
+  Sequence("SmarAct sequence",          host='192.168.1.31', port=PORT_SMARACT,   max_channels=3 , graph=0)
   ])
 
 digital_seq1, analog_seq1, cam, cam2, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, adc_1, photon_counter, lb_1, lb_2, lb_3, lb_4, ad_1, rfsoc_1, rp_ddds_1, kinesis_2, kinesis_4, atten_1, dmd, smaract = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
@@ -224,8 +224,10 @@ ATT_1 = atten_1.newChannel(0, "Attenuation",  system='Floquet', steady_state_val
 
 #SmarAct MKS2 controller
 # so far only voltage scans are implemented
-SMARACT_vx = smaract.newChannel(0, "SmarAct Vx", system='CavPrb', steady_state_value=50, max_value=100.0, graph=0)
-SMARACT_vy = smaract.newChannel(1, "SmarAct Vy", system='CavPrb', steady_state_value=50, max_value=100.0, graph=0)
+SMARACT_vx = smaract.newChannel(0, "SmarAct Vx", system='CavPrb', steady_state_value=0, max_value=100.0, graph=0)
+SMARACT_vy = smaract.newChannel(1, "SmarAct Vy", system='CavPrb', steady_state_value=0, max_value=100.0, graph=0)
+SMARACT_vz = smaract.newChannel(2, "SmarAct Vz", system='CavPrb', steady_state_value=0, max_value=100.0, graph=0)
+
 #=====================================End Channel Definitions=======================================
 
 #====================================Slave Channel Definitions======================================

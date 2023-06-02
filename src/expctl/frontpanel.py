@@ -372,9 +372,9 @@ class FrontPanel(wx.Frame):
     self.btn_CtrlSaveMV        = wx.Button(self.panel, wx.ID_ANY, 'Save FB Ctrl MVs', size=(150,27))
     # Numerical Input
     self.txt_FeedShotsBetLabel = wx.StaticText(self.panel, wx.ID_ANY, 'Shots between feedback: ')
-    self.txtctrl_FeedShotsBet  = wx.TextCtrl(self.panel, wx.ID_ANY, size=(55, -1), value=str(9))
+    self.txtctrl_FeedShotsBet  = wx.TextCtrl(self.panel, wx.ID_ANY, size=(55, -1), value=str(10))
     self.txt_FeedShotsLabel = wx.StaticText(self.panel, wx.ID_ANY, 'Shots per feedback: ')
-    self.txtctrl_FeedShots  = wx.TextCtrl(self.panel, wx.ID_ANY, size=(55, -1), value=str(9))
+    self.txtctrl_FeedShots  = wx.TextCtrl(self.panel, wx.ID_ANY, size=(55, -1), value=str(10))
     # add txt to row
     self.sizer_NumBetRow.Add(self.txt_FeedShotsBetLabel)
     self.sizer_NumBetRow.Add(self.txtctrl_FeedShotsBet)
@@ -416,9 +416,9 @@ class FrontPanel(wx.Frame):
     # Settings
     self.txt_loop         = wx.StaticText(self.panel, wx.ID_ANY, 'Loop Settings:')
     self.lbl_j0           = wx.StaticText(self.panel, wx.ID_ANY, 'j0:')
-    self.txtctrl_j0       = wx.TextCtrl(self.panel,   wx.ID_ANY, '1',  size=(60, -1))
+    self.txtctrl_j0       = wx.TextCtrl(self.panel,   wx.ID_ANY, '0',  size=(60, -1))
     self.lbl_j1           = wx.StaticText(self.panel, wx.ID_ANY, 'j1:')
-    self.txtctrl_j1       = wx.TextCtrl(self.panel,   wx.ID_ANY, '10', size=(60, -1))
+    self.txtctrl_j1       = wx.TextCtrl(self.panel,   wx.ID_ANY, '49', size=(60, -1))
     self.txt_prerun       = wx.StaticText(self.panel, wx.ID_ANY, 'Pre runs:')
     self.txtctrl_prerun   = wx.TextCtrl(self.panel,   wx.ID_ANY, '0',  size=(40, -1))
     self.txt_dirname      = wx.StaticText(self.panel, wx.ID_ANY, 'Folder name:')
@@ -426,7 +426,7 @@ class FrontPanel(wx.Frame):
     self.chkbox_rand      = wx.CheckBox(self.panel,   wx.ID_ANY, 'Randomize Order')
     self.chkbox_autobkp   = wx.CheckBox(self.panel,   wx.ID_ANY, 'Auto Backup')
     self.chkbox_autoidle  = wx.CheckBox(self.panel,   wx.ID_ANY, 'Auto Idle When Done')
-    self.chkbox_autoidle.SetValue(True)
+    self.chkbox_autoidle.SetValue(False)
     self.chkbox_autobkp.SetValue(True)
     self.ln_loopsetting   = wx.StaticLine(self.panel, wx.ID_ANY, style=wx.LI_VERTICAL)
     # Loop code
@@ -1257,6 +1257,16 @@ class FrontPanel(wx.Frame):
 
     return FBmMVs
 
+  def GenerateFBCtrlMVDict(self):
+    # make a dict out of the *Feedback control* (the MVs that are actually modified by the feedback) MVs for feedback runs
+    FBctrlMVs = {} #static MVs
+    for _mv in self.metavariables_controlled:
+      # FBControlMV(MV.name, P=0, I=0, value=MV.value, typeval=MV.type, minval=MV.min, minval=MV.max, maxinc=MV.inc)
+      _mv.updateFromGUI()
+      FBctrlMVs[_mv.name] = {'value': float(_mv.value), 'min': float(_mv.min), 'max': float(_mv.max)}
+
+    return FBctrlMVs
+
   # Save loop code at their current values to a text file
   def ExportLoopedCode(self, event, flag=1):
     folder_name = self.txtctrl_dirname.GetValue()
@@ -1508,6 +1518,9 @@ class FrontPanel(wx.Frame):
       FBmMVs = self.GenerateFBMVDict() # take the *Feedback measure* MVs here and update static MVs, or it will mess up the analsis!!
       initMVs.update(FBmMVs)
 
+      FBctrlMVs = self.GenerateFBCtrlMVDict() # get the initial values as well as min/max for every FBctrlMV, for optimization
+      initMVs.update({'FBctrlMVs': FBctrlMVs})
+
       self.savedata_switch_fb = False
       run_fb_doc = RunIdle(name=loop_fname+'_fb', date=run_time, initMVs=initMVs, updateMVs={}, sequence=seq_bin, info='', done=False)
       _run_id_fb = createRun(self.client, run=run_fb_doc, save=self.savedata_switch_fb)
@@ -1518,7 +1531,7 @@ class FrontPanel(wx.Frame):
     # Trigger the worker thread unless it's already busy
     self.statusbar.Error("Loop from "+str(loop_start)+" to "+str(loop_stop))
     self.statusbar.SetStatusText('Running loop.')
-    #self.ExportLoopedCode(None, flag=0)
+    self.ExportLoopedCode(None, flag=0)
     self.__DisableBtn__(self.btn_run_looped, label='Abort') # disable UI
     wx.BeginBusyCursor()
     
@@ -1668,7 +1681,17 @@ class FrontPanel(wx.Frame):
             self.metavariables_controlled.remove(FBMV)            
 
     if MV.label.Get3StateValue() == 2: # if it just became a control MV
-        newMV = FBControlMV(MV.name, P=0, I=0, value=MV.value, typeval=MV.type, minval=round(0.8*MV.value, -1), maxval=round(1.2*MV.value, -1), maxinc=MV.inc) #minval=MV.min, maxval=MV.max,
+        specificFBMVkwargs = {
+                                'PDH1560_freq': {'P':0.5,  'I':0, 'maxinc':1.0 },
+                                'PDH960_freq':  {'P':-0.5, 'I':5},
+                            }
+        defaultFBMVkwargs = {'P':0, 'I':0, 'value':MV.value, 'typeval':MV.type, 'minval':round(0.8*float(MV.value), -1), 'maxval':round(1.2*float(MV.value), -1), 'maxinc':MV.inc}  
+        FBMVkwargs = defaultFBMVkwargs
+        FBMVkwargs.update( specificFBMVkwargs[MV.name] if (MV.name in specificFBMVkwargs.keys()) else {})
+        newMV = FBControlMV(MV.name, **FBMVkwargs)
+        # newMV = FBControlMV(MV.name, P=0, I=0, value=MV.value, typeval=MV.type, minval=round(0.8*float(MV.value), -1), maxval=round(1.2*float(MV.value), -1), maxinc=MV.inc) #minval=MV.min, maxval=MV.max,
+        # newMV = FBControlMV(MV.name, P=0, I=0, value=MV.value, typeval=MV.type, minval=MV.min, maxval=MV.max, maxinc=MV.inc)
+        print(MV.value, type(MV.value))
         self.metavariables_controlled.append(newMV)
         print('FB Control MV')
     elif MV.label.Get3StateValue() == 1: # if it just became a feedback measurement MV, make sure it is removed from FB measurement and control    
@@ -1819,6 +1842,7 @@ class FrontPanel(wx.Frame):
     # f = open(self.temp_dir/self.fp_cfg, 'w')
     # f.write(savetxt)
     # f.close()
+    print('Saving Front Panel Configurations...')
     d = shelve.open(str(self.temp_dir/self.fp_cfg))
     d['dir_seq'] = WindowsPath(self.dir_seq)
     d['fname_seq'] = self.fname_seq

@@ -27,7 +27,7 @@ dev = ok.okCFrontPanel()
 pll = ok.okCPLL22150()
 
 code = DIR_BITFILE/"PhotonTimers.bit"
-FPGAsn = '1452000AQ7'
+FPGAsn = ['1452000AQ7', '1840000NR8'][1]
 
 # Settings Used on the FPGA
 N_blocks = 32 # number of RAM blocks instantiated

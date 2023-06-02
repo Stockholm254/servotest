@@ -501,8 +501,6 @@ MV(DMD_Phi, min=-5.0, max=5.0, init=0.0, inc=0.1, digits=2)
 MV(DMD_Epsilon_Phi, min=-5.0, max=5.0, init=0.0, inc=0.1, digits=2)
 MV(SmarAct_x_V, min=0, max=100, init=50, inc=0.1, digits=1)
 MV(SmarAct_y_V, min=0, max=100, init=50, inc=0.1, digits=1)
-# If you add more pwrs here, make sure to add them to the list (GDEP_pwrs) below
-
 
 #### End Modifiable Variables ###n
 
@@ -511,7 +509,7 @@ MV(SmarAct_y_V, min=0, max=100, init=50, inc=0.1, digits=1)
 ########################################################################
 #### Other calculations ####
 #Convert E-filter bases
-thetaBLluna = 32.5*np.pi/180
+thetaBLluna = -32.5*np.pi/180
 Ex = E_par*np.cos(thetaBLluna) + E_perp_xy*np.sin(thetaBLluna)
 Ey = -E_par*np.sin(thetaBLluna) + E_perp_xy*np.cos(thetaBLluna)
 

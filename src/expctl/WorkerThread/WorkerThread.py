@@ -51,6 +51,10 @@ RUNMODE_PRE    = 2 # Pre-run before loop run
 RUNMODE_LOOP   = 3 # Loop run
 RUNMODE_DEBUG  = 5 # Sequence debug mode
 
+import coloredlogs, logging
+# Create a logger object.
+logger = logging.getLogger(__name__)
+coloredlogs.install(level='DEBUG')
 
 
 # # # TEMPORARY SOLUTION
@@ -244,13 +248,16 @@ class WorkerThread(Thread):
       print("DBG: Worker Thread PRB_f0_MHz: {:.4f}".format(eval('PRB_f0_MHz')))
       return 1
     except SetError as e:
-      printError("SetError: "+e.msg)
+      #printError("SetError: "+e.msg)
+      logger.exception("SetError")
       return 0
     except ValueError as e:
       printError("ValueError: "+e)
+      logger.exception("ValueError")
       return 0
     except:
-      printError("Unexpected error: ")
+      # printError("Unexpected error: ")
+      logger.exception("Unexpected Error")
       traceback.print_exc()
       for e in sys.exc_info():
         printError('\t'+str(e))

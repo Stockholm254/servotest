@@ -464,21 +464,21 @@ times_Wait0 = times.append(Wait0_ms*Unit.ms(), "Wait At MOT")
 
 
 #transport 1
-times_transport = Transport(times, Trans_acc_g, Trans_dist_mm, chanA=RFSOC1_0, chanB=RFSOC1_1, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
+times_transport = Transport(times, Trans_acc_g, Trans_dist_mm, chanA=RFSOC1_2, chanB=RFSOC1_3, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
 #wait 1
 #if Trans_hold_1_ms>0.:
 times_Wait1 = times.append(Trans_hold_1_ms*Unit.ms(), "Wait after transport 1")
 times_transport &= times_Wait1
 #transport 2
 if abs(Trans_dist_2_mm)>0.:
-	times_transport_2 = Transport(times, Trans_acc_g, Trans_dist_2_mm, chanA=RFSOC1_0, chanB=RFSOC1_1, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
+	times_transport_2 = Transport(times, Trans_acc_g, Trans_dist_2_mm, chanA=RFSOC1_2, chanB=RFSOC1_3, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
 	times_transport &= times_transport_2
 #wait 2
 if Trans_hold_2_ms>0.:
 	times_Wait11 = times.append(Trans_hold_2_ms*Unit.ms(), "Wait after transport 2")
 #transport 3
 if abs(Trans_dist_3_mm)>0.:
-	times_transport_3 = Transport(times, Trans_acc_g, Trans_dist_3_mm, chanA=RFSOC1_0, chanB=RFSOC1_1, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
+	times_transport_3 = Transport(times, Trans_acc_g, Trans_dist_3_mm, chanA=RFSOC1_2, chanB=RFSOC1_3, Max_df=Trans_MaxF_MHz, mode=Trans_mode, twoAoms=Trans_twoAom, Npts=Trans_Npts)
 	times_transport &= times_transport_3
 
 #times_transport = times_transport_1 #& times_transport_2&times_transport_3 HOW to fix this correctly
@@ -605,10 +605,10 @@ DDS_OptPump1.SetInterval(times_Init, 80.0)
 DDS_PDH1560.SetInterval(times_Init, PDH1560_freq*Unit.MHz())
 DDS_PDH960.SetInterval(times_Init, PDH960_freq*Unit.MHz())
 DDS_PDH780.SetInterval(times_Init, PDH780_freq*Unit.MHz())
-RFSOC1_CavPrbEom.SetInterval(times_Init, PRB_f0_MHz*Unit.MHz())
+#RFSOC1_CavPrbEom.SetInterval(times_Init, PRB_f0_MHz*Unit.MHz())
 # Formerly used for ParamHeat_freq_kHz, now used for transport
-RFSOC1_0.SetInterval(times_Init, 80.0*Unit.MHz())
-RFSOC1_1.SetInterval(times_Init, 80.0*Unit.MHz())
+RFSOC1_2.SetInterval(times_Init, 80.0*Unit.MHz())
+RFSOC1_3.SetInterval(times_Init, 80.0*Unit.MHz())
 #RFSOC1_6.SetInterval(times_Init, ParamHeat_freq_kHz*Unit.kHz())
 RFSOC1_7.SetInterval(times_Init, OP_REP_RF_MHz*Unit.MHz())
 DDS_HalfRng.SetInterval(times_Init, 0)
@@ -1181,8 +1181,8 @@ RP_trans_b.SetSteadyStateValue(80*Unit.MHz())
 DDS_PDH1560.SetSteadyStateValue(PDH1560_freq)
 DDS_PDH960.SetSteadyStateValue(PDH960_freq)
 DDS_PDH780.SetSteadyStateValue(PDH780_freq)
-RFSOC1_CavPrbEom.SetSteadyStateValue(PRB_f0_MHz)
-RFSOC1_6.SetSteadyStateValue(80*Unit.MHz())
+#RFSOC1_CavPrbEom.SetSteadyStateValue(PRB_f0_MHz)
+#RFSOC1_6.SetSteadyStateValue(80*Unit.MHz())
 RFSOC1_7.SetSteadyStateValue(OP_REP_RF_MHz*Unit.MHz())
 DDS_HalfRng.SetSteadyStateValue(5)
 # DDS seq 2

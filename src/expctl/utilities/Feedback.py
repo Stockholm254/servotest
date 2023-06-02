@@ -176,7 +176,7 @@ def VRS_g_fit(data_dir, MVs=None, pguess=None, latest=0): # NEED TO TEST HOW SLO
 # 				'BlueComp_EyTrim_FF': BlueComp_EyTrim_FF,
 # 				'BlueComp_EzTrim_FF': BlueComp_EzTrim_FF
 # 				}
-__FBfunctions__ = {'Cavf0': None, 'EITpkf0': None} # TODO implement logic to get Observables from Controller/Cache
+__FBfunctions__ = {'Cavf0': None, 'EITpkf0': None, 'OPT': None} # TODO implement logic to get Observables from Controller/Cache
 
 def is_float(s):
   try:
@@ -200,7 +200,8 @@ class FBControlMV(LoadSequence.MetaVariable):
 		self.enabled = False
 		self.FF = False
 
-		self.eval_function = 'Cavf0' # default
+		# self.eval_function = 'Cavf0' # default
+		self.eval_function = 'EITpkf0' if (self.name=='PDH960_freq') else 'Cavf0' # default
 		self.set_point = 0
 
 		if self.min == None:
@@ -291,10 +292,12 @@ class FBControlMV(LoadSequence.MetaVariable):
 
 			#try to get the last feedback value
 			obs_name = self.eval_function #'Cavf0'
-			trials = 30
+			trials = 150
 			for i in range(trials):
-				time.sleep(0.02)
-				socket.send_pyobj(str(obs_name)) # TODO replace with eval function
+				time.sleep(0.06)
+				# socket.send_pyobj(str(obs_name)) # TODO replace with eval function
+				query = {'OBS': str(obs_name), 'MVname': self.name}
+				socket.send_pyobj(query)
 				answer = socket.recv_pyobj()
 				if answer == 'NOPE':
 					print("Found no data for Observable {}".format(obs_name))

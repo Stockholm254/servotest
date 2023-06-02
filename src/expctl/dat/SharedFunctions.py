@@ -362,6 +362,9 @@ def Imaging(times, mode,
         times_gap2 = DropAtoms(times, t_gap, Lat=0)
         times_img3 = times.append(t_img, 'DarkField')
         # Turn on/off beams
+        # set the imaging power only before the first image to reduce leakage
+        VImg_pwr.SetInterval((times_img1 & times_gap1 & times_img2), img_pwr)  #Img_ABS_pwr
+
         Nufern1_ttl.SetInterval(times_img1, 1)
         Nufern1_ttl.SetInterval(times_img1.afterward(0), 0)
         Blue_ttl.SetInterval(times_img1, blue_img_ttl)
