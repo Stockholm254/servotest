@@ -9,7 +9,7 @@ import numpy as np
 class Rb87:
   def __init__(self):
     lambda_D1 = 795.9788509   # Wavelength for D1 line transition in nm
-    lambda_D2 = 780.241209686 # Wavelength for D1 line transition in nm
+    lambda_D2 = 780.241209686 # Wavelength for D2 line transition in nm
 
     Gamma_D1 = 5.746 # Natural Line Width (FWHM) for D1 line in MHz
     Gamma_D2 = 6.065 # Natural Line Width (FWHM) for D2 line in MHz
@@ -82,24 +82,24 @@ def Calc_DDS_MOT_Blast(Fe, detuning):
 #################
 class Rb85:
   def __init__(self):
-    lambda_D1 = 795.9788509   # Wavelength for D1 line transition in nm
-    lambda_D2 = 780.241209686 # Wavelength for D1 line transition in nm
+    lambda_D1 = 794.979014933   # Wavelength for D1 line transition in nm
+    lambda_D2 = 780.241368271 # Wavelength for D2 line transition in nm
 
-    Gamma_D1 = 5.746 # Natural Line Width (FWHM) for D1 line in MHz
-    Gamma_D2 = 6.065 # Natural Line Width (FWHM) for D2 line in MHz
+    Gamma_D1 = 5.750 # Natural Line Width (FWHM) for D1 line in MHz
+    Gamma_D2 = 6.0666 # Natural Line Width (FWHM) for D2 line in MHz
 
 
 ## All numbers are in MHz
 def groundHF():
-  return 6834.68261090429
+  return 3035.7324390
  
 def excitedHF(F1, F2):
   F1 = int(F1)
   F2 = int(F2)
   # returns the splitting between the given excited state levels
-  f01 = 72.218
-  f12 = 156.947
-  f23 = 266.65
+  f01 = 29.372
+  f12 = 63.401
+  f23 = 120.640
   fs = [0, f01, f01+f12, f01+f12+f23]
   df = fs[F2] - fs[F1]
   return df
