@@ -8,6 +8,9 @@ import datetime
 import time
 import pyqtgraph
 import colorsys
+from typing import List
+
+from expctl.sequencer.sequence import Sequence
 from .util import *
 
 ############################
@@ -112,16 +115,18 @@ def PlotSeq_DeviceValue(dm, IntervalTime=None):
   p1.setYRange(0, chancounter)
   plotWidget.show()
 
-def PlotSeq_SeqValue(dm):
+def PlotSeq_SeqValue(dm, IntervalTime=None):
   # Configurate qtgraph
   plotTitle = "Sequence Timing"
   pyqtgraph.setConfigOption('background', '#ffffff')
   pyqtgraph.setConfigOption('foreground', '#333333')
   plotWidget = pyqtgraph.plot(title=plotTitle)
   p1 = plotWidget.plotItem
-  plotWidget.resize(1300, 650)
+  plotWidget.resize(1300, 1000)
   
-  seqs = dm.seq_plot # Get all sequence to graph
+  #seqs = dm.seq_plot # Get all sequence to graph
+  seqs = dm
+
 
   # Load plot data from the server
   ytick_locations = [] # channel name location
@@ -144,12 +149,35 @@ def PlotSeq_SeqValue(dm):
 
       # Get channel values:
       y = []; x = []
+      # find minimum and maximum value of the channel to scale up small changes
+      _all_vals = [uv[i] for i in [1, 3] for uv in _chan._UserValues]
+      _chan_max = max(_all_vals)
+      _chan_max = _chan.max_v if _chan_max<=0.0 else _chan_max
+      _chan_min = min(_all_vals)
+      _chan_min = 0.0 if _chan_min==_chan_max else _chan_min
+      _chan_scale = 0.9/(_chan_max-_chan_min)
+
       for ii in range(0, len(_chan._UserValues)):
         pair = _chan._UserValues[ii] # get time-value tuple
-        x.append(pair[0]/1e6); y.append(chancounter+.7*pair[1]/_chan.max_v); # start value
-        x.append(pair[2]/1e6); y.append(chancounter+.7*pair[3]/_chan.max_v); # final value
-        if ii < len(_chan._UserValues)-1: # fill in the gaps between each time intervals
-          x.append(_chan._UserValues[ii+1][0]/1e6); y.append(chancounter+.7*pair[3]/_chan.max_v);
+        if len(pair)==4: #regular interval
+          
+          #x.append(pair[0]/1e6); y.append(chancounter+.7*pair[1]/_chan.max_v); # start value
+          #x.append(pair[2]/1e6); y.append(chancounter+.7*pair[3]/_chan.max_v); # final value
+          x.append(pair[0]/1e6); y.append(chancounter+_chan_scale*(pair[1]-_chan_min)) # start value
+          x.append(pair[2]/1e6); y.append(chancounter+_chan_scale*(pair[3]-_chan_min)); # final value
+          if ii < len(_chan._UserValues)-1: # fill in the gaps between each time intervals
+            # x.append(_chan._UserValues[ii+1][0]/1e6); y.append(chancounter+.7*pair[3]/_chan.max_v)
+            x.append(_chan._UserValues[ii+1][0]/1e6); y.append(chancounter+_chan_scale*(pair[3]-_chan_min))
+
+        elif len(pair)==7: #modulation stamp
+          #pair = Interval((timeInterval[0], stamp[0][1], timeInterval[1], stamp[-1][3], stamp, stamp_length, mod_num))
+          stmp_len = pair[5]
+          for j in range(pair[6]): #mod_num
+            for subp in pair[4]: #stamp
+              x.append((pair[0]+j*stmp_len+subp[0])/1e6); y.append(chancounter+_chan_scale*(subp[1]-_chan_min)) # start value
+              x.append((pair[0]+j*stmp_len+subp[2])/1e6); y.append(chancounter+_chan_scale*(subp[3]-_chan_min)); # final value
+        else:
+          print("I don't know what to do here...")
       ytick_locations.append((chancounter, _chan.name)) # add new channel tick location
       
       newline = plotWidget.plot(x, y, pen={'color': rgb}, fillLevel=chancounter, brush=rgba)  ## setting pen=(i,3) automaticaly creates three different-colored pens
@@ -178,25 +206,26 @@ def PlotSeq_SeqValue(dm):
   p1.addItem(refLiner)
   
   '''TODO: TIME LABELS'''
-  # timeBars=[]
-  # labelTimes=True
-  # try: # Get time interval value
-  #   for interval in timeObj:
-  #     timeBars.append(interval.end_t()/1.0e6)
-  # except NameError:
-  #   labelTime=False
-  
-  # for t in timeBars: # Add reference line for each time interval
-  #   refLine = pyqtgraph.InfiniteLine(pos=t, angle=90, pen={'color': 1}, movable=False, bounds=None)
-  #   p1.addItem(refLine)
-  
-  # if labelTimes:
-  #   for t in timeObj:
-  #     if t.getName():
-  #       if t.start_t() != t.end_t():
-  #         text  = pyqtgraph.TextItem(t.getName(), color=0.7, angle=0)
-  #         text.setPos(t.start_t()/1.0e6, chancounter+1)
-  #         p1.addItem(text)
+  if IntervalTime is not None:
+    timeBars=[]
+    labelTimes=True
+    try: # Get time interval value
+      for interval in IntervalTime:
+        timeBars.append(interval.end_t()/1.0e6)
+    except NameError:
+      labelTime=False
+    
+    for t in timeBars: # Add reference line for each time interval
+      refLine = pyqtgraph.InfiniteLine(pos=t, angle=90, pen={'color': 1}, movable=False, bounds=None)
+      p1.addItem(refLine)
+    
+    if labelTimes:
+      for t in IntervalTime:
+        if t.getName():
+          if t.start_t() != t.end_t():
+            text  = pyqtgraph.TextItem(t.getName(), color=0.7, angle=0)
+            text.setPos(t.start_t()/1.0e6, chancounter+1)
+            p1.addItem(text)
   
   p1.setYRange(0, chancounter)
   plotWidget.show()
@@ -206,7 +235,7 @@ def PlotSeq_SeqValue(dm):
 ########################################################################
 # GUI class for creating a dialog for selecting channels to plot
 class ChanSelect(wx.Dialog):
-  def __init__(self, seqs):
+  def __init__(self, seqs: List[Sequence]):
     wx.Dialog.__init__(self, None, title="Channels to Graph", size=(500,575))
     self.panel = wx.Panel(self)
 

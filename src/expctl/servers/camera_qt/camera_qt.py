@@ -13,20 +13,6 @@ import numpy as np
 import os
 import time
 from scipy.optimize import curve_fit
-try:
-    import PyCapture2
-except:
-    from .gpcamera import Mock_GP_camera as Camera
-else:
-    from .gpcamera import GP_camera as Camera
-
-# try:
-#     import PySpin
-# except:
-#     from .spincamera import Mock_GP_camera as Camera
-# else:
-#     from .spincamera import GP_camera as Camera
-
 from ..ServerClass import logger, Server
 from copy import deepcopy
 from collections import deque
@@ -35,16 +21,81 @@ from expdatabase.db import insertImage
 from expdatabase.types import ShotImage
 from pymongo import MongoClient
 from bson import ObjectId
+import logging
+
+#try:
+#     import PyCapture2
+# except:
+#     from .gpcamera import Mock_GP_camera as Camera
+# else:
+#     from .gpcamera import GP_camera as Camera
+
+try:
+    import PySpin
+except:
+    try:
+        import PyCapture2
+    except:
+        logger.warning("couldn't load any camera driver, resort to Mock camera")
+        from .spincamera import Mock_GP_camera as Camera
+    else:
+        logger.info("Loaded PyCapture2 driver")
+        from .gpcamera import GP_camera as Camera
+        DRIVER = 2
+else:
+    logger.info("Loaded PySpin driver")
+    from .spincamera import GP_camera as Camera
+    DRIVER = 3
+
+
 
 IMG_ABS= {0: 'fg', 1: 'bg', 2: 'ref'}
 IMG_FL = {0: 'fg', 1: 'bg'}
 
 STORE_FILES = False
 
-CAMERA_SERIALS = {13442499: 'Cam Absorption', 15331899: 'Cam Fluorescence', 17497066: 'Cam Absorption 3',}
-DEFAULT_ROI = {13442499: (500, 1100, 350, 950), 15331899: (550, 850, 250, 950), 17497066: (500, 1100, 350, 950), 17497066: (500, 1100, 800, 1300)}
-DEFAULT_FIT_ROI = {13442499: (500, 1100, 350, 950), 15331899: (550, 850, 250, 950), 17497066: (500, 1100, 350, 950), 17497066: (600, 1000, 900, 1200)}
-CAMERA_KWARGS = {17497066: {'trigger_port': 2, 'trigger_mode': 1, 'video_mode': (23, 8)}} #CM3 full resolution (2048x1536) (23, 8) 
+
+CAMERA_SERIALS = {
+    13442499: 'Cam Absorption',
+    15331899: 'Cam ABS Blue Cavity',
+    17497066: 'Cam Absorption VERT',
+    17497209: 'Cam Fluorescence',
+    13262377: 'Cam ABS Side Mirrors',
+    12372860: 'Cam ABS Slot',
+    15331897: 'Cam ABS TOP',
+    13442465: 'Cam Lluna Trans',
+    13152783: 'Cam DMD',
+    }
+
+DEFAULT_ROI = {
+    13442499: (500, 1100, 350, 950),
+    15331899: (760, 960, 380, 680),
+    17497066: (750, 1050, 250, 550),
+    17497209: (750, 1150, 750, 1050),
+    13262377: (500, 750, 300, 700),
+    13442465: (760-100, 760+100, 101-100, 101+100),
+    13152783: (250, 450, 200, 400),
+    }
+
+DEFAULT_FIT_ROI = {
+    13442499: (500, 1100, 350, 950),
+    15331899: (550, 700, 350, 650),
+    17497066: (500, 1100, 350, 950),
+    17497066: (600, 1000, 900, 1200),
+    17497209: (350, 600, 320, 520),
+    13262377: (500, 750, 300, 700),
+    12372860: (350, 600, 320, 520),
+    13442465: (760-50, 760+50, 99-50, 99+50),
+    13152783: (250, 450, 200, 400),
+    }
+
+CAMERA_KWARGS = {
+    17497066: {'trigger_port': 2, 'trigger_mode': 1, 'video_mode': (23, 8)},
+    17497209: {'trigger_port': 2, 'trigger_mode': 1, 'video_mode': (23, 8)},
+    12372860: {'trigger_port': 0, 'trigger_mode': 0}
+    } #CM3 full resolution (2048x1536) (23, 8),  
+
+
 # Interpret image data as row-major instead of col-major
 #pg.setConfigOptions(imageAxisOrder='row-major')
 pg.mkQApp()
@@ -118,7 +169,7 @@ class CameraServer(Server):
             self.device.InitCamera()
             logger.info("Camera initiated.")
         except:
-            logger.exception("Failed to connect the camera!")
+            logger.exception("Failed to connect the camera!")w
 
     def set_ROI(self, roi):
         if len(roi)==4:
@@ -185,8 +236,12 @@ class CameraServer(Server):
                     logger.info("Number of images will be captured: " + str(self.NumOfImage))
                     logger.info("Shutter time: " + str(ShutterTime)+ "ms")
                     self.imgbuffer = []
+
+                    
                     try:
+                        #self.device.c.start()
                         success, imgbuffer, images_file = self.device.GrabImages(shutter=ShutterTime, gain=gain_mv, number=self.NumOfImage, runname=run_name, foldername=folder_name)
+                        #self.device.c.stop()
                         logger.debug("Success {}".format(success))
                         if not success:
                             raise RuntimeError("Grab Images failed, this shot will not be saved!")
@@ -240,6 +295,13 @@ class CameraServer(Server):
                             #self.queue.put(item)
                             self.parent.storeSignal.emit(item)
                             logger.info("Emitted to Save Thread")
+                    finally:
+                        pass
+                        # for i in range(2):
+                        #     try:
+                        #         self.device.c.get_image(wait=False)
+                        #     except:
+                        #         logger.exception("trying to empty out image buffer of camera...")
 
         elif autostart == 1:
             TIME_STOP = time.time()
@@ -272,7 +334,8 @@ class ServerWorker(QObject):
     def __init__(self, parent=None, port=60614, camera_id=0, camera_kwargs={}):
         #super(self.__class__, self).__init__(parent)
         super(ServerWorker, self).__init__(parent)
-        message = """===========================================
+        message = \
+        """===========================================
         ==             Camera Server 1           ==
         ==        for Point Grey Chameleon       ==
         ===========================================
@@ -330,9 +393,9 @@ class MainWindow(TemplateBaseClass):
     start_acquire = pyqtSignal(tuple)
     stop_acquire = pyqtSignal()
 
-    def __init__(self, port=60614):
+    def __init__(self, title='Qt Camera Server USB 3.0', port=60614):
         TemplateBaseClass.__init__(self)
-        self.setWindowTitle('Qt Camera Server')
+        self.setWindowTitle(title)
         self.port = port
         self.data = np.zeros((1280, 960))
 
@@ -379,7 +442,11 @@ class MainWindow(TemplateBaseClass):
         camera_id = self.ui.comboBox.currentIndex()
         ser = self.cams[camera_id]['serial'] #serial of current camera
         if ser in DEFAULT_ROI.keys():
-            res = self.cams[camera_id]['res'].split('x') #.decode('utf-8')
+            #print(self.cams[camera_id]['res'])
+            if DRIVER == 2:
+                res = self.cams[camera_id]['res'].decode('utf-8').split('x') #
+            else:
+                res = self.cams[camera_id]['res'].split('x') 
             xmax, ymax = int(res[0]), int(res[1])
             self.ui.x1SpinBox.setMaximum(xmax)
             self.ui.y1SpinBox.setMaximum(ymax)
@@ -545,13 +612,26 @@ class MainWindow(TemplateBaseClass):
         self.entry_model.items.appendleft(entry)
         self.entry_model.layoutChanged.emit()  
         self.data = data
-        self.img.setImage(self.data, autoLevels=self.ui.checkBox_autoscale.isChecked())
+
+        #index_entry = self.ui.imgList.selectionModel().selectedIndexes()[0].row()
+        #entry = self.entry_model.get(index_entry)
+        try:
+            index_frame = self.ui.listView.selectionModel().selectedIndexes()[0].row()
+        except IndexError:
+            index_frame = 0
+        print(index_frame)
+        if index_frame>0:
+            self.data = entry.imgarray[int(index_frame)]
+            self.img.setImage(self.data, autoLevels=self.ui.checkBox_autoscale.isChecked())
+        else:
+            self.img.setImage(self.data, autoLevels=self.ui.checkBox_autoscale.isChecked())
         
         if mode=="ABS":
-            #self.hist.setLevels(0., 1.)
+            lo, hi = self.hist.getLevels()
+            self.hist.setLevels(0., hi)
             #self.hist.setLevels(0., 3.)
             #self.hist.setHistogramRange(0., 1.)
-            pass
+            #pass
         else:
             if self.ui.checkBox_autoscale.isChecked():
                 self.hist.setLevels(np.nanmin(self.data), np.nanmax(self.data))
@@ -562,9 +642,9 @@ class MainWindow(TemplateBaseClass):
         self.frame_model.clear()
         index = self.ui.imgList.selectionModel().selectedIndexes()[0].row()
         print(index)
-        for n in self.entry_model.get(index).names:
-            print(n)
-            item = QtGui.QStandardItem("Frame {}".format(n))
+        for n, name in self.entry_model.get(index).names.items():
+            print(n, name)
+            item = QtGui.QStandardItem("{} ({:d})".format(name, n))
             self.frame_model.appendRow(item)
         self.frame_model.layoutChanged.emit()
 
@@ -575,7 +655,7 @@ class MainWindow(TemplateBaseClass):
         index_frame = self.ui.listView.selectionModel().selectedIndexes()[0].row()
         print(index_frame)
         self.data = entry.imgarray[int(index_frame)]
-        self.img.setImage(self.data)
+        self.img.setImage(self.data, autoLevels=self.ui.checkBox_autoscale.isChecked())
 
     def _process_fluorescence(self, buffer_item):
         imgArrays = buffer_item.buffer
@@ -584,20 +664,33 @@ class MainWindow(TemplateBaseClass):
         fore[fore < back] = back[fore < back]
         diff = fore - back
 
+        # def _img_time(t):
+        #     return 2.16e1*t 
+
+        # def _img_gain(g):
+        #     return 4.87e3*np.exp(g*1.17e-1)
+
+        # def _img_pwr(p):
+        #     return np.polyval([ -13560.43361486,  179062.01299561, -753441.71015276, 1025454.73261022], p)
+        # scale_time = _img_time(0.4)/_img_time(buffer_item.shutter) # Img_time used for calibration was 400us = 0.4 ms
+        # scale_gain = _img_gain(14.0)/_img_gain(buffer_item.gain)
+        # scale_power = _img_pwr(5.0)/_img_pwr(buffer_item.power)
+        #return 61.43*scale_time*scale_gain*scale_power*diff
+
         def _img_time(t):
-            return 2.16e1*t 
+            return 7.46e1*t 
 
         def _img_gain(g):
-            return 4.87e3*np.exp(g*1.17e-1)
+            return 1.17e4*np.exp(g*1.16e-1)
 
         def _img_pwr(p):
-            return np.polyval([ -13560.43361486,  179062.01299561, -753441.71015276, 1025454.73261022], p)
+            return np.polyval([ 7.68048349e+02, -4.08492532e+04,  5.06165857e+05, -2.59932438e+06, 6.04131006e+06, -5.27368991e+06], p)
 
-        scale_time = _img_time(0.4)/_img_time(buffer_item.shutter) # Img_time used for calibration was 400us = 0.4 ms
-        scale_gain = _img_gain(14.0)/_img_gain(buffer_item.gain)
-        scale_power = _img_pwr(5.0)/_img_pwr(buffer_item.power)
+        scale_time = _img_time(1.0)/_img_time(buffer_item.shutter) # Img_time used for calibration was 1000us = 1 ms
+        scale_gain = _img_gain(16.0)/_img_gain(buffer_item.gain)
+        scale_power = _img_pwr(4.6)/_img_pwr(buffer_item.power)
 
-        return 61.43*scale_time*scale_gain*scale_power*diff
+        return 28*scale_time*scale_gain*scale_power*diff
 
     def _process_absorption(self, buffer_item):
         logger.debug("processing absorption")
@@ -684,10 +777,10 @@ class MainWindow(TemplateBaseClass):
         self.ui.x1SpinBox.blockSignals(True)
         self.ui.y0SpinBox.blockSignals(True)
         self.ui.y1SpinBox.blockSignals(True)
-        self.ui.x0SpinBox.setValue(xl)
-        self.ui.x1SpinBox.setValue(xl+w)
-        self.ui.y0SpinBox.setValue(yl)
-        self.ui.y1SpinBox.setValue(yl+h)
+        self.ui.x0SpinBox.setValue(int(xl))
+        self.ui.x1SpinBox.setValue(int(xl+w))
+        self.ui.y0SpinBox.setValue(int(yl))
+        self.ui.y1SpinBox.setValue(int(yl+h))
         self.ui.x0SpinBox.blockSignals(False)
         self.ui.x1SpinBox.blockSignals(False)
         self.ui.y0SpinBox.blockSignals(False)

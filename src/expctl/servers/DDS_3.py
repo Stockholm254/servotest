@@ -161,6 +161,7 @@ def RunServer(server, seq, dev, loadorrun, autostart=1):
 		#Next do the data conversions on the full sequence, inserting the I/F value
 		convertedSeq=ConvertSeqtoCountsandFTWs(chan.GetHardwareValues()) #values)
 		fullSeq=GenerateFullSeq(convertedSeq,ssvalFTW)
+		print(ssvalHz, ssvalFTW, fullSeq)
 
 		#fullseq is a list of ramps in time (counts) with a FTW at each endpoint of each ramp. The first interval starts at time zero.
 		#next we need to convert this into a list of ramps, in clock cycles and slopes. For now the slopes will be a signed float FTW/count, but eventually we will need to multiply by 2**32 and round it

@@ -14,23 +14,20 @@ N780_Prob_EOM   = -320.0    # Cavity probe EOM frequence. Red sideband
 ##########################################
 ### Blue Laser PDH Locking Frequencies ###
 ##########################################
-# These nmbers might change due to the EM field
-Blue_PDH_40S = 682.5   # Blue PDH locking freq for 40S
-Blue_PDH_48S = 51.5    # Blue PDH locking freq for 48S
-Blue_PDH_60S = 166.75  # Blue PDH locking freq for 60S (left sideband)
-Blue_PDH_62S = 644.0   # Blue PDH locking freq for 62S
-Blue_PDH_75S = 240.0   # Blue PDH locking freq for 75S (left sideband)
-Blue_PDH_85S = 581.5   # Blue PDH locking freq for 85S (right sideband)
 # With 200 MHz blue AOM
 Blue_PDH_40S  = 727.0 # Blue PDH locking freq for 40S
+Blue_PDH_48S = 118.8  # Blue PDH locking freq for 48S, F'=3 (960.6269nm on wavemeter) #ended up at ; previously 191.0 ?
 Blue_PDH_60S  = 228.0 # Blue PDH locking freq for 60S (left sideband), F'=3
 Blue_PDH_60S  = 19.0  # Blue PDH locking freq for 60S (RIGHT sideband), F'=0
+Blue_PDH_43D_3halves = 804.5		# Blue PDH locking freq for 43D_{5/2}, F'=3 (RIGHT sideband reltive to carrier but left of the two very close sidebands (almost FSR/2))
 Blue_PDH_58D_3halves = 615.3		# Blue PDH locking freq for 58D_{3/2}, F'=0 (RIGHT sideband)
-Blue_PDH_58D_5halves = 391.9 #397.9 # Blue PDH locking freq for 58D_{5/2}, F'=3   (RIGHT sideband)
+Blue_PDH_58D_5halves = 388.8 #397.9 # Blue PDH locking freq for 58D_{5/2}, F'=3   (RIGHT sideband)
 Blue_PDH_58D_5halves = 645.8 # Blue PDH locking freq for 58D_{5/2}, F'=0   (RIGHT sideband)
+Blue_PDH_68D_5halves = 341.1 # Blue PDH locking freq for 68D_{5/2}, F'=3   (---- sideband)
 Blue_PDH_70D_5halves = 629.26 #632.9 # Blue locking frequency for 70D_{5/2}, F' = 3 (RIGHT sideband, appears as left hand feature)
+Blue_PDH_75D_5halves = 28.3 # Blue locking frequency for 75D_{5/2}, F' = 3 (LEFT sideband)
 Blue_PDH_80D_5halves = 102.0  # 80D_{5/2}, F'=0, RIGHT sideband
-Blue_PDH_80D_5halves = 151  # 80D_{5/2}, F'=3, LEFT sideband
+Blue_PDH_80D_5halves = 152.6  # 80D_{5/2}, F'=3, LEFT sideband
 Blue_PDH_90D_5halves = 465.0  # 90D_{5/2}, F'=3, RIGHT sideband (LEFT....)
 Blue_PDH_98D_5halves = 205.0  # 98D_{5/2}, F'=3, LEFT sideband
 Blue_PDH_100S = 580.7 # Blue PDH locking freq for 100S (left set of closest pairs)
@@ -39,7 +36,7 @@ Blue_PDH_111D_5halves = 127 # 111D_{5/2}, F'=3, RIGHT sideband
 
 
 #######################################
-### Experimental caivity parameters ###
+### Experimental cavity parameters ###
 #######################################
 ### Non planar cavity ###
 Cav_1560_Carrier_00 = 733.8 # 476.2  # LEFT sideband. Lock here to put carrier of 780 on resonance with 00 mode of cavity

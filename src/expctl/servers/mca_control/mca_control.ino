@@ -22,7 +22,7 @@ void set_val(int val) {
   // corresponds to a data bit to be written
   for (int i = 0; i < 6; i++)
   {
-    digitalWrite(DATA, kth_bit(val, i));
+    digitalWrite(DATA, kth_bit(val, 6-i)); // send MSB first
     digitalWrite(CLK, 1);
     digitalWrite(CLK, 0);
   }

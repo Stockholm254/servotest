@@ -7,10 +7,10 @@ import glob
 import os
 import csv
 
-from ..jpac.jload import *
-from ..jpac.jutil import *
-from ..jpac.jfit import jfit
-from ..jpac.jfunc import jfunc
+# from ..jpac.jload import *
+# from ..jpac.jutil import *
+# from ..jpac.jfit import jfit
+# from ..jpac.jfunc import jfunc
 
 
 # Most of this is intended for handling feedback conrol MVs, whose values change based on the results of experimental measuremnets.
@@ -33,6 +33,14 @@ BlueComp_Voltage_Column = 30 # indexed from 0!
 # 	mv_val = smv['Value'][mv_ind][0]
 # 	return mv_val
 
+
+from dataclasses import dataclass
+
+@dataclass
+class Update:
+    observable: str
+    j: int
+    data: np.array
 
 def BlueComp_ExTrim_FF(data_dir, MVs=None, latest=0):
 	# which column of the LUT corresponds to each electric field value?
@@ -159,15 +167,16 @@ def VRS_g_fit(data_dir, MVs=None, pguess=None, latest=0): # NEED TO TEST HOW SLO
 	else:
 		return pout[0][2]
 
-__FBfunctions__ = {
-				'VRS_balance': VRS_balance,
-				'VRS_g': VRS_g,
-				'VRS_g_improved': VRS_g_improved,
-				'VRS_g_fit': VRS_g_fit,
-				'BlueComp_ExTrim_FF': BlueComp_ExTrim_FF,
-				'BlueComp_EyTrim_FF': BlueComp_EyTrim_FF,
-				'BlueComp_EzTrim_FF': BlueComp_EzTrim_FF
-				}
+# __FBfunctions__ = {
+# 				'VRS_balance': VRS_balance,
+# 				'VRS_g': VRS_g,
+# 				'VRS_g_improved': VRS_g_improved,
+# 				'VRS_g_fit': VRS_g_fit,
+# 				'BlueComp_ExTrim_FF': BlueComp_ExTrim_FF,
+# 				'BlueComp_EyTrim_FF': BlueComp_EyTrim_FF,
+# 				'BlueComp_EzTrim_FF': BlueComp_EzTrim_FF
+# 				}
+__FBfunctions__ = {'Cavf0': None, 'EITpkf0': None, 'OPT': None} # TODO implement logic to get Observables from Controller/Cache
 
 def is_float(s):
   try:
@@ -177,7 +186,7 @@ def is_float(s):
       return False
 
 class FBControlMV(LoadSequence.MetaVariable):
-	def __init__(self, name, P=0, I=0, value=0, typeval=1, minval=0, maxval=1, maxinc=.1):
+	def __init__(self, name, P=0, I=0, value=0, typeval=1, minval=0, maxval=1, maxinc=1.0):
 		LoadSequence.MetaVariable.__init__(self, name, tabname=None, value=value, type=typeval, min=minval, max=maxval, inc=maxinc)
 
 		self.P = P
@@ -191,8 +200,9 @@ class FBControlMV(LoadSequence.MetaVariable):
 		self.enabled = False
 		self.FF = False
 
-		self.eval_function = 'VRS_balance' # default
-		self.set_point = 1
+		# self.eval_function = 'Cavf0' # default
+		self.eval_function = 'EITpkf0' if (self.name=='PDH960_freq') else 'Cavf0' # default
+		self.set_point = 0
 
 		if self.min == None:
 			self.min = value
@@ -200,6 +210,7 @@ class FBControlMV(LoadSequence.MetaVariable):
 			self.inc = 0
 
 		self.prev_fit_params = []
+		self.old_values = []
 
 		self.clearGUI()
 
@@ -230,6 +241,7 @@ class FBControlMV(LoadSequence.MetaVariable):
 		self.I_ctrl = wx.TextCtrl(window, wx.ID_ANY, str(self.I), size=(55, -1))
 		self.eval_function_control = wx.Choice(window, wx.ID_ANY, choices=list(__FBfunctions__.keys()), size=(100, -1))
 		self.eval_function_control.SetSelection(list(__FBfunctions__.keys()).index(self.eval_function))
+		# self.eval_function_control.SetSelection(list(__FBfunctions__).index(self.eval_function))
 		self.set_point_ctrl = wx.TextCtrl(window, wx.ID_ANY, str(self.set_point), size=(55, -1))
 		self.latest_eval_disp = wx.StaticText(window, wx.ID_ANY, str(self.latest_eval))
 
@@ -266,40 +278,86 @@ class FBControlMV(LoadSequence.MetaVariable):
 		# frame.Bind(wx.EVT_TEXT, self.updateFromGUI, self.set_point_ctrl)
 
 		
+	#feedbackIteration(socket=self.socket, MVs=self._notify_window.metavariables_fb)
+	def feedbackIteration(self, socket=None, counter=0, MVs=None):
+		if socket is None:
+			print("not connected to FB server!")
+			return
 
-	def feedbackIteration(self, data_dir=None, MVs=None):
 		if self.default_value_ctrl != None: # check that GUI objects have been created
 			# First, needs to get the latest values from the GUI objects (if they are valid)
 			self.updateFromGUI()
 
-			# Then, call the eval function (even if feedback is disabled, as long as there is a data directory)
-			# and calculate error signal
-			if data_dir == None:
-				self.latest_eval = 0
-				self.error_signal = 0
-			else:
-				print((self.eval_function))
-				self.latest_eval = __FBfunctions__.get(self.eval_function)(data_dir, MVs=MVs, latest=self.latest_eval)
-				self.error_signal = self.latest_eval - self.set_point
-			self.error_tot = self.error_tot + self.error_signal
+			print("Getting feedback for observable {}".format(self.eval_function))
 
-			# Update current value	
-			if self.enabled_ctrl.GetValue():
-				if not self.FF_ctrl.GetValue():
-					self.change = self.default_value + self.I*self.error_tot + self.P*self.error_signal - self.value
-					if np.abs(self.change) < self.inc: # if small enough, apply feedback step
-						self.value += self.change
-					else: # otherwise apply maximum step size
-						self.value += np.sign(self.change)*self.inc
+			#try to get the last feedback value
+			obs_name = self.eval_function #'Cavf0'
+			trials = 150
+			for i in range(trials):
+				time.sleep(0.06)
+				# socket.send_pyobj(str(obs_name)) # TODO replace with eval function
+				query = {'OBS': str(obs_name), 'MVname': self.name}
+				socket.send_pyobj(query)
+				answer = socket.recv_pyobj()
+				if answer == 'NOPE':
+					print("Found no data for Observable {}".format(obs_name))
+					continue
+				
+				#print("counter {}, j {}".format(counter, answer['j']))
+				#sync logic
+				if answer['j'] > counter: #the last j we got was higher than our current j, that must be old data!
+					print("the last j we got was higher than our current j, that must be old data")
+					continue 
+				elif answer['j']< counter:
+					# we don't have the newest result yet
+					continue
+				else:
+					# we got the right data! update
+					break
+			
+			if i == trials-1:
+				print("timed out! not updating...")
+				return
+			print("Got feedback value {}".format(answer['data']))	
+			fb_value = float(answer['data'])
+
+			if np.isfinite(fb_value): # got a value, do the feedback
+				self.latest_eval = fb_value #__FBfunctions__.get(self.eval_function)(data_dir, MVs=MVs, latest=self.latest_eval)
+				#self.error_signal = self.latest_eval - self.value
+				#self.error_tot = self.error_tot + self.error_signal
+				self.error_signal = self.latest_eval - self.set_point
+				
+
+				# Update current value	
+				if self.enabled_ctrl.GetValue():
+					if not self.FF_ctrl.GetValue():
+						# for now abuse P as FF gain so we do sign and scaling!
+						if (self.I > 1) and (answer['j']>int(self.I)) and (abs(self.P*self.error_signal)<self.inc): #wait for the first couple shots to bring value there
+							new_value = self.value + self.P*self.error_signal # what we would do in the current step
+							#self.value = self.value + (new_value-self.value)/self.I # exponential smoothing didn't work great
+							self.old_values.append(new_value)
+							vals = self.old_values[-min(int(self.I), len(self.old_values)):]
+							self.value = np.mean(vals)
+							#TODO add small step logic here for self.inc
+						else:
+							#self.value += min(self.P*self.latest_eval, self.inc)
+							if abs(self.P*self.error_signal)>self.inc: #we would change the variable by too much! could become unlocked
+								self.value += np.sign(self.P*self.error_signal)*self.inc
+							else:
+								self.value += self.P*self.error_signal
+						
+					else: # FeedForward
+						self.value=self.latest_eval
 
 					# CHECK FOR INVALID CURRENT VALUES; 
 					if self.value > self.max:
 						self.value=self.max
+						print("Warning: FB MV clipped!")
 					elif self.value < self.min:
 						self.value=self.min
-				else: # FeedForward
-					self.value=self.latest_eval
-
+						print("Warning: FB MV clipped!")
+			else:
+				print("Dind't update!")
 			# Update StaticText Displays
 			self.updateStaticText()
 
@@ -348,8 +406,8 @@ class FBControlMV(LoadSequence.MetaVariable):
 
 	def updateStaticText(self):
 		if self.default_value_ctrl != None: # check that GUI objects have been created
-			self.value_disp.SetLabel(str(self.value))
-			self.latest_eval_disp.SetLabel(str(self.latest_eval))
+			self.value_disp.SetLabel("{:.3f}".format(self.value))
+			self.latest_eval_disp.SetLabel("{:.3f}".format(self.latest_eval))
 
 	def reset(self):
 		if self.default_value_ctrl != None: # check that GUI objects have been created

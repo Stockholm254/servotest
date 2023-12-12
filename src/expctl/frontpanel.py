@@ -56,6 +56,14 @@ from expdatabase.types import RunIdle, RunLooped
 from bson import ObjectId
 import zlib
 
+from dataclasses import dataclass
+
+@dataclass
+class Update:
+    observable: str
+    j: int
+    data: np.array
+
 # Create a logger object.
 logger = logging.getLogger(__name__)
 coloredlogs.install(level='DEBUG')
@@ -90,14 +98,15 @@ SOUND_FOLDER = Path(__file__).parent/"dat/sounds/"
 SOUND_LIST = ['1.wav']
 ICON_FOLDER = Path(__file__).parent/"gui_icons/"
 
+
 class FrontPanel(wx.Frame):
   def __init__(self):
     jGlobals.init() # Initialize global variables
 
     # Front panel GUI
-    wx.Frame.__init__(self, None, wx.ID_ANY, title='SimonLab Control Suite 3', size=(1300, 750)) 
+    wx.Frame.__init__(self, None, wx.ID_ANY, title='SimonLab Control Suite 3', size=(1300, 750))
     self.panel = wx.Panel(self, wx.ID_ANY)
-    # self.window_size = self.GetSize()
+    self.window_size = self.GetSize()
     
     ###################################
     ### IMPORTANT PROGRAM VARIABLES ###
@@ -189,6 +198,12 @@ class FrontPanel(wx.Frame):
     m_plot.SetBitmap(wx.Bitmap(str((ICON_FOLDER/'graph.png'))))
     menu.Append(m_plot)
     self.Bind(wx.EVT_MENU, self.OnPlotSeq, m_plot)
+
+    m_plot_soft = wx.MenuItem(menu, wx.ID_ANY, "&Plot Software Sequences\tAlt-G", "Generate interactive plot of sequence with PyQtGraph.")
+    m_plot_soft.SetBitmap(wx.Bitmap(str((ICON_FOLDER/'graph.png'))))
+    menu.Append(m_plot_soft)
+    self.Bind(wx.EVT_MENU, self.OnPlotSeqSoft, m_plot_soft)
+
     m_selplot = wx.MenuItem(menu, wx.ID_ANY, "&Select Channels to Plot\tAlt-S", "Select channels for the plotting.")
     menu.Append(m_selplot)
     self.Bind(wx.EVT_MENU, self.OnSelectPlot, m_selplot)
@@ -300,10 +315,10 @@ class FrontPanel(wx.Frame):
     ### Construct Title Bar ###
     ###########################
     ## Sizer ##
-    self.sizer_Title = wx.FlexGridSizer(1, 11, 8, 5) # Title sizer
+    self.sizer_Title = wx.FlexGridSizer(1, 12, 8, 5) # Title sizer
     ## Buttons and Icons ##
     # Title and icon
-    bmp = wx.BitmapFromImage(wx.Image(str(ICON_FOLDER/"38740-200.png"), wx.BITMAP_TYPE_ANY).Scale(30, 30, wx.IMAGE_QUALITY_HIGH))
+    bmp = wx.Bitmap(wx.Image(str(ICON_FOLDER/"38740-200.png"), wx.BITMAP_TYPE_ANY).Scale(30, 30, wx.IMAGE_QUALITY_HIGH))
     titleIco1 = wx.StaticBitmap(self.panel, wx.ID_ANY, bmp, size=(30, 30))
     titleIco2 = wx.StaticBitmap(self.panel, wx.ID_ANY, bmp, size=(30, 30))
     title = wx.StaticText(self.panel, wx.ID_ANY, 'Simon Lab Software Suite Front Panel 3')
@@ -311,7 +326,8 @@ class FrontPanel(wx.Frame):
     # Buttons
     self.btn_remote      = wx.Button(self.panel,     wx.ID_ANY, 'Remote')
     self.ping_server     = wx.Button(self.panel,     wx.ID_ANY, 'Ping Servers')
-    self.btn_plot_seq    = wx.Button(self.panel,     wx.ID_ANY, 'Plot Sequences')
+    self.btn_plot_seq    = wx.Button(self.panel,     wx.ID_ANY, 'Plot HW Sequences')
+    self.btn_plot_seq_soft  = wx.Button(self.panel,  wx.ID_ANY, 'Plot SW Sequences')
     self.btn_set_ssv     = wx.Button(self.panel,     wx.ID_ANY, 'Set Steady State Values')
     self.btn_load_file   = wx.Button(self.panel,     wx.ID_ANY, 'Load')
     self.btn_reload_file = wx.Button(self.panel,     wx.ID_ANY, 'Reload')
@@ -323,6 +339,7 @@ class FrontPanel(wx.Frame):
     self.sizer_Title.Add(self.btn_remote,      flag=wx.TOP|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL,  border=5)
     self.sizer_Title.Add(self.ping_server,     flag=wx.TOP|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL,  border=5)
     self.sizer_Title.Add(self.btn_plot_seq,    flag=wx.TOP|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL,  border=5)
+    self.sizer_Title.Add(self.btn_plot_seq_soft, flag=wx.TOP|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL,  border=5)
     self.sizer_Title.Add(titleIco1,            flag=wx.TOP|wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, border=5)
     self.sizer_Title.Add(title,                flag=wx.TOP|wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL,  border=8)
     self.sizer_Title.Add(titleIco2,            flag=wx.TOP|wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL,  border=5)
@@ -342,6 +359,7 @@ class FrontPanel(wx.Frame):
     self.sizer_FeedMain  = wx.FlexGridSizer(1, 5, 3, 10)
     self.sizer_FeedCol   = wx.BoxSizer(wx.VERTICAL) # the main column for feedback MEASUREMENT settings
     self.sizer_NumBetRow = wx.BoxSizer(wx.HORIZONTAL) # the row with both static and control text
+    self.sizer_NumRow = wx.BoxSizer(wx.HORIZONTAL) # the row with both static and control text
     ### Feedback Measurement Settings:
     # Static label text
     self.txt_FeedLabel   = wx.StaticText(self.panel, wx.ID_ANY, 'Feedback Measurement Settings:')
@@ -354,10 +372,14 @@ class FrontPanel(wx.Frame):
     self.btn_CtrlSaveMV        = wx.Button(self.panel, wx.ID_ANY, 'Save FB Ctrl MVs', size=(150,27))
     # Numerical Input
     self.txt_FeedShotsBetLabel = wx.StaticText(self.panel, wx.ID_ANY, 'Shots between feedback: ')
-    self.txtctrl_FeedShotsBet  = wx.TextCtrl(self.panel, wx.ID_ANY, size=(55, -1), value=str(9))
+    self.txtctrl_FeedShotsBet  = wx.TextCtrl(self.panel, wx.ID_ANY, size=(55, -1), value=str(10))
+    self.txt_FeedShotsLabel = wx.StaticText(self.panel, wx.ID_ANY, 'Shots per feedback: ')
+    self.txtctrl_FeedShots  = wx.TextCtrl(self.panel, wx.ID_ANY, size=(55, -1), value=str(10))
     # add txt to row
     self.sizer_NumBetRow.Add(self.txt_FeedShotsBetLabel)
     self.sizer_NumBetRow.Add(self.txtctrl_FeedShotsBet)
+    self.sizer_NumRow.Add(self.txt_FeedShotsLabel)
+    self.sizer_NumRow.Add(self.txtctrl_FeedShots)
     # add to main feedback column
     self.sizer_FeedCol.Add(self.txt_FeedLabel, flag=wx.ALL, border=5)
     self.sizer_FeedCol.Add(self.chkbox_FeedOn, flag=wx.ALL, border=5)
@@ -366,6 +388,8 @@ class FrontPanel(wx.Frame):
     self.sizer_FeedCol.Add(self.btn_CtrlLoadMV, flag=wx.ALL, border=5)
     self.sizer_FeedCol.Add(self.btn_CtrlSaveMV, flag=wx.ALL, border=5)
     self.sizer_FeedCol.Add(self.sizer_NumBetRow, flag=wx.ALL, border=5)
+    self.sizer_FeedCol.Add(self.sizer_NumRow, flag=wx.ALL, border=5)
+
     ## add to FeedMain
     # self.sizer_FeedMain.Insert(5, self.sizer_FeedCol, border=5)
     self.sizer_FeedMain.Add(self.sizer_FeedCol, border=5)
@@ -392,9 +416,9 @@ class FrontPanel(wx.Frame):
     # Settings
     self.txt_loop         = wx.StaticText(self.panel, wx.ID_ANY, 'Loop Settings:')
     self.lbl_j0           = wx.StaticText(self.panel, wx.ID_ANY, 'j0:')
-    self.txtctrl_j0       = wx.TextCtrl(self.panel,   wx.ID_ANY, '1',  size=(60, -1))
+    self.txtctrl_j0       = wx.TextCtrl(self.panel,   wx.ID_ANY, '0',  size=(60, -1))
     self.lbl_j1           = wx.StaticText(self.panel, wx.ID_ANY, 'j1:')
-    self.txtctrl_j1       = wx.TextCtrl(self.panel,   wx.ID_ANY, '10', size=(60, -1))
+    self.txtctrl_j1       = wx.TextCtrl(self.panel,   wx.ID_ANY, '49', size=(60, -1))
     self.txt_prerun       = wx.StaticText(self.panel, wx.ID_ANY, 'Pre runs:')
     self.txtctrl_prerun   = wx.TextCtrl(self.panel,   wx.ID_ANY, '0',  size=(40, -1))
     self.txt_dirname      = wx.StaticText(self.panel, wx.ID_ANY, 'Folder name:')
@@ -402,7 +426,7 @@ class FrontPanel(wx.Frame):
     self.chkbox_rand      = wx.CheckBox(self.panel,   wx.ID_ANY, 'Randomize Order')
     self.chkbox_autobkp   = wx.CheckBox(self.panel,   wx.ID_ANY, 'Auto Backup')
     self.chkbox_autoidle  = wx.CheckBox(self.panel,   wx.ID_ANY, 'Auto Idle When Done')
-    self.chkbox_autoidle.SetValue(True)
+    self.chkbox_autoidle.SetValue(False)
     self.chkbox_autobkp.SetValue(True)
     self.ln_loopsetting   = wx.StaticLine(self.panel, wx.ID_ANY, style=wx.LI_VERTICAL)
     # Loop code
@@ -477,9 +501,9 @@ class FrontPanel(wx.Frame):
     # self.SetSizeHints(900, 620, 1920, 1200) # minW, minH, maxW, maxH
     # self.sizer_top.Fit(self) # Resize window/sizers to fit content
     # layout
-    self.Center()
-    # self.Maximize()
+    # self.Center()
     self.Show()
+    self.Maximize(True)
     
     #############################
     ### DO ALL BUTTON BINDING ###
@@ -497,6 +521,7 @@ class FrontPanel(wx.Frame):
     self.Bind(wx.EVT_BUTTON, self.OnBkpData,         self.btn_bkp_data)
     self.Bind(wx.EVT_BUTTON, self.OnPingServers,     self.ping_server)
     self.Bind(wx.EVT_BUTTON, self.OnPlotSeq,         self.btn_plot_seq)
+    self.Bind(wx.EVT_BUTTON, self.OnPlotSeqSoft,     self.btn_plot_seq_soft)
     self.Bind(wx.EVT_BUTTON, self.OnLoadFBMV,        self.btn_FeedLoadMV)
     self.Bind(wx.EVT_BUTTON, self.ExportFBMV,        self.btn_FeedSaveMV)
     self.Bind(wx.EVT_BUTTON, self.OnLoadCtrlMV,      self.btn_CtrlLoadMV)
@@ -521,6 +546,7 @@ class FrontPanel(wx.Frame):
                     self.btn_remote, 
                     self.ping_server, 
                     self.btn_plot_seq,
+                    self.btn_plot_seq_soft,
                     self.btn_save_loopcode,
                     self.btn_FeedLoadMV,
                     self.btn_FeedSaveMV,
@@ -541,6 +567,8 @@ class FrontPanel(wx.Frame):
 
     ### Reload the Front Panel ###
     self.InitFP()
+    self.Show()
+    self.Maximize(True)
 
   #############################################################################
   #=============================== GUI Methods ===============================#
@@ -551,7 +579,7 @@ class FrontPanel(wx.Frame):
     if os.path.exists(new_path):
 
         #ActSeqNames = [] #catch empty ActSeqNames
-        print('Londing Front Panel Configurations!')
+        print('Loading Front Panel Configurations!')
         # f = open(persist_fname, 'r')
         # for line in f.readlines():
         #   #exec(str(line))
@@ -566,14 +594,14 @@ class FrontPanel(wx.Frame):
         self.script_name = d['script_name']
         ActSeqNames = d['ActSeqNames']
         d.close()
-        print(ActSeqNames)
+        # print(ActSeqNames)
         try:
             self.LoadSeq() # Load last sequence
             self.LoadMV(mv_dir=self.temp_dir, mv_fname=self.temp_MV) # Load MVs
         except:
             pass
         seq_new = []
-        print(ActSeqNames)
+        # print(ActSeqNames)
         # Select active sequence in the manu bar and update the device manager using OnCheckServers()
         for ii, seq in enumerate(self.dm.seq_all): # Loop over all available sequence in the device manager
             if seq.name in ActSeqNames:
@@ -581,7 +609,7 @@ class FrontPanel(wx.Frame):
                 seq_new.append(seq)
             else:
                 self.menuBar.Check(self.m_seq[ii].GetId(), False)
-        print(seq_new) 
+        # print(seq_new) 
         self.dm.SetActiveSeq(seq_new)
         self.OnCheckServers(None)
 
@@ -634,7 +662,7 @@ class FrontPanel(wx.Frame):
     wx.EndBusyCursor()
 
     # GUI layout
-    self.SetSizeHints(-1, -1, -1, -1) # minW, minH, maxW, maxH
+    # self.SetSizeHints(-1, -1, -1, -1) # minW, minH, maxW, maxH
     self.panel.Layout()
     # self.Maximize()
 
@@ -939,7 +967,7 @@ class FrontPanel(wx.Frame):
   def SaveCtrlMVs(self, fdir, fname):
     # If we first clear out all of the GUI information, then we can pickle the Ctrl MVs, save them, and rebuild the GUI
     fpath = Path(fdir) / fname
-    f = open(fpath, 'w')
+    f = open(fpath, 'wb')
 
     for CtrlMV in self.metavariables_controlled:
         CtrlMV.updateFromGUI() # make sure MV values reflect GUI
@@ -954,9 +982,14 @@ class FrontPanel(wx.Frame):
   def LoadCtrlMVs(self, mv_dir='', mv_fname=''):
     mv_path = Path(mv_dir) / mv_fname
     if mv_path.exists():
+        print("Loading CtrlMV file: "+ mv_fname) 
         f = open(mv_path, 'rb')
-        self.metavariables_controlled = pickle.load(f)
-        f.close()
+        try:
+          self.metavariables_controlled = pickle.load(f)
+        except EOFError:
+          print("CtrlMVs empty, this is probably fine")
+        finally:
+          f.close()
         # go through regular MVs; if they now correspond to a FB MV, set checkbox appropriately AND remove measurement MV if necessary
 
         self.UpdatedCtrlMVs() # ensures that regular and FBMVs are consistent with the new control MVs
@@ -1062,7 +1095,7 @@ class FrontPanel(wx.Frame):
     # Update UI
     self.panel.Layout()
     self.Refresh()
-  
+
   # Choose the active sequence
   def OnCheckServers(self, event):
     self.sizer_server.Clear(True) # Clear server status sizers
@@ -1213,6 +1246,27 @@ class FrontPanel(wx.Frame):
         lMVs[metavarname] = loop_vars[metavarname]
     return sMVs, lMVs
     
+  
+  def GenerateFBMVDict(self):
+    # make a dict out of the *Feedback measure* MVs for feedback runs
+    FBmMVs = {} #static MVs
+    for _mv in self.metavariables_fb:
+      # exec(_mv.name+"="+str(_mv.value))
+      # print((_mv.name+"="+str(_mv.value)))
+      FBmMVs[_mv.name] = _mv.value
+
+    return FBmMVs
+
+  def GenerateFBCtrlMVDict(self):
+    # make a dict out of the *Feedback control* (the MVs that are actually modified by the feedback) MVs for feedback runs
+    FBctrlMVs = {} #static MVs
+    for _mv in self.metavariables_controlled:
+      # FBControlMV(MV.name, P=0, I=0, value=MV.value, typeval=MV.type, minval=MV.min, minval=MV.max, maxinc=MV.inc)
+      _mv.updateFromGUI()
+      FBctrlMVs[_mv.name] = {'value': float(_mv.value), 'min': float(_mv.min), 'max': float(_mv.max)}
+
+    return FBctrlMVs
+
   # Save loop code at their current values to a text file
   def ExportLoopedCode(self, event, flag=1):
     folder_name = self.txtctrl_dirname.GetValue()
@@ -1446,9 +1500,33 @@ class FrontPanel(wx.Frame):
     run_doc = RunLooped(name=loop_fname, date=run_time, Nshots=Nshots,
                         staticMVs=sMVs, loopMVs=lMVs, sequence=seq_bin, info=text_info)
     self.savedata_switch = True #bool(self.chkbox_savedata.GetValue())
-    logger.debug("Loopen run with save_switch {}".format(self.savedata_switch))
+    logger.debug("Looped run with save_switch {}".format(self.savedata_switch))
     _run_id = createRun(self.client, run=run_doc, save=self.savedata_switch)
     self.run_id = str(_run_id) #cast BSON Object ID into string
+
+    if self.chkbox_FeedOn.GetValue():
+      # make a second run for just the feedback data, for now store both the run and the data in the IDLE collections so it get's swept up after a while...
+      # steps:
+      # make a special run and run id here
+      # in the worker thread switch out the run id and save switch that is sent to the servers so they save the feedback shots somewhere else... 
+      FeedShotsBet = int(self.txtctrl_FeedShotsBet.GetValue()) # normal shots between feedback
+      FeedShots = int(self.txtctrl_FeedShots.GetValue()) # shots per feedback 
+      NFeedbacks = Nshots//FeedShotsBet #round down?
+      NFbShots = NFeedbacks*FeedShots # total number of feedback shots
+      initMVs = sMVs.copy()
+      initMVs.update({'FbShots': FeedShots, 'FbShotsBet': FeedShotsBet, 'NFbShots': NFbShots, 'NFb': NFeedbacks}) # XXX
+      FBmMVs = self.GenerateFBMVDict() # take the *Feedback measure* MVs here and update static MVs, or it will mess up the analsis!!
+      initMVs.update(FBmMVs)
+
+      FBctrlMVs = self.GenerateFBCtrlMVDict() # get the initial values as well as min/max for every FBctrlMV, for optimization
+      initMVs.update({'FBctrlMVs': FBctrlMVs})
+
+      self.savedata_switch_fb = False
+      run_fb_doc = RunIdle(name=loop_fname+'_fb', date=run_time, initMVs=initMVs, updateMVs={}, sequence=seq_bin, info='', done=False)
+      _run_id_fb = createRun(self.client, run=run_fb_doc, save=self.savedata_switch_fb)
+      logger.debug("created feedback run doc {}".format(_run_id_fb))
+      self.run_id_fb = str(_run_id_fb) #cast BSON Object ID into string
+
 
     # Trigger the worker thread unless it's already busy
     self.statusbar.Error("Loop from "+str(loop_start)+" to "+str(loop_stop))
@@ -1603,7 +1681,17 @@ class FrontPanel(wx.Frame):
             self.metavariables_controlled.remove(FBMV)            
 
     if MV.label.Get3StateValue() == 2: # if it just became a control MV
-        newMV = FBControlMV(MV.name, P=0, I=0, value=MV.value, typeval=MV.type, minval=MV.min, maxval=MV.max, maxinc=MV.inc)
+        specificFBMVkwargs = {
+                                'PDH1560_freq': {'P':0.5,  'I':0, 'maxinc':1.0 },
+                                'PDH960_freq':  {'P':-0.5, 'I':5},
+                            }
+        defaultFBMVkwargs = {'P':0, 'I':0, 'value':MV.value, 'typeval':MV.type, 'minval':round(0.8*float(MV.value), -1), 'maxval':round(1.2*float(MV.value), -1), 'maxinc':MV.inc}  
+        FBMVkwargs = defaultFBMVkwargs
+        FBMVkwargs.update( specificFBMVkwargs[MV.name] if (MV.name in specificFBMVkwargs.keys()) else {})
+        newMV = FBControlMV(MV.name, **FBMVkwargs)
+        # newMV = FBControlMV(MV.name, P=0, I=0, value=MV.value, typeval=MV.type, minval=round(0.8*float(MV.value), -1), maxval=round(1.2*float(MV.value), -1), maxinc=MV.inc) #minval=MV.min, maxval=MV.max,
+        # newMV = FBControlMV(MV.name, P=0, I=0, value=MV.value, typeval=MV.type, minval=MV.min, maxval=MV.max, maxinc=MV.inc)
+        print(MV.value, type(MV.value))
         self.metavariables_controlled.append(newMV)
         print('FB Control MV')
     elif MV.label.Get3StateValue() == 1: # if it just became a feedback measurement MV, make sure it is removed from FB measurement and control    
@@ -1708,6 +1796,27 @@ class FrontPanel(wx.Frame):
     #time.sleep(.5) # wait the code to be executed by the WorkerThread
     #PlotSeq.PlotSeq_SeqValue(self.dm, IntervalTime) # Plot the sequence data
 
+  # Plot the sequence of selected channels. 
+  def OnPlotSeqSoft(self, event):
+    # RUN_FLAG = 0 # Do not run the sequence
+    self.debug_done = 0
+    wx.BeginBusyCursor()
+    IntervalTime = {'times': None}
+    self.worker = WorkerThread(self, loop=5, IntervalerObj=IntervalTime) # Execute the sequence file
+    self.worker.join()
+    try:
+      _IntervalTime = IntervalTime['Intervaler']
+    except KeyError:
+      _IntervalTime = None
+    logger.debug("IntervalTime {}".format(_IntervalTime))
+
+    #PlotSeq.PlotSeq_DeviceValue(self.dm, IntervalTime=_IntervalTime) # Plot the actual device value
+    '''TODO: PLOT SEQUENCE VALUES. FUNCTION IS DONE, ONLY NEED GUI OBJECT'''
+    #time.sleep(.5) # wait the code to be executed by the WorkerThread
+    #PlotSeq.PlotSeq_SeqValue(self.dm, IntervalTime=_IntervalTime) # Plot the sequence data
+    PlotSeq.PlotSeq_SeqValue(SEQUENCES_TO_GRAPH, IntervalTime=_IntervalTime) # Plot the sequence data
+    
+
   # Save current settings before close the program
   def OnClose(self, event):
     # Terminate all thread
@@ -1733,6 +1842,7 @@ class FrontPanel(wx.Frame):
     # f = open(self.temp_dir/self.fp_cfg, 'w')
     # f.write(savetxt)
     # f.close()
+    print('Saving Front Panel Configurations...')
     d = shelve.open(str(self.temp_dir/self.fp_cfg))
     d['dir_seq'] = WindowsPath(self.dir_seq)
     d['fname_seq'] = self.fname_seq

@@ -27,8 +27,9 @@ class KinesisServer(Server):
 				logger.warning('Kinesis stage given multiple settings in same sequence, but only takes the first!!')
 
 			if chan.chanid == 0: # Waveplate angle
-				angle = np.mod(val, 360.0)
-				self.stage.moveToPosition(angle, eps=2)
+				# angle = np.mod(val, 360.0)
+				angle = np.mod(val+180, 360.0) - 180.0
+				self.stage.moveToPosition(angle, eps=5)
 				logger.debug("Waveplate moved successfully")
 			else: # wtf?
 				logger.warning('WARNING: Sequence specified for unsupported channel...')
