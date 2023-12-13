@@ -22,6 +22,7 @@ from expdatabase.types import ShotImage
 from pymongo import MongoClient
 from bson import ObjectId
 import logging
+import zmq
 
 #try:
 #     import PyCapture2
@@ -48,6 +49,7 @@ else:
     DRIVER = 3
 
 
+URL = "*:55555"
 
 IMG_ABS= {0: 'fg', 1: 'bg', 2: 'ref'}
 IMG_FL = {0: 'fg', 1: 'bg'}
@@ -169,7 +171,7 @@ class CameraServer(Server):
             self.device.InitCamera()
             logger.info("Camera initiated.")
         except:
-            logger.exception("Failed to connect the camera!")w
+            logger.exception("Failed to connect the camera!")
 
     def set_ROI(self, roi):
         if len(roi)==4:
@@ -399,11 +401,34 @@ class MainWindow(TemplateBaseClass):
         self.port = port
         self.data = np.zeros((1280, 960))
 
+        self.zmq_socket = None
+        self._init_zmq()
+
         # Create the main window
         self.ui = WindowTemplate()
         self.ui.setupUi(self)
+        
+        self._init_ui()
+
+        self.show()
+
+    def _init_zmq(self):
+        context = zmq.Context()
+        try:
+            self.zmq_socket = context.socket(zmq.PUB)
+            self.zmq_socket.bind(f"tcp://{URL}")
+        except:
+            logger.exception(f"Couldn't bind socket {URL}")
+            self.zmq_socket = None
+        else:
+            logger.info(f"Viewer serving images at {URL}")
+
+    def _get_cams(self):
+        return Camera.ListCameras()
+
+    def _init_ui(self):
         #get cameras
-        self.cams = Camera.ListCameras()
+        self.cams = self._get_cams()
         # Name known cameras
         for n, c in self.cams.items():
             if c['serial'] in CAMERA_SERIALS.keys():
@@ -414,11 +439,8 @@ class MainWindow(TemplateBaseClass):
         self.ui.stopButton.clicked.connect(self.button_stop)
         self.ui.startButton.clicked.connect(self.button_start)
         self.ui.stopButton.setEnabled(False)
-        for el in [self.ui.x0SpinBox, self.ui.x1SpinBox, self.ui.y0SpinBox, self.ui.y1SpinBox]:
-            el.setRange(0,2000)
-            el.valueChanged.connect(self.update_roi_save_from_spinbox)
-        self.ui.checkBox_lockroi.stateChanged.connect(self.update_roi_lock)
-        self.ui.comboBox.currentIndexChanged.connect(self.set_default_save_roi)
+        
+        self._setup_roi_signals()
 
         self.history = deque(maxlen=16)
 
@@ -435,7 +457,13 @@ class MainWindow(TemplateBaseClass):
         self.setup_plot()
         self.set_default_save_roi()
         self.ui.checkBox_saveroi.setChecked(True)
-        self.show()
+
+    def _setup_roi_signals(self):
+        for el in [self.ui.x0SpinBox, self.ui.x1SpinBox, self.ui.y0SpinBox, self.ui.y1SpinBox]:
+            el.setRange(0,2000)
+            el.valueChanged.connect(self.update_roi_save_from_spinbox)
+        self.ui.checkBox_lockroi.stateChanged.connect(self.update_roi_lock)
+        self.ui.comboBox.currentIndexChanged.connect(self.set_default_save_roi)
 
     @pyqtSlot()
     def set_default_save_roi(self):
@@ -587,7 +615,10 @@ class MainWindow(TemplateBaseClass):
 
   
     def _update_plot(self, buffer_item: ImageBufferItem):
-        #
+        # send out images over network, maybe move to worker thread later
+        if self.zmq_socket is not None:
+            self.zmq_socket.send_pyobj(buffer_item)
+
         mode = "UNKWN"
         imgArrays = buffer_item.buffer
         if imgArrays.shape[0]==3:
@@ -845,6 +876,7 @@ def fit1Dgauss(data):
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
     import sys
+
     win = MainWindow(port=60614)
     if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
         QtGui.QApplication.instance().exec_()
