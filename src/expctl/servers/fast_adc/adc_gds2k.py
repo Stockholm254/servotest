@@ -108,7 +108,7 @@ class ADCdso:
 
 
 if __name__=='__main__':
-    dso = ADCdso(address='192.168.1.99:3000')
+    dso = ADCdso(address='10.108.56.14:3000')
     data, meta = dso.get_data(getCH1=True, getCH2=True)
     dso.plot_data(data, meta)
 

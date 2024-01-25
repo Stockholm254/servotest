@@ -111,5 +111,5 @@ if __name__ == '__main__':
     else:
         logger.info("Database connected.")
 
-    server = ADCServer("GDS-2072E_1", 60622, message=message, client=client, address='192.168.1.99:3000')
+    server = ADCServer("GDS-2072E_1", 60622, message=message, client=client, address='10.108.56.14:3000')
     server.main_loop()

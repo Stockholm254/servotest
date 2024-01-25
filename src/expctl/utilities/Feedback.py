@@ -288,7 +288,7 @@ class FBControlMV(LoadSequence.MetaVariable):
 			# First, needs to get the latest values from the GUI objects (if they are valid)
 			self.updateFromGUI()
 
-			print("Getting feedback for observable {}".format(self.eval_function))
+			print("Getting feedback for observable {}, counter={}".format(self.eval_function, counter))
 
 			#try to get the last feedback value
 			obs_name = self.eval_function #'Cavf0'
@@ -299,6 +299,7 @@ class FBControlMV(LoadSequence.MetaVariable):
 				query = {'OBS': str(obs_name), 'MVname': self.name}
 				socket.send_pyobj(query)
 				answer = socket.recv_pyobj()
+				print("got answer {}".format(answer))
 				if answer == 'NOPE':
 					print("Found no data for Observable {}".format(obs_name))
 					continue

@@ -317,6 +317,8 @@ if __name__ == '__main__':
 	#Configure FPGA with bit code
 	logger.info('Loading Bitfile...' + ('success' if dev.ConfigureFPGA(code1)==0 else 'failure'))
 	logger.info('FPGA Clock Frequency: ' + str(FPGAclock) + ' MHz (set in server)')
+	logger.info('FPGA Clock Frequency: ' + str(float(pll.GetOutputFrequency(0))) + ' MHz (read from FPGA)')
+
 
 	dev.ActivateTriggerIn(DDSRESET, 0) #RESET DDS
 	dev.ActivateTriggerIn(RAMWRITERESET, 0) #RESET RAM

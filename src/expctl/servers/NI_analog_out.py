@@ -122,12 +122,33 @@ def RunServer(server, seq, autostart = 1):
 		task.ao_channels.add_ao_voltage_chan('PCI6723/ao0:31')
 		#rate=sample_rate*localMHz ??
 		task.timing.cfg_samp_clk_timing(rate=sample_rate*localMHz, source="OnboardClock", samps_per_chan=samps_per_channel)
-		#task.timing.cfg_samp_clk_timing(rate=10e6, source="RTSI6", samps_per_chan=samps_per_channel)
+		# task.timing.cfg_samp_clk_timing(rate=10e6, source="RTSI6", samps_per_chan=samps_per_channel) # need to set the SampleClock _Timebase_ to 10 MHz, not the sample clock itself!!
 		task.export_signals.export_signal(Signal.SAMPLE_CLOCK, output_terminal="PFI5")
 		#task.timing.samp_clk_src = "RTSI6"
 		#task.timing.samp_clk_rate = 10e6
-		print(task.timing.samp_clk_src)
-		print(task.timing.samp_clk_rate)
+		
+
+		
+
+		task.timing.master_timebase_src = "RTSI7"
+		task.timing.master_timebase_rate = 10000000
+		task.timing.samp_clk_timebase_div = 250
+
+		print('task.timing.master_timebase_src: ', task.timing.master_timebase_src)
+		print('task.timing.samp_clk_timebase_master_timebase_div: ', task.timing.samp_clk_timebase_master_timebase_div)
+		print('task.timing.master_timebase_rate: ', task.timing.master_timebase_rate)
+
+		#Sample clock timebase
+		print('task.timing.samp_clk_timebase_src: ', task.timing.samp_clk_timebase_src)
+		# print('task.timing.samp_clk_timebase_rate: ', task.timing.samp_clk_timebase_rate) # change from 2e7 to 1e7
+		# task.timing.samp_clk_timebase_rate = 10000000
+		print('task.timing.samp_clk_timebase_rate: ', task.timing.samp_clk_timebase_rate)
+		print('task.timing.samp_clk_timebase_div: ', task.timing.samp_clk_timebase_div) # change from 500 to 250
+		print('task.timing.samp_clk_timebase_div: ', task.timing.samp_clk_timebase_div) # change from 500 to 250
+
+		#Sample clock
+		print('task.timing.samp_clk_src: ', task.timing.samp_clk_src)
+		print('task.timing.samp_clk_rate: ', task.timing.samp_clk_rate)
 		
 		task.write(seq_data, auto_start=False)
 		task.wait_until_done(timeout=8.0)

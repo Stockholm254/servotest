@@ -37,8 +37,8 @@ all_sequences = ([
   Sequence("Kinesis Lambda 2",          host=IP_RYDFRIES,    port=PORT_KINESIS_2, max_channels=1 , graph=0),
   Sequence("Kinesis Lambda 4",          host=IP_RYDFRIES,    port=PORT_KINESIS_4, max_channels=1 , graph=0),
   Sequence("Attenuator sequence",       host=IP_RYDFRIES,    port=PORT_ATT,       max_channels=1 , graph=0),
-  Sequence("DMD sequence",              host='192.168.1.31', port=PORT_DMD,       max_channels=10, graph=0),
-  Sequence("SmarAct sequence",          host='192.168.1.31', port=PORT_SMARACT,   max_channels=3 , graph=0)
+  Sequence("DMD sequence",              host=IP_RYDFLURRY, port=PORT_DMD,       max_channels=17, graph=0),
+  Sequence("SmarAct sequence",          host=IP_RYDFLURRY, port=PORT_SMARACT,   max_channels=3 , graph=0)
   ])
 
 digital_seq1, analog_seq1, cam, cam2, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, adc_1, photon_counter, lb_1, lb_2, lb_3, lb_4, ad_1, rfsoc_1, rp_ddds_1, kinesis_2, kinesis_4, atten_1, dmd, smaract = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
@@ -212,12 +212,19 @@ DMD_waist     = dmd.newChannel(0, "DMD waist x",     system='CavPrb', steady_sta
 DMD_defocus   = dmd.newChannel(1, "DMD defocus",     system='CavPrb', steady_state_value=2500, max_value=100000, graph=0)
 DMD_l         = dmd.newChannel(2, "DMD L",           system='CavPrb', steady_state_value=0.0, max_value=100.0, graph=0)
 DMD_p         = dmd.newChannel(3, "DMD P",           system='CavPrb', steady_state_value=0.0, max_value=30.0, graph=0)
-DMD_center_x  = dmd.newChannel(4, "DMD center x",    system='CavPrb', steady_state_value=0, max_value=200, graph=0)
-DMD_center_y  = dmd.newChannel(5, "DMD center y",    system='CavPrb', steady_state_value=0, max_value=200, graph=0)
+DMD_center_x  = dmd.newChannel(4, "DMD center x",    system='CavPrb', steady_state_value=0, max_value=300, graph=0)
+DMD_center_y  = dmd.newChannel(5, "DMD center y",    system='CavPrb', steady_state_value=0, max_value=300, graph=0)
 DMD_tilt_x    = dmd.newChannel(6, "DMD tilt x",      system='CavPrb', steady_state_value=0.0, max_value=15.0, graph=0)
 DMD_tilt_y    = dmd.newChannel(7, "DMD tilt y",      system='CavPrb', steady_state_value=0.0, max_value=15.0, graph=0)
 DMD_phi       = dmd.newChannel(8, "DMD phi",         system='CavPrb', steady_state_value=0.0, max_value=10.0, graph=0)
 DMD_eps_phi   = dmd.newChannel(9, "DMD epsilon phi", system='CavPrb', steady_state_value=0.0, max_value=10.0, graph=0)
+DMD_switch = dmd.newChannel(10, "DMD mode switch",    system='CavPrb', steady_state_value=0, max_value=3, graph=0) # different DMD modes: 0) LG modes 1) abberration scanning beamlets
+DMD_prb_x  = dmd.newChannel(11, "DMD probe x",    system='CavPrb', steady_state_value=0, max_value=300, graph=0)
+DMD_prb_y  = dmd.newChannel(12, "DMD probe y",    system='CavPrb', steady_state_value=0, max_value=300, graph=0)
+DMD_prb_waist  = dmd.newChannel(13, "DMD probe waist",    system='CavPrb', steady_state_value=12, max_value=300, graph=0)
+DMD_prb_phase  = dmd.newChannel(14, "DMD probe phase",    system='CavPrb', steady_state_value=0, max_value=300, graph=0)
+DMD_prb_phasemap  = dmd.newChannel(15, "DMD probe phasemap",    system='CavPrb', steady_state_value=0, max_value=2, graph=0)
+DMD_prb_ampmap  = dmd.newChannel(16, "DMD probe ampmap",    system='CavPrb', steady_state_value=0, max_value=2, graph=0)
 
 # Digital attenuator
 ATT_1 = atten_1.newChannel(0, "Attenuation",  system='Floquet', steady_state_value=0.0, max_value=31.5, graph=0)

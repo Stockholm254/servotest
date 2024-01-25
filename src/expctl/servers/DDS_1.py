@@ -24,12 +24,17 @@ code1 = str(DIR_BITFILE/"DDS_freq_out_ExtCLK.bit")
 logger.info(f"Using bitfile {code1}")
 
 jdebug=0
-FPGAclock = 100.0 #MHz is the default, but we'll get the actual frequency from the FPGA pll itself!
+# FPGAclock = 100.0 #MHz is the default, but we'll get the actual frequency from the FPGA pll itself!
+FPGAclock = 25.0 #MHz is the default, but we'll get the actual frequency from the FPGA pll itself!
+
 #FPGAsn = '12520004R7' #This must match the S/N of the FPGA inside the PDH DDS box. Can find the serial number via the Opal Kelly FrontPanel interface.
 #Development test FPGA board
 FPGAsn = '12520004R7' #This must match the S/N of the FPGA inside the PDH DDS box. Can find the serial number via the Opal Kelly FrontPanel interface.
-FPGA_TMPCLOCKIN = 40.0 #this is the fix for the DDS going nuts from sync errors with FPGA IGNORES PLL
-FPGAclock = FPGA_TMPCLOCKIN
+# FPGAsn =   '1616000EJK' #This must match the S/N of the FPGA inside the PDH DDS box. Can find the serial number via the Opal Kelly FrontPanel interface.
+# FPGAsn =   '1744000K55' #This must match the S/N of the FPGA inside the PDH DDS box. Can find the serial number via the Opal Kelly FrontPanel interface.
+
+# FPGA_TMPCLOCKIN = 40.0 #this is the fix for the DDS going nuts from sync errors with FPGA IGNORES PLL
+# FPGAclock = FPGA_TMPCLOCKIN
 
 def RunServer(server, seq, dev, loadorrun, autostart=1):
 
@@ -319,6 +324,8 @@ if __name__ == '__main__':
 	#Configure FPGA with bit code
 	logger.info('Loading Bitfile...' + ('success' if dev.ConfigureFPGA(code1)==0 else 'failure'))
 	logger.info('FPGA Clock Frequency: ' + str(FPGAclock) + ' MHz (set in server)')
+	logger.info('FPGA Clock Frequency: ' + str(float(pll.GetOutputFrequency(0))) + ' MHz (read from FPGA)')
+
 
 	dev.ActivateTriggerIn(DDSRESET, 0) #RESET DDS
 	dev.ActivateTriggerIn(RAMWRITERESET, 0) #RESET RAM

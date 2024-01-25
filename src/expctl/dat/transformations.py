@@ -20,7 +20,7 @@ def BlueAOMDelay(t):
   return t-1.70
 
 def OPREPAOMDelay(t):
-  return t-1.5
+  return t-1.73
   
 def TopImgAOMDelay(t):
   return t-2.60
@@ -89,13 +89,16 @@ def BiasXScale(V):
   return 16.0*V
 
 def BiasXGauss(V):
-  return 16.0*(V/7.62-0.0445)
+  # return 16.0*(V/7.62-0.0445)
+  return 16.0*((V+0.01)/7.62)
 
 def BiasYGauss(V):
-  return V/0.66-0.0311
+  # return V/0.66-0.0311
+  return (V+0.08)/0.66
 
 def BiasZGauss(V):
-  return V/1.24+0.2989
+  # return V/1.24+0.2989
+  return (V+0.15)/1.24
 
 def DigitalNot(TTL):
   if TTL < 0.5:

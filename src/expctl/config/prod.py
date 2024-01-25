@@ -21,15 +21,25 @@ FNAME_TEMP_MV = 'temp_MV.txt' # File name for temporary mvs
 ## TCP/IP Information for the Lab ##
 ####################################
 ## IP address
-IP_RYDBURGER = '192.168.1.105' # Experimental control computer (control room)
-IP_RYDFRIES  = '192.168.1.106' # Data collection computer (laser room top racks)
-IP_RYDCOKES  = '192.168.1.107' # Laptop (mobile, usually in the vacuum room cart)
+IP_RYDBURGER = '10.108.56.6' # Experimental control computer (control room)
+IP_RYDFRIES  = '10.108.56.4' # Data collection computer (laser room top racks)
 IP_LABSERVER = '192.168.1.101' # Simonlab data backup server (lab office behind the sofa)
-IP_RYDNUGGET = '192.168.1.120' # New rydberg polariton experiment control computer (control room)
+IP_RYDNUGGET = '10.108.56.5' # New rydberg polariton experiment control computer (control room)
 IP_RPTR = '192.168.1.12'
-IP_RFSOC_1 = '192.168.1.160'
+IP_RFSOC_1 = '10.108.56.8'
 IP_RYDSHAKE = '192.168.1.109'
-IP_RPCOUNTER = '192.168.1.125'
+IP_RPCOUNTER = 'simonlab-multimode-rpcounter0.stanford.edu'
+IP_RYDFLURRY = '10.108.56.11' # Laptop controlling DMD and SmarAct
+
+# IP_RYDBURGER = '192.168.1.105' # Experimental control computer (control room)
+# IP_RYDFRIES  = '192.168.1.106' # Data collection computer (laser room top racks)
+# IP_RYDCOKES  = '192.168.1.107' # Laptop (mobile, usually in the vacuum room cart)
+# IP_LABSERVER = '192.168.1.101' # Simonlab data backup server (lab office behind the sofa)
+# IP_RYDNUGGET = '192.168.1.120' # New rydberg polariton experiment control computer (control room)
+# IP_RPTR = '192.168.1.12'
+# IP_RFSOC_1 = '192.168.1.160'
+# IP_RYDSHAKE = '192.168.1.109'
+# IP_RPCOUNTER = '192.168.1.125'
 
 # RYDBURGER PORTS
 PORT_REMOTECTRL = 60000 # Remote front panel control (disabled)

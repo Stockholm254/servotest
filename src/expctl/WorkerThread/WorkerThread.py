@@ -140,7 +140,8 @@ class WorkerThread(Thread):
       self.context = zmq.Context()
       try:
         self.socket = self.context.socket(zmq.REQ)
-        self.socket.connect ("tcp://192.168.1.23:7776")
+        # self.socket.connect ("tcp://192.168.1.23:7776")
+        self.socket.connect ("tcp://simonlab-jupyterserver.stanford.edu:7776")
       except:
         print("Couldn't connect to FB server!")
       else:
