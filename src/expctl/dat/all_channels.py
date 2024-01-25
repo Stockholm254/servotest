@@ -242,25 +242,6 @@ SMARACT_vz = smaract.newChannel(2, "SmarAct Vz", system='CavPrb', steady_state_v
 # The value of these channels will be assigned automatically later.
 # The properties of the channel (id, name, steady_state_value, max_value, and graph) should be set in this section
 
-# THERE IS A DIGITAL SLAVE CHANNEL, DEFINED ABOVE SO NO ONE THINGS THE CHANNEL IS AVAILABLE
-# Chemeleon camera
-CAMERA = cam.newChannel(1, "Camera", steady_state_value=1, max_value=1, graph=0, ctype='Slave', master=Cam_trig)
-# Photon counter
-PhotonCounter = photon_counter.newChannel(0, "Photon Counter", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
-# Photon timers
-PT_save_2 = photon_timer_2.newChannel(0, "Photon Timer 2 Save", system='CavPrb', steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=PT_save)
-PT_save_3 = photon_timer_3.newChannel(0, "Photon Timer 3 Save", system='CavPrb', steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=PT_save)
-PhotonTimer = photon_timer.newChannel(1, "Photon Timer", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
-PhotonTimer2 =photon_timer_2.newChannel(1, "Photon Timer 2", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
-PhotonTimer3 =photon_timer_3.newChannel(1, "Photon Timer 3", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
-# Pass Img_horz_pwr also to the camera server for computing the atom number
-Camera_Img_horz_pwr =cam.newChannel(3, "Camera Img_horz_pwr", system='IMG', steady_state_value=5.0, max_value=5.0, graph=0, ctype='Slave', master=MOT0_pwr)
-
-#Camera 2
-Camera2_gain = cam2.newChannel(0, "Camera gain", system='IMG', steady_state_value=24.0, max_value=24.0, graph=0, ctype='Slave', master=Camera_gain)
-Camera2_save = cam2.newChannel(2, "Camera save", system='IMG', steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Camera_save)
-CAMERA2 = cam2.newChannel(1, "Camera", steady_state_value=1, max_value=1, graph=0, ctype='Slave', master=Cam_trig)
-Camera_Img_horz_pwr = cam2.newChannel(3, "Camera Img_horz_pwr", system='IMG', steady_state_value=5.0, max_value=5.0, graph=0, ctype='Slave', master=MOT0_pwr)
 
 ###########################################################################################################
 ###   AUTO DETECT SEQUENCE AND CHANNEL TYPE AND CREATE HELPER LIST THAT IS USEFUL FOR THE FRONT PANEL   ###

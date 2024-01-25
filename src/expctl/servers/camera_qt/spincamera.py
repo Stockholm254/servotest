@@ -73,16 +73,24 @@ class GP_camera:
 
 	def InitCamera(self):
 		#Connect to the camera
-		self.c = Camera(index=self.camera_id) # Acquire Camera
+		# Get list of connected cameras for GUI
+		global _SYSTEM
+			
+		try:
+			self.c = Camera(index=self.camera_id) # Acquire Camera
+		except:
+			_SYSTEM = PySpin.System.GetInstance()
+			self.c = Camera(index=self.camera_id) # Acquire Camera
+
 		self.c.init() # Initialize camera
 
 		# #Set camera properties
 		self.c.OffsetX = 0
 		self.c.OffsetY = 0
 
-		self.c.Width = self.c.SensorWidth
-		self.c.Height = self.c.SensorHeight
-
+		# self.c.Width = self.c.SensorWidth//2
+		# self.c.Height = self.c.SensorHeight//2
+		logger.debug(f"Camera width: {self.c.Width}, height: {self.c.Height}")
 
 		# To control the exposure settings, we need to turn off auto
 		self.c.GainAuto = 'Off'
@@ -100,7 +108,17 @@ class GP_camera:
 		self.c.TriggerSource = 'Line2'
 		self.c.TriggerMode = 'On'
 
-		self.c.start() # Start recording
+
+		self.c.start()
+
+		# for i in range(2):
+		# 	try:
+		# 		self.c.get_image(wait=False)
+		# 	except:
+		# 		logger.exception("trying to empty out image buffer of camera...")
+
+		#self.c.stop()
+
 		
 	def GrabImages(self, shutter=0, gain=24., number=0, runname="", foldername=""):
 		self.shutter_time = shutter
@@ -136,7 +154,7 @@ class GP_camera:
 		for i, img in enumerate(img_name):
 			logger.debug(f"Grabbing image {i} of {self.num_of_images}")
 			try:
-				image = self.c.get_array(wait=1000)
+				image = self.c.get_array(wait=7000)
 			except:
 				logger.exception('Error retrieving buffer for image {} of {}'.format(i, len(img_name)))
 				err=True
@@ -149,22 +167,30 @@ class GP_camera:
 		return (not err), imgbuffer, images_file
 							
 	def Disconnect(self):
-		self.c.close()
-		global _SYSTEM
-		_SYSTEM.ReleaseInstance()
-		logger.info("Disconnected the camera.")
+		try:
+			self.c.close()
+			global _SYSTEM
+			#_SYSTEM.ReleaseInstance()
+			logger.info("Disconnected the camera.")
+		except AttributeError:
+			logger.info("Camera already disconnected...")
 
 	def __del__(self):
-		self.c.close()
-		global _SYSTEM
-		_SYSTEM.ReleaseInstance()
-		logger.info("Deleted the camera.")
-
+		try:
+			self.c.close()
+			global _SYSTEM
+			#_SYSTEM.ReleaseInstance()
+			logger.info("Delete the camera.")
+		except AttributeError:
+			logger.info("Camera already deleted...")
 	def __exit__(self, type, value, traceback):
-		self.c.close()
-		global _SYSTEM
-		_SYSTEM.ReleaseInstance()
-		logger.info("Closed the camera.")
+		try:
+			self.c.close()
+			global _SYSTEM
+			#_SYSTEM.ReleaseInstance()
+			logger.info("Exit the camera.")
+		except AttributeError:
+			logger.info("Camera already exited...")
 
 class Mock_GP_camera:
 	def __init__(self, BIT12=False, camera_id=0):

@@ -117,6 +117,7 @@ class GP_camera:
 		trigger_mode.mode = self.trigger_mode # 0 for programmed shutter time, 1 for bulb trigger
 		trigger_mode.parameter = 0
 		trigger_mode.source = int(self.trigger_port) #0 #External trigger #7     # Using software trigger
+		trigger_mode.polarity = 0 # Polarity trigger low
 		self.c.setTriggerMode(trigger_mode)
 		self.c.setConfiguration(grabTimeout = 3000)
 		self.c.startCapture()  
@@ -211,6 +212,23 @@ class GP_camera:
 		if not os.path.exists(log_dir):
 			os.makedirs(log_dir)
 		
+	def Disconnect(self):
+		self.c.disconnect()
+		logger.info("Disconnected the camera.")
+
+
+class Mock_GP_camera:
+	def __init__(self, BIT12=False, camera_id=0):
+		#self.get_c = flycapture2.Context()
+		self.shutter_time = 0
+		self.num_of_images = 0
+		self.run_name = ""
+		self.folder_name = ""
+		self.setDate()     
+		self.BIT12 = BIT12
+		self.camera_id=camera_id
+
+
 	def setDate(self):
 		self.run_time = datetime.datetime.now()
 		self.date_dir = self.run_time.strftime("%Y\\%m\\%d\\")

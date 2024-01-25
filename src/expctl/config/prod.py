@@ -8,18 +8,18 @@ from pathlib import Path
 DIR_SEQ  = Path(__file__).parent.parent/"usr/sequences" # defaulst sequences files
 DIR_MV   = Path(__file__).parent.parent/"usr/snippets" # default MV files
 DIR_TEMP = Path(__file__).parent.parent/"temp" # front panel temperary file directory
+DIR_DATA = Path(__file__).parent.parent.parent.parent/"TestOutput/Data/" # experiment data
+DIR_LOG  = Path(__file__).parent.parent.parent.parent/"TestOutput/Logs/" # experiment run log
+DIR_REM  = Path(__file__).parent.parent/"usr/Remote"  #Path("./usr/Remote") # Remote uploaded file
 
-DIR_DATA = Path("E:/Data")
-DIR_LOG = Path("E:/Log/FrontPanel")
-# DIR_INFO = r"C:/Users/Simonlab/Documents/Info"   # experiment info
-DIR_REM  = Path(__file__).parent.parent/"usr/Remote" # Remote uploaded file
-
+# FNAME_SSV = r'/temp_MV.txt'
 FNAME_SSV     = 'SetSSV.py'  # Set steady state value sequence
 FNAME_TEMP_MV = 'temp_MV.txt' # File name for temporary mvs
 
 ####################################
 ## TCP/IP Information for the Lab ##
 ####################################
+### REDICRECT TO LOCAL PC FOR TESTING
 ## IP address
 IP_RYDBURGER = '10.108.56.6' # Experimental control computer (control room)
 IP_RYDFRIES  = '10.108.56.4' # Data collection computer (laser room top racks)

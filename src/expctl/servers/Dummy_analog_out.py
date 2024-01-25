@@ -100,9 +100,9 @@ def RunServer(seq, autostart = 1):
 		 per channel for one channel, or 45 kS/s per channel for 32 channels '''
 	sample_rate = 4.0/100  # number of samples per microsecond (clock speed in MHz) # use 40kS/s to avoid timing offset (DO NOT USE 45kS/s!!!)
 	samps_per_channel = int(math.ceil(sample_rate * seq_duration) + 1) # MHz * us (+ 1 for the steady_state_value)
-	logger.debug("samps rate: ", sample_rate*localMHz)
+	logger.debug("samps rate: {}".format(sample_rate*localMHz))
 	buffer_size = samps_per_channel # number of samples
-	logger.debug("samples per channel: ",samps_per_channel)
+	logger.debug("samples per channel: {}".format(samps_per_channel))
 	seq_data = ParseData(seq, samps_per_channel)
 	time.sleep(0.03)
 	#server.task_id += 1
