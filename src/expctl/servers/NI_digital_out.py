@@ -151,8 +151,17 @@ def RunServer(server, seq, autostart = 1):
 			'PCI6537/line0:31',
 			line_grouping=LineGrouping.CHAN_FOR_ALL_LINES)
 		task.timing.cfg_samp_clk_timing(rate=sample_rate*localMHz, source="RTSI7", samps_per_chan=samps_per_channel)
-		task.export_signals.export_signal(Signal.START_TRIGGER, output_terminal="PFI4")
-		task.write(seq_data, auto_start=True)
+		if autostart==1:
+			task.export_signals.export_signal(Signal.START_TRIGGER, output_terminal="PFI4")
+			task.write(seq_data, auto_start=True)
+		else:
+			task.write(seq_data, auto_start=False)
+			task.wait_until_done(timeout=8.0)
+			logger.debug("Task done writing data")
+			task.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source="PFI4")
+			task.start()
+			logger.info("Digital out waiting for trigger on PFI4")
+			server.send_msg(server.ReplyHeader() + 'Sequence has been queued... Trigger it whenever!')
 		#task.start()
 		task.wait_until_done(timeout=10.0)
 		logger.debug(f"Task {task} finished!")	
@@ -167,11 +176,18 @@ class NIDigitalServer(Server):
 		super().__init__(name, port, message)
 		self.task_id = 0
 
-	def queue(self):
-		return RunServer(self, self.seq, autostart=0)
+	# def queue(self):
+	# 	return RunServer(self, self.seq, autostart=0)
+	def cmd_queue(self):
+		if self.seq is None:
+			logger.error('QUEUE failed. Sequence has not been imported!')
+			#self.send_msg(self.ReplyHeader() + 'QUEUE failed. Sequence has not been imported!')
+		else:
+			ret = RunServer(self, self.seq, autostart=0)
+			logger.debug(f'Successfully ran sequence ({ret} seconds)')
 
 	def run(self):
-		return RunServer(self, self.seq)
+		return RunServer(self, self.seq, autostart=0) #remove if you want to run this as the master
 
 	def plotdata(self):
 		return DataForPlot(self.seq)

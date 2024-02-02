@@ -15,7 +15,7 @@ from . import transformations as tran # Channel value transformation function
 #=======================================Sequence Definitions=========================================
 #FIRST DECLARE ALL SEQUENCES into the all_sequences array, and then give them names for easier assignment!
 all_sequences = ([
-  Sequence("Digital sequence",          host=IP_RYDNUGGET,   port=PORT_DIGITAL,   max_channels=32, graph=1, seq_type="MASTER"),  
+  Sequence("Digital sequence",          host=IP_RYDNUGGET,   port=PORT_DIGITAL,   max_channels=32, graph=1),   #, seq_type="MASTER"
   Sequence("Analog sequence",           host=IP_RYDNUGGET,   port=PORT_ANALOG,    max_channels=32, graph=1),
   Sequence("Camera sequence",           host=IP_RYDFRIES,    port=PORT_CAMERA,    max_channels=4 , graph=0),
   Sequence("Camera 2 sequence",         host=IP_RYDFRIES,    port=PORT_CAMERA2,   max_channels=4 , graph=0),
@@ -38,10 +38,11 @@ all_sequences = ([
   Sequence("Kinesis Lambda 4",          host=IP_RYDFRIES,    port=PORT_KINESIS_4, max_channels=1 , graph=0),
   Sequence("Attenuator sequence",       host=IP_RYDFRIES,    port=PORT_ATT,       max_channels=1 , graph=0),
   Sequence("DMD sequence",              host=IP_RYDFLURRY, port=PORT_DMD,       max_channels=17, graph=0),
-  Sequence("SmarAct sequence",          host=IP_RYDFLURRY, port=PORT_SMARACT,   max_channels=3 , graph=0)
+  Sequence("SmarAct sequence",          host=IP_RYDFLURRY, port=PORT_SMARACT,   max_channels=3 , graph=0),
+  Sequence("rp DOG 1",          host='simonlab-multimode-rpdog-1.stanford.edu',   port=PORT_DIGITAL,   max_channels=15, graph=0, seq_type="MASTER") #, seq_type="MASTER"
   ])
 
-digital_seq1, analog_seq1, cam, cam2, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, adc_1, photon_counter, lb_1, lb_2, lb_3, lb_4, ad_1, rfsoc_1, rp_ddds_1, kinesis_2, kinesis_4, atten_1, dmd, smaract = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
+digital_seq1, analog_seq1, cam, cam2, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, adc_1, photon_counter, lb_1, lb_2, lb_3, lb_4, ad_1, rfsoc_1, rp_ddds_1, kinesis_2, kinesis_4, atten_1, dmd, smaract, rpdog_1 = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!
 
 #=======================================Channel Definitions=========================================
 # NEXT ADD ALL OF THE CHANNELS TO THEM! ##Note: the name in quotes must have 1 < length < 31
@@ -235,6 +236,9 @@ SMARACT_vx = smaract.newChannel(0, "SmarAct Vx", system='CavPrb', steady_state_v
 SMARACT_vy = smaract.newChannel(1, "SmarAct Vy", system='CavPrb', steady_state_value=0, max_value=100.0, graph=0)
 SMARACT_vz = smaract.newChannel(2, "SmarAct Vz", system='CavPrb', steady_state_value=0, max_value=100.0, graph=0)
 
+rp_trig = rpdog_1.newChannel(0, "Line Trigger",      system='Debug',   steady_state_value=0,   max_value=1, graph=1)
+
+
 #=====================================End Channel Definitions=======================================
 
 #====================================Slave Channel Definitions======================================
@@ -242,6 +246,25 @@ SMARACT_vz = smaract.newChannel(2, "SmarAct Vz", system='CavPrb', steady_state_v
 # The value of these channels will be assigned automatically later.
 # The properties of the channel (id, name, steady_state_value, max_value, and graph) should be set in this section
 
+# THERE IS A DIGITAL SLAVE CHANNEL, DEFINED ABOVE SO NO ONE THINGS THE CHANNEL IS AVAILABLE
+# Chemeleon camera
+CAMERA = cam.newChannel(1, "Camera", steady_state_value=1, max_value=1, graph=0, ctype='Slave', master=Cam_trig)
+# Photon counter
+PhotonCounter = photon_counter.newChannel(0, "Photon Counter", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
+# Photon timers
+PT_save_2 = photon_timer_2.newChannel(0, "Photon Timer 2 Save", system='CavPrb', steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=PT_save)
+PT_save_3 = photon_timer_3.newChannel(0, "Photon Timer 3 Save", system='CavPrb', steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=PT_save)
+PhotonTimer = photon_timer.newChannel(1, "Photon Timer", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
+PhotonTimer2 =photon_timer_2.newChannel(1, "Photon Timer 2", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
+PhotonTimer3 =photon_timer_3.newChannel(1, "Photon Timer 3", steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Scope_trig)
+# Pass Img_horz_pwr also to the camera server for computing the atom number
+Camera_Img_horz_pwr =cam.newChannel(3, "Camera Img_horz_pwr", system='IMG', steady_state_value=5.0, max_value=5.0, graph=0, ctype='Slave', master=MOT0_pwr)
+
+#Camera 2
+Camera2_gain = cam2.newChannel(0, "Camera gain", system='IMG', steady_state_value=24.0, max_value=24.0, graph=0, ctype='Slave', master=Camera_gain)
+Camera2_save = cam2.newChannel(2, "Camera save", system='IMG', steady_state_value=0, max_value=1, graph=0, ctype='Slave', master=Camera_save)
+CAMERA2 = cam2.newChannel(1, "Camera", steady_state_value=1, max_value=1, graph=0, ctype='Slave', master=Cam_trig)
+Camera_Img_horz_pwr = cam2.newChannel(3, "Camera Img_horz_pwr", system='IMG', steady_state_value=5.0, max_value=5.0, graph=0, ctype='Slave', master=MOT0_pwr)
 
 ###########################################################################################################
 ###   AUTO DETECT SEQUENCE AND CHANNEL TYPE AND CREATE HELPER LIST THAT IS USEFUL FOR THE FRONT PANEL   ###

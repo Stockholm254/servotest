@@ -7,13 +7,12 @@ Ash
 from pynq import Overlay
 import xrfclk
 import numpy as np
-#from pynq import Xlnk
-from pynq import allocate
+from pynq import Xlnk
 import xrfdc
 DDS_CLK = 409.6 #MHz #This is the clock of the DDS. Each DDS generates 16 samples per this clock.
 #pynq needs this number specifically to start the clock.
 
-CAL_DDS_CLK = 409.6 #025 #The actual calibrated clock. Calibrate with an accurate spectrum analyzer .
+CAL_DDS_CLK = 409.6025 #The actual calibrated clock. Calibrate with an accurate spectrum analyzer .
 #Actually I am not sure where the error comes from, The PLLs on ZCU111 board or those on DAC tiles.
 
 SEQUENCER_CLK = CAL_DDS_CLK/2 #This is the clock for sequencer. This clock is hardwired on the FPGA to be DDS_CLK/2
@@ -32,8 +31,7 @@ def setLastBit(N,x):
 def getFTW(freq):
 	#freq in MHz from Seq!
 	#convert into Hz
-	#return np.int64(((1e6*freq)/(10**6*SAMPLE_CLK)*(2**64)))
-	return np.int64((freq/(SAMPLE_CLK)*(2**64)))
+	return np.int64(((1e6*freq)/(10**6*SAMPLE_CLK)*(2**64)))
 
 def getCycles(t):
 	#t in us
@@ -45,7 +43,7 @@ def ConvertTupletoCountsandFTWs(tuplein): #converts ramp tuple (T0,f0,T1,f1) in 
 def ConvertSeqtoCountsandFTWs(seqin): #converts full sequence from microseconds and Hz to counts and FTWs
 	seqout=[]
 	for i in range(len(seqin)):
-	  seqout.append(ConvertTupletoCountsandFTWs(seqin[i]))
+		seqout.append(ConvertTupletoCountsandFTWs(seqin[i]))
 	return seqout
 		
 	
@@ -57,6 +55,9 @@ class ddsmanager: #class to manage a dds channel.
 	fselect_add = 0x18 #DO NOT TOUCH this register
 	debug_add = 0x20 #Read only
 	done_add = 0x28 #Read Only
+
+	#output mode register
+	output_mode_add = 0x10
 	
 	#What is written to the config register to make sequencer do different stuff.
 	CASE_RESET = 0 #Reset all counters, but keep last output
@@ -66,6 +67,11 @@ class ddsmanager: #class to manage a dds channel.
 	CASE_START = 5 #Ready to go based on triggers
 	CASE_RESET_DONE = 6 #Reset done register
 	CASE_KILL = 10 #Kill all output.
+
+
+
+
+
 	
 	#I am going to use self to reference class variables, so that they are overridable for individual instances
 	def __init__(self, streamswitch, ss_add, ddscore, dma):
@@ -119,8 +125,16 @@ class ddsmanager: #class to manage a dds channel.
 	#left off when started again using start().
 		self.sequencer.write(self.config_add,self.CASE_KILL)
 
+	def setOutputMode(self,mode):
+			#Output mode cases for the DDS
+			# CASE_COS = 0
+			# CASE_SIN = 1
+			# CASE_SERR = 2
+			# CASE_NSERR = 3
+		self.dds.write(self.output_mode_add,mode)
+
 class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager itself.
-	#xlnk=Xlnk()
+	xlnk=Xlnk()
 	
 	#Trigger manager addresses
 	
@@ -154,8 +168,7 @@ class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager
 		
 	def startClocks(self):
 		print("Starting RFSOC clocks...\n")
-		# xrfclk.set_all_ref_clks(DDS_CLK)
-		xrfclk.set_ref_clks(lmk_freq=122.88, lmx_freq=409.6)
+		xrfclk.set_all_ref_clks(DDS_CLK)
 		print("Clocks Started\n")
 	
 	def configureTriggerManager(self, config = 0b1011111111, pulselength = 50000000):
@@ -171,12 +184,9 @@ class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager
 	def writeData(self,channel, seqin, trigger_bits, phase_reset_bits):
 		
 		N_ramps = len(seqin)
-		# freqsbuffer = self.xlnk.cma_array(shape=(N_ramps,), dtype=np.int64)
-		# cyclesbuffer = self.xlnk.cma_array(shape=(N_ramps,), dtype=np.int64)
-		# dfreqsbuffer = self.xlnk.cma_array(shape=(N_ramps,), dtype=np.int64)
-		freqsbuffer = allocate(shape=(N_ramps,), dtype=np.int64)
-		cyclesbuffer = allocate(shape=(N_ramps,), dtype=np.int64)
-		dfreqsbuffer = allocate(shape=(N_ramps,), dtype=np.int64)
+		freqsbuffer = self.xlnk.cma_array(shape=(N_ramps,), dtype=np.int64)
+		cyclesbuffer = self.xlnk.cma_array(shape=(N_ramps,), dtype=np.int64)
+		dfreqsbuffer = self.xlnk.cma_array(shape=(N_ramps,), dtype=np.int64)
 		
 		seqout = []
 		for i in range(0,N_ramps):
@@ -209,12 +219,9 @@ class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager
 	#tone because the sequencer will just keep repeating that ramp. This is only true if phase reset bit is 0.
 	#Otherwise, the sequencer will reset the phase at the beginning of the ramp and you get zero.
 		
-		# freqsbuffer = self.xlnk.cma_array(shape=(1,), dtype=np.int64)
-		# cyclesbuffer = self.xlnk.cma_array(shape=(1,), dtype=np.int64)
-		# dfreqsbuffer = self.xlnk.cma_array(shape=(1,), dtype=np.int64)
-		freqsbuffer = allocate(shape=(1,), dtype=np.int64)
-		cyclesbuffer = allocate(shape=(1,), dtype=np.int64)
-		dfreqsbuffer = allocate(shape=(1,), dtype=np.int64)
+		freqsbuffer = self.xlnk.cma_array(shape=(1,), dtype=np.int64)
+		cyclesbuffer = self.xlnk.cma_array(shape=(1,), dtype=np.int64)
+		dfreqsbuffer = self.xlnk.cma_array(shape=(1,), dtype=np.int64)
 		
 		FTW = getFTW(freq)
 		freqsbuffer[0]=setLastBit(FTW,0)
@@ -231,19 +238,23 @@ class rfdriver: #This is the main driver. You shouldn't need to touch ddsmanager
 		
 	def resetDoneRegister(self,channel):
 		self.ddss[channel].resetDoneRegister()
-
+	   
 	def isSequenceDone(self,channel_list):
 		isdone = 1
+		
 		#check if all channels are done.
 		for i in channel_list:
 			isdone = isdone and self.ddss[i].rampsFinished()
 		
 		return isdone
 	
-	def setNyquistZone(self, channel, zone=1):
+	def setNyquistZone(self, channel, zone = 1):
 		block = self.rf.dac_tiles[channel//4].blocks[channel%4]
 		assert zone < 3	
-		block.NyquistZone = int(zone)
+		block.NyquistZone =  int(zone)
+
+	def setOutputMode(self,channel,mode=0):
+		self.ddss[channel].setOutputMode(mode)
 	
 		
 		

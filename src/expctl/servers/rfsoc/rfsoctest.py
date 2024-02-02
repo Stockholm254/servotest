@@ -11,7 +11,7 @@ def handler(signal_received, frame):
 
 #bitfile_name = '/home/xilinx/ash/ddsfinal/ddsfinal10k_tm_3.bit'
 DIR_BITFILE = Path(__file__).parent
-bitfile_path = str(DIR_BITFILE/"ddsfinal10k_tm_4.bit")
+bitfile_path = str(DIR_BITFILE/"ddsfinal10k_serrodyne.bit")
 print(bitfile_path)
 
 rf = rfdriver(bitfile_path, False)
@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     signal(SIGINT, handler)
     #active_channels = [0,1,2,3,4,5,6,7]
-    active_channels = [0,5,7]
+    active_channels = [2,3]
     CAL_DDS_CLK = 409.6025 #The actual calibrated clock. Calibrate with an accurate spectrum analyzer .
     #Actually I am not sure where the error comes from, The PLLs on ZCU111 board or those on DAC tiles.
 
@@ -33,13 +33,14 @@ if __name__ == "__main__":
     # seq = [[0, 1e9, 5e6, 3e9],[5e6, 3e9, 10e6, 1e9]] #high freq
     #seq = [[0, 300e6, 5e6, 2.5e9],[5e6, 2.5e9, 10e6, 300e6]] #low freq
     #seq = [[0, 1253.6e6, 5e6, 1553.6e6],[5e6, 953.6e6, 10e6, 1253.6e6]]
-    seq = [[0, 300e6, 2e6, 2.2e9],[2e6, 2.2e9, 4e6, 2.8e9],[4e6, 2.8e9, 6e6, 300e6]]
+    seq = [[0, 10, 2e6, 80],[2e6,80, 4e6, 100],[4e6, 100, 6e6, 10]]
     convertedseq = ConvertSeqtoCountsandFTWs(seq)
-    #print(seq)
+    print(seq)
     triggers = [1,1,1]
     phase_resets = [0,0,0]
 
-    rf.configureTriggerManager(config=0b1011111111)
+    rf.configureTriggerManager(config=0b0111111111)
+    # rf.setOutputMode(channel=0,mode=2)
     #rf.setNyquistZone(channel = 0, zone = 2)
     for i, chan in enumerate(active_channels):
         #seq = seqs[i]
