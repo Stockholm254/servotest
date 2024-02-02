@@ -53,9 +53,11 @@ def RunServer(seq, rf, autostart=1, UPDATE_RAM=1):
 		for chan in seq.allChannels:
 			if chan == None:
 				continue
+
 			chan.Print()
 			chanid = chan.chanid
-			if chan.chanid > 7:
+			
+			if chan.chanid > 15:
 				logger.info(f"More channels than {numDDS}, ignoring...\n")
 				continue
 
@@ -64,6 +66,24 @@ def RunServer(seq, rf, autostart=1, UPDATE_RAM=1):
 			ssvalFTW = getFTW(ssvalHz)
 			#seq = chan.GetHardwareValues()
 			chanValues = chan.GetHardwareValues()
+
+			
+
+			if chan.chanid > 7 and chan.chanid <= 15:
+				logger.info(f"Channel {chan.chanid} sets output mode for output {chan.chanid-numDDS}, ignoring...\n")
+				output_id = chan.chanid-numDDS
+				assert 0<=output_id<8
+				# set output mode
+				val = int(chanValues[0][1])
+				if 0<=val<4:
+					logger.info(f"setting output {output_id} to mode {val}")
+					rf.setOutputMode(channel=output_id,mode=val)
+				else:
+					logger.info(f"Invalid output mode {val}, must be 0, 1, 2 or 3")
+
+				continue
+
+
 			parsed_chan = []
 			for interval in chanValues:
 				# Note: had to invert logical values because of the line driver
@@ -207,7 +227,7 @@ class RfSocServer(Server):
 		self.rf = rfdriver(bitfile, True)
 
 		#Set properties for different channels
-		self.rf.setOutputMode(channel=0,mode=2)
+		#self.rf.setOutputMode(channel=0,mode=2)
 
 
 	def queue(self):

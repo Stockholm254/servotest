@@ -27,6 +27,7 @@ IP_LABSERVER = '192.168.1.101' # Simonlab data backup server (lab office behind 
 IP_RYDNUGGET = '10.108.56.5' # New rydberg polariton experiment control computer (control room)
 IP_RPTR = '192.168.1.12'
 IP_RFSOC_1 = '10.108.56.8'
+IP_RFSOC_2 = 'simonlab-multimode-rfsoc2.stanford.edu'
 IP_RYDSHAKE = '192.168.1.109'
 IP_RPCOUNTER = 'simonlab-multimode-rpcounter0.stanford.edu'
 IP_RYDFLURRY = '10.108.56.11' # Laptop controlling DMD and SmarAct
