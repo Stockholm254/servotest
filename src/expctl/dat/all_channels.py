@@ -33,12 +33,12 @@ all_sequences = ([
   Sequence("LabBrick 4 sequence",       host=IP_RYDFRIES,    port=PORT_LB4,       max_channels=3 , graph=0),
   Sequence("ADF435X sequence",          host=IP_RYDFRIES,    port=PORT_AD1,       max_channels=3 , graph=0),
   Sequence("RFSOC 1 sequence",          host=IP_RFSOC_1,     port=PORT_RFSOC,     max_channels=8 , graph=0),
-  Sequence("RFSOC 2 sequence",          host=IP_RFSOC_2,     port=PORT_RFSOC,     max_channels=8 , graph=0),
-  Sequence("RP DDS Transport sequence", host=IP_RPTR,        port=PORT_RPTR,      max_channels=2 , graph=0),
+  Sequence("RFSOC 2 sequence",          host=IP_RFSOC_2,     port=PORT_RFSOC,     max_channels=16 , graph=0),
+  Sequence("RP DDS sequence",           host=IP_RPTR,        port=PORT_RPTR,      max_channels=2 , graph=0),
   Sequence("Kinesis Lambda 2",          host=IP_RYDFRIES,    port=PORT_KINESIS_2, max_channels=1 , graph=0),
   Sequence("Kinesis Lambda 4",          host=IP_RYDFRIES,    port=PORT_KINESIS_4, max_channels=1 , graph=0),
   Sequence("Attenuator sequence",       host=IP_RYDFRIES,    port=PORT_ATT,       max_channels=1 , graph=0),
-  Sequence("DMD sequence",              host=IP_RYDFLURRY, port=PORT_DMD,       max_channels=17, graph=0),
+  Sequence("DMD sequence",              host='10.108.56.232', port=PORT_DMD,       max_channels=17, graph=0), #IP_RYDFLURRY
   Sequence("SmarAct sequence",          host=IP_RYDFLURRY, port=PORT_SMARACT,   max_channels=3 , graph=0),
   Sequence("rp DOG 1",          host='simonlab-multimode-rpdog-1.stanford.edu',   port=PORT_DIGITAL,   max_channels=15, graph=0, seq_type="MASTER") #, seq_type="MASTER"
   ])
@@ -89,10 +89,10 @@ MOTCoil        = analog_seq1.newChannel(2,  "MOT Coil",        system='MOT',    
 BiasX          = analog_seq1.newChannel(3,  "Bias X",          system='MOT',     steady_state_value=0.04,  max_value=5.0,  graph=1, transform_v=tran.BiasXGauss)
 BiasY          = analog_seq1.newChannel(4,  "Bias Y",          system='MOT',     steady_state_value=0.66,  max_value=3.0,  graph=1, transform_v=tran.BiasYGauss)
 BiasZ          = analog_seq1.newChannel(5,  "Bias Z",          system='MOT',     steady_state_value=-0.56, max_value=3.0,  graph=1, transform_v=tran.BiasZGauss)
-LAT1_pwr       = analog_seq1.newChannel(6,  "Lat Hori Pwr",    system='LAT',     steady_state_value=4.8,   max_value=5.0,  graph=1)
-LAT2_pwr       = analog_seq1.newChannel(7,  "Lat Vert Pwr",    system='LAT',     steady_state_value=4.8,   max_value=5.0,  graph=1)
-Sacher2_pwr    = analog_seq1.newChannel(8,  "ELAT_Pwr",        system='dRSC',    steady_state_value=3.8,   max_value=5.0,  graph=1)
-LAT0_pwr       = analog_seq1.newChannel(9,  "Lat Main Pwr",    system='LAT',     steady_state_value=4.7,   max_value=5.0,  graph=1)
+LAT1_pwr       = analog_seq1.newChannel(6,  "Lat Hori Pwr",    system='LAT',     steady_state_value=4.8,   max_value=10.0,  graph=1)
+LAT2_pwr       = analog_seq1.newChannel(7,  "Lat Vert Pwr",    system='LAT',     steady_state_value=4.8,   max_value=10.0,  graph=1)
+Sacher2_pwr    = analog_seq1.newChannel(8,  "ELAT_Pwr",        system='dRSC',    steady_state_value=3.8,   max_value=10.0,  graph=1)
+LAT0_pwr       = analog_seq1.newChannel(9,  "Lat Main Pwr",    system='LAT',     steady_state_value=4.7,   max_value=10.0,  graph=1)
 Blue_pwr       = analog_seq1.newChannel(10, "Blue Pwr",        system='Blue',    steady_state_value=4.25,  max_value=5.0,  graph=1)
 EDFA_1529_pwr  = analog_seq1.newChannel(11, "Floquet Pwr",     system='Floquet', steady_state_value=4.25,  max_value=5.0,  graph=1)
 ODT2_pwr       = analog_seq1.newChannel(12, "Cav DTrap Pwr",   system='CavPrb',  steady_state_value=4.80,  max_value=5.0,  graph=1)
@@ -197,6 +197,17 @@ RFSOC1_5 = rfsoc_1.newChannel(5, "RFSOC 1 Chan 5",   system='CavPrb', steady_sta
 RFSOC1_CavPrbEom = rfsoc_1.newChannel(6, "RFSOC 1 Chan 6",   system='CavPrb', steady_state_value=80, max_value=3200, graph=1)
 RFSOC1_784Lock = rfsoc_1.newChannel(7, "RFSOC 1 Chan 7",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0) # LF
 
+#RFSOC 2 DDS Box
+RFSOC2_PDH960 = rfsoc_2.newChannel(0, "RFSOC 2 PDH960",   system='CavPrb', steady_state_value=400, max_value=3200, graph=0) # serrodyne
+RFSOC2_PDH960_mode = rfsoc_2.newChannel(8, "RFSOC 2 PDH960 mode",   system='CavPrb', steady_state_value=0, max_value=4, graph=0) # mode
+RFSOC2_PDH1560 = rfsoc_2.newChannel(1, "RFSOC 2 PDH1560",   system='CavPrb', steady_state_value=370, max_value=3200, graph=0) # serrodyne
+RFSOC2_PDH1560_mode = rfsoc_2.newChannel(9, "RFSOC 2 PDH1560 mode",   system='CavPrb', steady_state_value=0, max_value=4, graph=0) # mode
+RFSOC2_PDH960CAV = rfsoc_2.newChannel(3, "RFSOC 2 960 Cav",   system='CavPrb', steady_state_value=270, max_value=3200, graph=0) # serrodyne
+RFSOC2_PDH960CAV_mode = rfsoc_2.newChannel(11, "RFSOC 2 960 Cav mode",   system='CavPrb', steady_state_value=0, max_value=4, graph=0) # mode
+
+RFSOC2_7 = rfsoc_2.newChannel(7, "RFSOC 2 Chan 7",   system='CavPrb', steady_state_value=80, max_value=3200, graph=0) # HF
+RFSOC2_7_mode = rfsoc_2.newChannel(15, "RFSOC 2 Chan 7 mode",   system='CavPrb', steady_state_value=0, max_value=4, graph=0) # HF
+
 #Red Pitaya Transport DDS
 RP1_DDS_0 = rp_ddds_1.newChannel(0, "RedPitaya 1 Chan 0",   system='Debug', steady_state_value=10e6, max_value=40e6, graph=0)
 RP1_DDS_1 = rp_ddds_1.newChannel(1, "RedPitaya 1 Chan 1",   system='Debug', steady_state_value=10e6, max_value=40e6, graph=0)
@@ -222,7 +233,7 @@ DMD_phi       = dmd.newChannel(8, "DMD phi",         system='CavPrb', steady_sta
 DMD_eps_phi   = dmd.newChannel(9, "DMD epsilon phi", system='CavPrb', steady_state_value=0.0, max_value=10.0, graph=0)
 DMD_switch = dmd.newChannel(10, "DMD mode switch",    system='CavPrb', steady_state_value=0, max_value=3, graph=0) # different DMD modes: 0) LG modes 1) abberration scanning beamlets
 DMD_prb_x  = dmd.newChannel(11, "DMD probe x",    system='CavPrb', steady_state_value=0, max_value=300, graph=0)
-DMD_prb_y  = dmd.newChannel(12, "DMD probe y",    system='CavPrb', steady_state_value=0, max_value=300, graph=0)
+DMD_prb_y  = dmd.newChannel(12, "DMD probe y",    system='CavPrb', steady_state_value=0, max_value=340, graph=0)
 DMD_prb_waist  = dmd.newChannel(13, "DMD probe waist",    system='CavPrb', steady_state_value=12, max_value=300, graph=0)
 DMD_prb_phase  = dmd.newChannel(14, "DMD probe phase",    system='CavPrb', steady_state_value=0, max_value=300, graph=0)
 DMD_prb_phasemap  = dmd.newChannel(15, "DMD probe phasemap",    system='CavPrb', steady_state_value=0, max_value=2, graph=0)

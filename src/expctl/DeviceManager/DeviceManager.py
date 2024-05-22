@@ -47,7 +47,13 @@ class Device:
     ######################################################################
     #Networking abstraction as zmq multipart messages
     def send_msg(self, msg, payload=None):
-        _send_msg(self.sock, msg, payload)
+        try:
+            _send_msg(self.sock, msg, payload)
+        except zmq.ZMQError: # the server was left in an undefined state! It's unlikely to recover from here without restarting said server so abort
+            self.sock.close()
+            self.sock = None
+            raise RuntimeError
+
 
     def recv_msg(self):
         return _recv_msg(self.sock)
@@ -266,20 +272,30 @@ class DeviceManager:
     def QueueSequences(self, master_sequence, timeout=10.0):
         SlaveDevices = {}
         tqueuestart = time.time()
+        any_error = False
         for seq in self.seq_act:
             if seq != master_sequence: # Queue the sequence unless is master sequence
                 dev = self.devices[seq.name]
                 SlaveDevices[seq.name] = dev
-                dev.Queue()
-                logger.debug(seq.name + " queued")
+                try:
+                    dev.Queue()
+                except RuntimeError:
+                    SlaveDevices.remove(seq.name)
+                    self.poller.unregister(self.devices[seq.name].sock)
+                    self.devices.pop(seq.name)
+                    any_error = True
+                    break
+                else:
+                    logger.debug(seq.name + " queued")
             else:
                 logger.debug('\tMaster sequence, will run after all sequences have been queued...')
         tqueueend = time.time()
 
         responses = self.AwaitResposes(devices=SlaveDevices, timeout=timeout)
 
-        if responses is None:
+        if responses is None or any_error:
             status = False
+            logger.debug(f"Device {dev} had a problem, aborting whole run")
         else:
             status = True
             for k, v in responses.items():
