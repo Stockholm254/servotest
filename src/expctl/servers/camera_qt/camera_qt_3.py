@@ -67,6 +67,7 @@ CAMERA_SERIALS = {
     15331897: 'Cam ABS TOP',
     13442465: 'Cam Lluna Trans',
     13152783: 'Cam DMD',
+    23540170: 'Cam Cavity Trans 3',
     }
 
 DEFAULT_ROI = {
@@ -77,6 +78,7 @@ DEFAULT_ROI = {
     13262377: (500, 750, 300, 700),
     13442465: (760-100, 760+100, 101-100, 101+100),
     13152783: (250, 450, 200, 400),
+    23540170: (750, 950, 544, 744),
     }
 
 DEFAULT_FIT_ROI = {
@@ -89,6 +91,7 @@ DEFAULT_FIT_ROI = {
     12372860: (350, 600, 320, 520),
     13442465: (760-50, 760+50, 99-50, 99+50),
     13152783: (250, 450, 200, 400),
+    23540170: (750, 950, 544, 744),
     }
 
 CAMERA_KWARGS = {
@@ -127,7 +130,7 @@ class DbWorker(QObject):
     def __init__(self, parent=None):
         super(DbWorker, self).__init__(parent)
         try:
-            self.client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_AUTH)
+            self.client = MongoClient(host=conf.DB_HOST, port=conf.DB_PORT, username=conf.USER_RAW_WRITER , password=conf.PASSWORD_RAW_WRITER, authSource=conf.DB_AUTH, connect=True, directConnection=True)
         except:
             logger.exception("Database connection could not be established!")
             self.client = None
@@ -137,6 +140,7 @@ class DbWorker(QObject):
     def storeImage(self, item):
         # Save to the DB
         try:
+            logger.debug(f"Saving shot {item.run_id}, {item.shot}")
             insertImage(self.client, item.run_id, item.shot, item.save)
         except:
             logger.exception("Problem storing image to DB")
@@ -158,6 +162,12 @@ class DbWorker(QObject):
     def store(self, item):
         self.storeImage(item)
 
+def round4(i):
+    return int(np.round(i/4))*4
+
+def round16(i):
+    return int(np.round(i/16))*16
+
 class CameraServer(Server):
     
     def __init__(self, name, port, message, parent, camera_id, camera_kwargs):
@@ -165,6 +175,7 @@ class CameraServer(Server):
         #self.device = GP_camera(BIT12 = False)
         self.parent=parent
         self.device = Camera(camera_id=camera_id, **camera_kwargs)
+        self.hardware_roi = False
         self.ROI = ()
         self.imgbuffer=[]
         try:
@@ -176,6 +187,19 @@ class CameraServer(Server):
     def set_ROI(self, roi):
         if len(roi)==4:
             self.ROI = tuple(roi)
+            print(self.ROI)
+            # set the actual ROI on the camera!
+            wx = roi[2] - roi[0]
+            wy = roi[3] - roi[1]
+            self.device.c.stop()
+            self.device.c.Width = round16(wx)
+            self.device.c.Height = round16(wy)
+            self.device.c.OffsetX = round4(roi[0])
+            self.device.c.OffsetY = round4(roi[1])
+            self.ROI_rounded = (round4(roi[0]), round4(roi[1]), round4(roi[0])+round16(wx), round4(roi[1])+round16(wy))
+            logger.info(f"Setting harware ROI to {self.ROI_rounded}")
+            self.hardware_roi = True
+            self.device.c.start()
         else:
             self.ROI = ()
 
@@ -232,8 +256,8 @@ class CameraServer(Server):
                     
             if self.NumOfImage > 0:
                 min_gap_time = min(shutter_gap)
-                if min_gap_time < 80:
-                    logger.error("Frame rate exceeds the maximum value (14fps)!")
+                if min_gap_time < 1.0: # with the nice new usb 3 cameras, there is no gap
+                    logger.error("Frame rate exceeds the maximum value (1000fps)!")
                 else:
                     logger.info("Number of images will be captured: " + str(self.NumOfImage))
                     logger.info("Shutter time: " + str(ShutterTime)+ "ms")
@@ -267,9 +291,13 @@ class CameraServer(Server):
                         if seq.saveswitch>0:
                             # apply ROI for saving
                             if len(self.ROI)==4:
-                                x0, y0, x1, y1 = self.ROI
-                                imgbuffer = self.imgbuffer.buffer[:,x0:x1,y0:y1]
-                                _roi = self.ROI
+                                if self.hardware_roi:
+                                    imgbuffer = self.imgbuffer.buffer
+                                    _roi = self.ROI_rounded
+                                else:
+                                    x0, y0, x1, y1 = self.ROI
+                                    imgbuffer = self.imgbuffer.buffer[:,x0:x1,y0:y1]
+                                    _roi = self.ROI
                             else:
                                 #_roi = (0, 0, self.imgbuffer.shape[1], self.imgbuffer.shape[2])
                                 _roi = (0, 0, self.imgbuffer.buffer.shape[1], self.imgbuffer.buffer.shape[2])
@@ -283,7 +311,7 @@ class CameraServer(Server):
                                 ims = {IMG_FL[i]: imgbuffer[i] for i in range(self.NumOfImage)}
                             else:
                                 im_type = 'unkwn'
-                                ims = {'u_i'.format(i): imgbuffer[i] for i in range(self.NumOfImage)}
+                                ims = {'u_{:d}'.format(i): imgbuffer[i] for i in range(self.NumOfImage)}
                             
 
                             shot = ShotImage(date=datetime.now(), 
@@ -877,6 +905,6 @@ def fit1Dgauss(data):
 if __name__ == '__main__':
     import sys
 
-    win = MainWindow(port=60614)
+    win = MainWindow(port=60612)
     if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
         QtGui.QGuiApplication.instance().exec_()

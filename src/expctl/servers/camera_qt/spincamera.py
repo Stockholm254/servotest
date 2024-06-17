@@ -85,12 +85,20 @@ class GP_camera:
 		self.c.init() # Initialize camera
 
 		# #Set camera properties
+		# self.c.OffsetX = 0
+		# self.c.OffsetY = 0
+
+		# self.c.Width = self.c.SensorWidth
+		# self.c.Height = self.c.SensorHeight
+
+		_width = self.c.get_info('Width')
+		_height = self.c.get_info('Height')
 		self.c.OffsetX = 0
 		self.c.OffsetY = 0
-
-		# self.c.Width = self.c.SensorWidth//2
-		# self.c.Height = self.c.SensorHeight//2
+		self.c.Width = _width['max']
+		self.c.Height = _height['max']
 		logger.debug(f"Camera width: {self.c.Width}, height: {self.c.Height}")
+		logger.debug(f'Camera width: {self.c.Width}, height: {self.c.Height}, offset x:{self.c.OffsetX }, ofset y:{self.c.OffsetY }')
 
 		# To control the exposure settings, we need to turn off auto
 		self.c.GainAuto = 'Off'
@@ -105,7 +113,7 @@ class GP_camera:
 
 		self.c.TriggerMode ='Off'
 		self.c.TriggerSelector = 'FrameStart'
-		self.c.TriggerSource = 'Line2'
+		self.c.TriggerSource = f'Line{self.trigger_port:d}'
 		self.c.TriggerMode = 'On'
 
 
@@ -147,6 +155,7 @@ class GP_camera:
 		#Gain
 		self.c.Gain = max(0, min(gain, 44.0))
 
+		#self.c.start()
 		#Grab images
 		images_file = {}
 		imgbuffer = []
@@ -162,7 +171,9 @@ class GP_camera:
 				#Convert to a numpy array with the right shape
 				cv_image = np.transpose(image) #np.transpose(np.array(image.getData(), dtype="uint8").reshape( (image.getRows(), image.getCols()) ) )
 				imgbuffer.append(cv_image)
-				images_file[img] = image
+				#images_file[img] = image
+
+		#self.c.stop()
 
 		return (not err), imgbuffer, images_file
 							
