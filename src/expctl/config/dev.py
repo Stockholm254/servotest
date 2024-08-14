@@ -31,6 +31,7 @@ IP_RPTR = '127.0.0.1'
 IP_RFSOC_1 = '127.0.0.1'
 IP_RYDSHAKE = '127.0.0.1'
 IP_RPCOUNTER = '127.0.0.1'
+#IP_ALIGNER = 'simonlab-multimode-picomotor-2.stanford.edu'
 
 # RYDBURGER PORTS
 PORT_REMOTECTRL = 60000 # Remote front panel control (disabled)
@@ -68,4 +69,6 @@ PORT_DMD = 60651
 # RPCOUNTER PORTS
 PORT_RPTR       = 60621
 
+#RPALIGNER PORTS
+PORT_ALIGN = 60627
 
