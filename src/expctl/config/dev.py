@@ -29,6 +29,8 @@ IP_LABSERVER = '127.0.0.1' # Simonlab data backup server (lab office behind the 
 IP_RYDNUGGET = '127.0.0.1' # New rydberg polariton experiment control computer (control room)
 IP_RPTR = '127.0.0.1'
 IP_RFSOC_1 = '127.0.0.1'
+IP_RFSOC_2 = '127.0.0.1'
+IP_RYDFLURRY = '127.0.0.1'
 IP_RYDSHAKE = '127.0.0.1'
 IP_RPCOUNTER = '127.0.0.1'
 #IP_ALIGNER = 'simonlab-multimode-picomotor-2.stanford.edu'
@@ -45,6 +47,8 @@ PORT_PTIMER     = 60623 # Photon timer FPGA (control room under table rack)
 PORT_PTIMER2    = 60625 # Photon timer FPGA (control room under table rack); TimerMcTimeFace
 PORT_PTIMER3    = 60626 # Photon timer FPGA (control room under table rack); TimerMcTimeFace
 PORT_AD1		= 60701 # Analog Devices ADF435X, for microwave generation
+PORT_ADC        = 60001
+PORT_SMARACT    = 60002
 
 # RYDFRIES PORTS
 PORT_CAMERA     = 60614 # Chameleon camera (side or vertical imaging system, chamber table)

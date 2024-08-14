@@ -6,9 +6,9 @@ import socket
 from pathlib import Path
 from scipy.optimize import lsq_linear
 
-with np.load(Path(__file__).parent/"matrix8_glass_no_box_msj.npz") as data:
+with np.load(Path(__file__).parent/"lluna_matrix8.npz") as data:
 	transfer_mat = data['mat_field2el']
-with np.load(Path(__file__).parent/"matrix9_glass_no_box_msj.npz") as data:
+with np.load(Path(__file__).parent/"lluna_matrix9_msj.npz") as data:
 	matrix9_ln = data['mat_field2el']
 
 	

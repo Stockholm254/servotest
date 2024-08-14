@@ -3,8 +3,8 @@ import zipfile
 import datetime
 import shutil
 import glob
-import win32wnet
-import win32netcon
+#import win32wnet
+#import win32netcon
 from pathlib import Path
 from ..config.config import *
 # Default home directory and date
