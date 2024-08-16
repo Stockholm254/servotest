@@ -6,6 +6,10 @@ from smbus2 import SMBus,i2c_msg
 from .scservo_sdk import *                    # Uses SCServo SDK library
 import MCP342x
 
+import json
+from pathlib import Path
+import atexit
+
 # Control table address
 ADDR_SCS_TORQUE_ENABLE     = 40
 ADDR_SCS_GOAL_ACC          = 41
@@ -21,7 +25,7 @@ DEVICENAME                  = '/dev/ttyUSB0'    # Check which port is being used
 # dmesg | grep tty
 protocol_end                = 0           # SCServo bit end(STS/SMS=0, SCS=1)
 
-sts3032_dict={0:[5,'1x'], 1:[6,'1y'], 2:[8,'2x'], 3:[7,'2y'], 4:[4,'3x'], 5:[3,'3y'], 6:[2,'4x'],7:[1,'4y']} # dict {index:[ID, servo name]}
+sts3032_dict={0:[2,'1x'], 1:[1,'1y'], 2:[4,'2x'], 3:[3,'2y'], 4:[4,'3x'], 5:[3,'3y'], 6:[2,'4x'],7:[1,'4y']} # dict {index:[ID, servo name]}
 class sts3032:
 
     def __init__(self, channel, portHandler, packetHandler):
@@ -66,8 +70,10 @@ class sts3032:
             elif scs_error != 0:
                 print(self.message+'error',self.packetHandler.getRxPacketError(scs_error))
             print(self.message+'SCServo zero set!')
+            return 0
         except:
             print(self.message+'Read not sucessful!')
+            return 1
 
     def set_speed(self, set_speed):
         # Write SCServo speed
@@ -184,30 +190,15 @@ class Servoset:
         servo_2x=sts3032(2, self.portHandler, self.packetHandler)
         servo_2y=sts3032(3, self.portHandler, self.packetHandler)
 
-        servo_3x=sts3032(4, self.portHandler, self.packetHandler)
-        servo_3y=sts3032(5, self.portHandler, self.packetHandler)
-        servo_4x=sts3032(6, self.portHandler, self.packetHandler)
-        servo_4y=sts3032(7, self.portHandler, self.packetHandler)
-
-        servo_1x.set_speed(3000)
-        servo_2x.set_speed(3000)
-        servo_1y.set_speed(3000)
-        servo_2y.set_speed(3000)
-
-        servo_3x.set_speed(2000)
-        servo_3y.set_speed(2000)
-        servo_4x.set_speed(2000)
-        servo_4y.set_speed(2000)
+        servo_1x.set_speed(1000)
+        servo_2x.set_speed(1000)
+        servo_1y.set_speed(1000)
+        servo_2y.set_speed(1000)
 
         servo_1x.torque_enable()
         servo_2x.torque_enable()
         servo_1y.torque_enable()
         servo_2y.torque_enable()
-
-        servo_3x.torque_enable()
-        servo_4x.torque_enable()
-        servo_3y.torque_enable()
-        servo_4y.torque_enable()
 
         self.servo_list=[servo_1x, servo_2x, servo_1y, servo_2y]
 
@@ -215,13 +206,56 @@ class Servoset:
         for servo in self.servo_list:
             self.SCS_ID_list.append(servo.SCS_ID)
         #initialize turn numbers
-        self.turn_num=np.zeros(len(self.SCS_ID_list))
-    
+        self.turn_num=list(np.zeros(len(self.SCS_ID_list)))
+        self.file = Path(f"/home/rydpiservo/expctl/src/expctl/servers/servoaligner/servos.json")
+        if self.file.exists():  # load existing data
+            print("loading position from disk")
+            self.load()
+
+        # make sure the current position gets saved to disk when the programm exits
+        atexit.register(self.save)
+
+    def save(self):
+        # persist encoder position to file when programm is closed
+        dct = {'turns': self.turn_num, 'angles': self.multi_position_list}
+        self.file.write_text(json.dumps(dct))
+        # with self.file.open("a") as f:
+        #     f.write(json.dumps(dct))
+
+    def load(self):
+        # load position from file
+        dct = json.loads(self.file.read_text())
+        self.turn_num = dct['turns']
+        self.multi_position_list = dct['angles']
+        message="Loaded, the angles are: \n"
+        for i in range(len(self.turn_num)):
+            message+=self.servo_list[i].message
+            message+=str((self.multi_position_list[i]+self.turn_num[i]*4096-2048)*360/4096)+' deg\t'
+        print(message)
+    # def __del__(self):
+    #     # also save when object is destroyed
+    #     self.save()
+
     def set_zero(self):
         for servo in self.servo_list:
-            servo.set_zero()
+            iteration=1
+            while 1:
+                print('Set Zero Trail ',iteration)
+                result=servo.set_zero()
+                if result==0:
+                    break
+                iteration+=1
         #Set turn number to be zero when we set zero on all the motors.
-        self.turn_num=np.zeros(len(self.SCS_ID_list))
+        self.turn_num=list(np.zeros(len(self.SCS_ID_list)))
+
+
+    def torques_enable(self):
+        for servo in self.servo_list:
+            servo.torque_enable()
+
+    def torques_disable(self):
+        for servo in self.servo_list:
+            servo.torque_disable()
 
     def home(self):
         goal_position_list=[]
@@ -304,10 +338,10 @@ class Servoset:
             scs_present_position_list.append(scs_present_position)
             index+=1
 
-        multi_position_list=[]
+        self.multi_position_list=[]
         for index in range(len(self.SCS_ID_list)): 
-            multi_position_list.append(int(scs_present_position_list[index]+self.turn_num[index]*4096))
-            status_string+='[ID:'+f'{self.SCS_ID_list[index]:03d}'+'] Goal:'+f'{goal_position_list[index]:03d}'+' Pres:'+f'{multi_position_list[index]:03d}'+'\t'
+            self.multi_position_list.append(int(scs_present_position_list[index]+self.turn_num[index]*4096))
+            status_string+='[ID:'+f'{self.SCS_ID_list[index]:03d}'+'] Goal:'+f'{goal_position_list[index]:03d}'+' Pres:'+f'{self.multi_position_list[index]:03d}'+'\t'
 
         scs_present_position_list_cache=scs_present_position_list.copy()
         print(status_string)
@@ -341,7 +375,7 @@ class Servoset:
                 scs_present_position_list.append(scs_present_position)
                 index+=1
 
-            multi_position_list=[]
+            self.multi_position_list=[]
             #determine whether turn number has been changed
             for index in range(len(self.SCS_ID_list)): 
                 if abs(scs_present_position_list[index]-scs_present_position_list_cache[index])>3500:
@@ -350,9 +384,9 @@ class Servoset:
                     elif scs_present_position_list[index]-scs_present_position_list_cache[index]<0:
                         self.turn_num[index]=self.turn_num[index]+1
 
-                multi_position_list.append(int(scs_present_position_list[index]+self.turn_num[index]*4096))
+                self.multi_position_list.append(int(scs_present_position_list[index]+self.turn_num[index]*4096))
 
-                status_string+='[ID:'+f'{self.SCS_ID_list[index]:03d}'+'] Goal:'+f'{goal_position_list[index]:03d}'+' Pres:'+f'{multi_position_list[index]:03d}'+'\t'
+                status_string+='[ID:'+f'{self.SCS_ID_list[index]:03d}'+'] Goal:'+f'{goal_position_list[index]:03d}'+' Pres:'+f'{self.multi_position_list[index]:03d}'+'\t'
 
             scs_present_position_list_cache=scs_present_position_list.copy()
 
@@ -362,7 +396,7 @@ class Servoset:
             #count how many motors have finished moving
             is_done=0
             for i in range(len(self.SCS_ID_list)): 
-                if abs(goal_position_list[i] - multi_position_list[i]) == SCS_MOVING_STATUS_THRESHOLD:
+                if abs(goal_position_list[i] - self.multi_position_list[i]) == SCS_MOVING_STATUS_THRESHOLD:
                     is_done+=1
 
             if is_done==len(self.SCS_ID_list):
@@ -370,7 +404,7 @@ class Servoset:
                 break
 
             iteration+=1
-
+        self.save()
         # Clear syncread parameter storage
         groupSyncRead.clearParam()
 

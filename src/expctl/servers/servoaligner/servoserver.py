@@ -6,13 +6,15 @@ from ..ServerClass import Server, logger
 from pathlib import Path
 from ..util.SequenceProcessor import *
 from .servodriver import Servoset
+import argparse
 
 class ServoalignerServer(Server):
 
 	def __init__(self, name, port, message):
 		super().__init__(name, port, message)
 		self.servos=Servoset()
-		self.servos.set_zero()
+		#self.servos.torques_enable()
+		#self.servos.set_zero()
 		#Here we probably don't need serial number for servo motors
 		
 	def __del__(self):
