@@ -33,7 +33,16 @@ IP_RFSOC_2 = '127.0.0.1'
 IP_RYDFLURRY = '127.0.0.1'
 IP_RYDSHAKE = '127.0.0.1'
 IP_RPCOUNTER = '127.0.0.1'
+IP_RPDOG_0 = '127.0.0.1'
+IP_RPDAC_0 = '127.0.0.1'
 #IP_ALIGNER = 'simonlab-multimode-picomotor-2.stanford.edu'
+IP_ALIGNER = 'simonlab-mmwave-servoaligner.stanford.edu'
+IP_RYDMALT = '127.0.0.1' # Experimental control computer
+IP_RPDOG_1 = '127.0.0.1' 
+IP_ADC_1 = '127.0.0.1' 
+IP_RFSOC_1 = '127.0.0.1' 
+IP_RPTR = '127.0.0.1'
+
 
 # RYDBURGER PORTS
 PORT_REMOTECTRL = 60000 # Remote front panel control (disabled)
