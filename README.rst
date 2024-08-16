@@ -33,3 +33,5 @@ Usage
 
 - For established servers use the shortcuts in expctl/shortcuts
 - For new servers/development call them via python -m expctl.servers.XXX
+- For calling server use python -m expctl.servers.servoaligner.servoserver
+- To zero servo angles use  python -m expctl.servers.servoaligner.servoserver zero

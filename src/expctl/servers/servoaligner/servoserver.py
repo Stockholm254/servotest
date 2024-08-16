@@ -13,7 +13,7 @@ class ServoalignerServer(Server):
 	def __init__(self, name, port, message):
 		super().__init__(name, port, message)
 		self.servos=Servoset()
-		#self.servos.torques_enable()
+		self.servos.torques_enable()
 		#self.servos.set_zero()
 		#Here we probably don't need serial number for servo motors
 		
@@ -72,4 +72,18 @@ if __name__ == '__main__':
 	===========================================
 	"""
 	server = ServoalignerServer("SA1", 60627, message=message)
+	# Create a servozero subcommand
+	parser = argparse.ArgumentParser()
+	subparsers = parser.add_subparsers()
+	parser_zero = subparsers.add_parser('zero', help='zero servo angles')
+	parser_zero.set_defaults(func=server.servos.set_zero)
+
+	# if len(sys.argv) <= 1:
+	# 	sys.argv.append('--help')
+	try:
+		options = parser.parse_args()
+		options.func()
+	except:
+		pass
+
 	server.main_loop()
