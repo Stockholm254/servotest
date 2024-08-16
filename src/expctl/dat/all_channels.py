@@ -38,9 +38,9 @@ all_sequences = ([
   Sequence("Kinesis Lambda 2",          host=IP_RYDFRIES,    port=PORT_KINESIS_2, max_channels=1 , graph=0),
   Sequence("Kinesis Lambda 4",          host=IP_RYDFRIES,    port=PORT_KINESIS_4, max_channels=1 , graph=0),
   Sequence("Attenuator sequence",       host=IP_RYDFRIES,    port=PORT_ATT,       max_channels=1 , graph=0),
-  Sequence("DMD sequence",              host='10.108.56.232', port=PORT_DMD,       max_channels=17, graph=0), #IP_RYDFLURRY
+  Sequence("DMD sequence",              host='127.0.0.1', port=PORT_DMD,       max_channels=17, graph=0), #IP_RYDFLURRY
   Sequence("SmarAct sequence",          host=IP_RYDFLURRY, port=PORT_SMARACT,   max_channels=3 , graph=0),
-  Sequence("rp DOG 1",          host='simonlab-multimode-rpdog-1.stanford.edu',   port=PORT_DIGITAL,   max_channels=15, graph=0, seq_type="MASTER") #, seq_type="MASTER"
+  Sequence("rp DOG 1",          host='127.0.0.1',   port=PORT_DIGITAL,   max_channels=15, graph=0, seq_type="MASTER") #, seq_type="MASTER"
   ])
 
 digital_seq1, analog_seq1, cam, cam2, dds_1, dds_pdh, dds_2, photon_timer, photon_timer_2, photon_timer_3, adc_1, photon_counter, lb_1, lb_2, lb_3, lb_4, ad_1, rfsoc_1, rfsoc_2, rp_ddds_1, kinesis_2, kinesis_4, atten_1, dmd, smaract, rpdog_1 = all_sequences # WE DO IT IN THIS ORDER SO THAT ONE CANNOT GET AWAY WITH CREATING A NAMED SEQUENCE WHICH IS NOT IN THE ARRAY OF ALL SEQUENCES!!

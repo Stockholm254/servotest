@@ -12,27 +12,32 @@ class ServoalignerServer(Server):
 	def __init__(self, name, port, message):
 		super().__init__(name, port, message)
 		self.servos=Servoset()
+		self.servos.set_zero()
 		#Here we probably don't need serial number for servo motors
 		
 	def __del__(self):
 		self.servos.close()
 
 	def updateSettings(self):
+		value_list=[]
 		for chan in self.seq.allChannels:
-			print(chan._TransValues)
-
+			#print(chan._TransValues)
 			val = chan._TransValues[0][1] # find the first value
+			value_list.append(int(val*4096/360)+2048)
 			set = chan._TransValues[0]
 			if set[1] != val or set[3] != val: # Check for non-identical values
-				logger.warning('Kinesis stage given multiple settings in same sequence, but only takes the first!!')
+				logger.warning('Servoalinger given multiple settings in same sequence, but only takes the first!!')
 
-			if chan.chanid == 0: # Waveplate angle
-				# angle = np.mod(val, 360.0)
-				angle = np.mod(val+180, 360.0) - 180.0
-				self.stage.moveToPosition(angle, eps=5)
-				logger.debug("Waveplate moved successfully")
-			else: # wtf?
-				logger.warning('WARNING: Sequence specified for unsupported channel...')
+			# if chan.chanid == 0: # Waveplate angle
+			# 	# angle = np.mod(val, 360.0)
+			# 	angle = np.mod(val+180, 360.0) - 180.0
+			# 	self.stage.moveToPosition(angle, eps=5)
+			# 	logger.debug("Waveplate moved successfully")
+			# else: # wtf?
+			# 	logger.warning('WARNING: Sequence specified for unsupported channel...')
+		print(value_list)
+		self.servos.set_angle(value_list)
+
 
 	def cmd_seq(self, data):
 		self.seq = data # unpack the sequence
