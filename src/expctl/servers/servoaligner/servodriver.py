@@ -217,7 +217,7 @@ class Servoset:
 
     def save(self):
         # persist encoder position to file when programm is closed
-        dct = {'turns': self.turn_num, 'angles': self.multi_position_list}
+        dct = {'turns': self.turn_num, 'angles': self.multi_position_list, 'angles_deg': list((np.array(self.multi_position_list)+np.array(self.turn_num)*4096-2048)*360/4096)}
         self.file.write_text(json.dumps(dct))
         # with self.file.open("a") as f:
         #     f.write(json.dumps(dct))
@@ -247,6 +247,7 @@ class Servoset:
                 iteration+=1
         #Set turn number to be zero when we set zero on all the motors.
         self.turn_num=list(np.zeros(len(self.SCS_ID_list)))
+        self.save()
 
 
     def torques_enable(self):
