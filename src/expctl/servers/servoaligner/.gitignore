@@ -172,3 +172,5 @@ dmypy.json
 /Scripts/wheel3.9.exe
 /Scripts/wheel3.exe
 /Scripts/wheel-3.9.exe
+
+./servos.json
