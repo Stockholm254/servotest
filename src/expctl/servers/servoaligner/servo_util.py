@@ -19,15 +19,72 @@ def create_zigzag_X(X):
 def a2p(angle):
     return int(angle*(4096/360)+2048)
 
-def xy2nd(x,y,xy_mask):
-    # assert there are only 2 "1" in the mask
-    assert sum(xy_mask) == 2
-    x_idx = np.where(xy_mask)[0][0]
-    y_idx = np.where(xy_mask)[0][1]
-    pos = np.ones(len(xy_mask),dtype=np.int_)*a2p(0)
-    pos[x_idx] = a2p(x)
-    pos[y_idx] = a2p(y)
+def r2nd(r,r_mask=None)->np.ndarray:
+    if r_mask is None:
+        r_mask = np.ones_like(r,dtype=np.bool_)
+    # arbitrary r embedded in the mask
+    r = list(r)
+    assert np.sum(r_mask) == len(r), ValueError("r2nd: r_mask should have the same 1 as len(r)")
+    pos = np.ones_like(r_mask,dtype=np.int_)*a2p(0)
+    for i in range(len(r_mask)):
+        if r_mask[i]:
+            pos[i] = a2p(r.pop(0))
+    return pos.astype(np.int_)
+
+def r2nr(r,r_mask=None)->np.ndarray:
+    if r_mask is None:
+        r_mask = np.ones_like(r,dtype=np.bool_)
+    # arbitrary r embedded in the mask
+    r = list(r)
+    assert np.sum(r_mask) == len(r), ValueError("r2nr: r_mask should have the same 1 as len(r)")
+    pos = np.zeros_like(r_mask,dtype=np.float_)
+    for i in range(len(r_mask)):
+        if r_mask[i]:
+            pos[i] = r.pop(0)
     return pos
+
+def nrselr(pos,r_mask)->np.ndarray:
+    # arbitrary r embedded in the mask
+    r = []
+    for i in range(len(r_mask)):
+        if r_mask[i]:
+            r.append(pos[i])
+    return np.array(r)
+
+def nrmodr(r_origin,r_mod,r_mask)->np.ndarray:
+    if r_mask is None:
+        r_mask = np.ones_like(r_origin,dtype=np.bool_)
+    # arbitrary r_mod embedded in the mask
+    r_mod = list(r_mod)
+    r_origin = np.array(r_origin)
+    assert np.sum(r_mask) == len(r_mod), ValueError("nrmodr: r_mask should have the same length as r_mod")
+    for i in range(len(r_mask)):
+        if r_mask[i]:
+            r_origin[i] = r_mod.pop(0)
+    return r_origin
+
+def nraddr(r_origin,r_add,r_mask=None)->np.ndarray:
+    if r_mask is None:
+        r_mask = np.ones_like(r_origin,dtype=np.bool_)
+    # arbitrary r_add embedded in the mask
+    r_add = list(r_add)
+    r_origin = np.array(r_origin)
+    assert np.sum(r_mask) == len(r_add), ValueError("nraddr: r_mask should have the same length as r_add")
+    for i in range(len(r_mask)):
+        if r_mask[i]:
+            r_origin[i] += r_add.pop(0)
+    return r_origin
+
+def ndmodr(pos_origin,r_mod,r_mask)->np.ndarray:
+    # arbitrary r_mod embedded in the mask
+    r_mod = list(r_mod)
+    pos_origin = np.array(pos_origin)
+    #
+    assert np.sum(r_mask) == len(r_mod), ValueError("r_mask should have the same length as r_mod")
+    for i in range(len(r_mask)):
+        if r_mask[i]:
+            pos_origin[i] = a2p(r_mod.pop(0))
+    return pos_origin.astype(np.int_)
 
 # ADS1115_fiber
 from adafruit_ads1x15.analog_in import AnalogIn
@@ -37,27 +94,27 @@ import board
 import busio
 import time
 
-# Create the I2C bus interface
-i2c = busio.I2C(board.SCL, board.SDA)
+# # Create the I2C bus interface
+# i2c = busio.I2C(board.SCL, board.SDA)
 
-# Create the ADS1115 instance
-ads = ADS1115.ADS1115(i2c)
-# PDA8A with 50 ohm load, will be 0 - 1.8 V
-# ADS1115.PGA_2: ±2.048V
-ads.gain = 4
-ads.data_rate = 860
+# # Create the ADS1115 instance
+# ads = ADS1115.ADS1115(i2c)
+# # PDA8A with 50 ohm load, will be 0 - 1.8 V
+# # ADS1115.PGA_2: ±2.048V
+# ads.gain = 4
+# ads.data_rate = 860
 
-# Create analog input channels
-ADS1115_fiber = AnalogIn(ads, ADS1115.P0)  # Channel 0
+# # Create analog input channels
+# ADS1115_fiber = AnalogIn(ads, ADS1115.P0)  # Channel 0
 
-print(f"Fiber channel reading: {ADS1115_fiber.value}")
+# print(f"Fiber channel reading: {ADS1115_fiber.value}")
 
-t0 = time.time()
-for i in range(100):
-    # print(f"Fiber channel reading: {ADS1115_fiber.value}")
-    a= ADS1115_fiber.value
-t1 = time.time()
-print(f"Time elapsed: {t1-t0}")
+# t0 = time.time()
+# for i in range(100):
+#     # print(f"Fiber channel reading: {ADS1115_fiber.value}")
+#     a= ADS1115_fiber.value
+# t1 = time.time()
+# print(f"Time elapsed: {t1-t0}")
 
 # fit X,Y,Z to a 2D gaussian
 from scipy.optimize import curve_fit
@@ -80,3 +137,10 @@ def fit_gaussian_2d(X,Y,Z):
     popt, pcov = curve_fit(gaussian_2d, xydata, zdata)
     return popt
 
+def format_para(para):
+    str_para = " ".join(["x_{:d}={:.2f}".format(i,para[i]) for i in range(len(para))])
+    return str_para
+
+if __name__=="__main__":
+    a =r2nd([-5,4],[1,0,1,0])
+    print(a)

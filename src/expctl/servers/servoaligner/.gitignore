@@ -174,3 +174,4 @@ dmypy.json
 /Scripts/wheel-3.9.exe
 
 ./servos.json
+./servos_0.json

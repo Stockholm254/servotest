@@ -11,6 +11,8 @@ import json
 from pathlib import Path
 import atexit
 
+
+
 # Control table address
 ADDR_SCS_TORQUE_ENABLE     = 40
 ADDR_SCS_GOAL_ACC          = 41
@@ -26,7 +28,8 @@ DEVICENAME_LIST             = ['/dev/ttyUSB0','/dev/ttyUSB1','/dev/ttyUSB2']    
 # dmesg | grep tty
 protocol_end                = 0           # SCServo bit end(STS/SMS=0, SCS=1)
 
-sts3032_dict={0:[2,'1x'], 1:[1,'1y'], 2:[4,'2x'], 3:[3,'2y'], 4:[4,'3x'], 5:[3,'3y'], 6:[2,'4x'],7:[1,'4y']} # dict {index:[ID, servo name]}
+sts3032_dict={0:[1,'1x'], 1:[2,'1y'], 2:[3,'2x'], 3:[4,'2y'], 4:[5,'3x'], 5:[6,'3y'], 6:[7,'4x'],7:[8,'4y']} # dict {index:[ID, servo name]}
+
 class sts3032:
 
     def __init__(self, channel, portHandler, packetHandler):
@@ -156,36 +159,30 @@ class sts3032:
 
 #A bigger Class that contains all the motors, should try to initialize the port connection as well in init of this class
 class Servoset:
-    def __init__(self,servo_mask=None):
+    def __init__(self,board_id,servo_channel_list):
         # Initialize PortHandler instance
         # Set the port path
         # Get methods and members of PortHandlerLinux or PortHandlerWindows
         #
         self.SCS_MOVING_STATUS_THRESHOLD = 0               # SCServo moving status threshold
-        self.MAX_ITERATION_NUM = 1000                       
+        self.MAX_ITERATION_NUM = 300     
+                          
+        self.board_id=board_id
+        self.servo_channel_list = servo_channel_list
 
+        self.refresh()
+
+    def refresh(self):
         self.connect()
+        self.servo_list=[]
 
-        self.servo_1x=sts3032(0, self.portHandler, self.packetHandler)
-        self.servo_1y=sts3032(1, self.portHandler, self.packetHandler)
-        self.servo_2x=sts3032(2, self.portHandler, self.packetHandler)
-        self.servo_2y=sts3032(3, self.portHandler, self.packetHandler)
+        for channel in self.servo_channel_list:
+            servo = sts3032(channel, self.portHandler, self.packetHandler)
+            servo.set_acc(255)
+            servo.set_speed(6000)
+            servo.torque_enable()
+            self.servo_list.append(servo)
 
-        self.servo_1x.set_speed(1000)
-        self.servo_2x.set_speed(1000)
-        self.servo_1y.set_speed(1000)
-        self.servo_2y.set_speed(1000)
-
-        self.servo_1x.torque_enable()
-        self.servo_2x.torque_enable()
-        self.servo_1y.torque_enable()
-        self.servo_2y.torque_enable()
-
-        avail_servo_list = [self.servo_1x, self.servo_1y, self.servo_2x, self.servo_2y]
-        if servo_mask is not None:
-            self.servo_list = [avail_servo_list[i] for i in range(len(avail_servo_list)) if servo_mask[i]]
-        else:
-            self.servo_list = avail_servo_list
 
         self.SCS_ID_list=[]
         for servo in self.servo_list:
@@ -193,7 +190,7 @@ class Servoset:
         #initialize turn numbers
         self.turn_num=list(np.zeros(len(self.SCS_ID_list)))
         #
-        self.file = Path(f"/home/rydpiservo/expctl/src/expctl/servers/servoaligner/servos.json")
+        self.file = Path("/home/rydpiservo/expctl/src/expctl/servers/servoaligner/servos_{:s}.json".format(str(self.board_id)))
         self.load()
 
         # make sure the current position gets saved to disk when the programm exits
@@ -201,6 +198,9 @@ class Servoset:
     
     def set_precision(self, precision):
         self.SCS_MOVING_STATUS_THRESHOLD = abs(int(precision))
+    
+    def set_max_iter(self, max_iter):
+        self.MAX_ITERATION_NUM = abs(int(max_iter))
 
 
     def connect(self):
@@ -273,7 +273,7 @@ class Servoset:
         for servo in self.servo_list:
             iteration=1
             while 1:
-                logging.info('Set Zero Trail '+ str(iteration))
+                logging.debug('Set Zero Trail '+ str(iteration))
                 result=servo.set_zero()
                 if result==0:
                     break
@@ -440,6 +440,18 @@ class Servoset:
         self.save()
         # Clear syncread parameter storage
         groupSyncRead.clearParam()
+    
+    def random_play(self):
+        self.set_precision(10)
+        time.sleep(5)
+        for i in range(len(self.servo_list)):
+            goal_list = [2048]* len(self.servo_list)
+            goal_list[i] = 4096
+            self.set_angle(goal_list)
+            goal_list[i] = 2048
+            self.set_angle(goal_list)
+            time.sleep(1)
+
 
     def close(self):
         # Close port

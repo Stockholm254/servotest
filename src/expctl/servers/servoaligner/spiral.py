@@ -37,27 +37,28 @@ class SpiralPath:
         self.N_LOOPS_BEFORE_RESET_ORIGIN = 0.5
         self.COEF_I_RESET_ORIGIN = 2
         self.COEF_I_DECAY = 0.99
-        self._alpha = 0.03
+        self.alpha = 0.03
         self._D = 2
+        self.I_max = self._I_meaningful
         #
         self.init_vars()
         #
         self.callback_function = None
-    
-    
+
+
     @property
     def SPIRAL_RESOLUTION(self):
         return self._SPIRAL_RESOLUTION
-    
+
     @SPIRAL_RESOLUTION.setter
     def SPIRAL_RESOLUTION(self, SPIRAL_RESOLUTION):
         self._SPIRAL_RESOLUTION = SPIRAL_RESOLUTION
         self.delta_theta = 2 * np.pi / self._SPIRAL_RESOLUTION
-    
+
     @property
     def I_meaningful(self):
         return self._I_meaningful
-    
+
     @I_meaningful.setter
     def I_meaningful(self, I_meaningful):
         self._I_meaningful = I_meaningful
@@ -66,12 +67,12 @@ class SpiralPath:
     @property
     def D(self):
         return self._D
-    
+
     @D.setter
     def D(self, D):
         self._D = D
         self.d = self._D
-    
+
     def init_vars(self):
         self.n_iter = 0
         self.pts_x = []
@@ -94,7 +95,11 @@ class SpiralPath:
         self.theta_axis=0
         #
         self.num_before_reset_origin = 0
-    
+
+    def load_options(self, settings):
+        for key, value in settings.items():
+            setattr(self, key, value)
+
 
     def mean(self, ptr, len_mean) -> float:
         if len(ptr) < len_mean:
@@ -162,7 +167,7 @@ class SpiralPath:
         self.x, self.y = self.bounded((x, y))
         self.pts_x.append(self.x)
         self.pts_y.append(self.y)
-    
+
         # >>> update theta value
         self.delta_theta = 2 * np.pi / self._SPIRAL_RESOLUTION
         self.theta += self.delta_theta
@@ -200,7 +205,7 @@ class SpiralPath:
         )
         if mean_I > self.I_meaningful:
             alpha = (
-                self._alpha
+                self.alpha
                 * (np.pi / 2 + np.arctan(ellipcity))
                 * (np.pi / 2 + np.arctan(mean_I / self._I_meaningful))
             )
@@ -229,11 +234,12 @@ class SpiralPath:
         self.n_iter += 1
         return True
 
-    def minimize(self,function,x0,bounds):
+    def maximize(self,function,x0,bounds,options):
+        self.callback_function=function
         self.x, self.y = x0
         self.x0, self.y0 = x0
         self.bounds=bounds
-        self.callback_function=function
+        self.load_options(options)
         #
         with tqdm.tqdm(total=self.SPIRAL_RESOLUTION*self.SPIRAL_SPAN) as pbar:
             while self.n_iter < self.SPIRAL_RESOLUTION*self.SPIRAL_SPAN:
@@ -265,7 +271,7 @@ if __name__ == "__main__":
 
     sp = SpiralPath()
     callback_function = lambda xy: gaussian2d(xy[0], xy[1], mu, cov)
-    sp.minimize(callback_function,x0=(0,0),bounds=[(-20,20),(-20,20)])
+    sp.maximize(callback_function,x0=(0,0),bounds=[(-20,20),(-20,20)])
 
     plt.plot(sp.pts_x, sp.pts_y, "r")
     plt.plot(sp.pts_x0, sp.pts_y0, "b")

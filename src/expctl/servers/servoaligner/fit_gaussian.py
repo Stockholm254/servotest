@@ -32,3 +32,4 @@ def fit_and_plot(X,Y,Z,p0=None):
     #
     plt.imshow(Z_new.reshape(X_new.shape)/np.max(Z_new),origin="lower",extent=[bounds_x[0],bounds_x[1],bounds_y[0],bounds_y[1]])
     plt.contour(X_new,Y_new,Z_new.reshape(X_new.shape),cmap="jet")
+    return popt
