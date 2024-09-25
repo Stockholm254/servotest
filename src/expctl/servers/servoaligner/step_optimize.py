@@ -6,7 +6,7 @@ from servo_const import *
 
 #
 spiral_params = {
-    'I_meaningful': 0.01,
+    'I_meaningful': 0.005,
     'D': 2,
     'SPIRAL_RESOLUTION': 15,
     'SPIRAL_SPAN': 7,
@@ -42,6 +42,8 @@ def step_optimize(servos,
         p0 = np.zeros(N_var)
     bounds = [bounds_single for i in range(N_var)]
     cf = lambda x: callback_func(x,pos_mask,zero=zero)
+    Istart = cf(p0)[1]
+    logging.info(f"Start position: {format_para(p0)}, start I: {Istart}")
     #
     para, Ibst = pts_iterator(N_var=N_var,callback_func=cf, p0=p0, bounds = bounds, options=options, method = method)
     #

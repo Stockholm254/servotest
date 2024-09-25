@@ -42,7 +42,9 @@ def motor_2d_scan(N_pts, scan_range, servos, callback_func):
         servos.set_precision(1)
     #
     plt.matshow(Z)
-    # plt.contourf(X,Y,Z)
+    plt.contourf(X,Y,Z)
+    plt.colorbar()
     print(np.max(Z))
+    print(np.min(Z))
     # plt.show()
     return X,Y,Z

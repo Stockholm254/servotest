@@ -119,27 +119,37 @@ import time
 # fit X,Y,Z to a 2D gaussian
 from scipy.optimize import curve_fit
 
-def gaussian_2d(xy, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
-    x, y = xy
-    a = (np.cos(theta)**2)/(2*sigma_x**2) + (np.sin(theta)**2)/(2*sigma_y**2)
-    b = -(np.sin(2*theta))/(4*sigma_x**2) + (np.sin(2*theta))/(4*sigma_y**2)
-    c = (np.sin(theta)**2)/(2*sigma_x**2) + (np.cos(theta)**2)/(2*sigma_y**2)
-    g = offset + amplitude*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)))
-    return g.ravel()
-
-
-def fit_gaussian_2d(X,Y,Z):
-    X = np.array(X)
-    Y = np.array(Y)
-    Z = np.array(Z)
-    xydata = np.vstack([X.ravel(),Y.ravel()])
-    zdata = Z.ravel()
-    popt, pcov = curve_fit(gaussian_2d, xydata, zdata)
-    return popt
 
 def format_para(para):
     str_para = " ".join(["x_{:d}={:.2f}".format(i,para[i]) for i in range(len(para))])
     return str_para
+
+def compose_para(para,
+                 pos_mask,
+                 zero=None,
+                 jac=None,
+                 jac_master_mask=None,
+                 debug=False):
+    # default para is zero
+    if para is None:
+        para = np.zeros(len(pos_mask))
+    # start from zero point, step para
+    if zero is None:
+        zero = np.zeros(len(pos_mask))
+    para_nr_move = nraddr(zero,para,pos_mask)
+    # set slave knobs according to jac
+    if jac is not None:
+        assert jac_master_mask is not None, "jac_master_mask is not provided"
+        dr = r2nr(para,r_mask = pos_mask)
+        dr = nrselr(dr,jac_master_mask)
+        d_slave_r = np.dot(jac,dr)
+        jac_slave_mask = 1-np.array(jac_master_mask)
+        para_nr_move = nraddr(para_nr_move,d_slave_r,jac_slave_mask)
+        if debug:
+            print(dr)
+            print(d_slave_r)
+            print(para_nr_move)
+    return para_nr_move
 
 if __name__=="__main__":
     a =r2nd([-5,4],[1,0,1,0])

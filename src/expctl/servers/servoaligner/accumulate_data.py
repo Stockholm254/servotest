@@ -8,13 +8,13 @@ import logging
 from collections import defaultdict
 
 logging.basicConfig(
-    level=logging.INFO,  # Set the logging level to DEBUG
-    # level= logging.DEBUG,
+    # level=logging.INFO,  # Set the logging level to DEBUG
+    level= logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
 from servodriver import Servoset
-from servo_util import create_zigzag_X, format_para,a2p,r2nd,r2nr,ndmodr,nrselr,nrmodr,nraddr
+from servo_util import create_zigzag_X, format_para,a2p,r2nd,r2nr,ndmodr,nrselr,nrmodr,nraddr,compose_para
 from spiral import SpiralPath
 from scipy.optimize import differential_evolution
 from fit_gaussian import gaussian_2d,fit_and_plot,fit_gaussian_2d
@@ -31,57 +31,51 @@ def callback_func(para,
                   pos_mask,
                   zero=None,
                   jac=None,
-                  jac_master_mask=None):
-    # start from zero point, step para
-    if zero is None:
-        zero = np.zeros(len(pos_mask))
-    para_nr_move = nraddr(zero,para,pos_mask)
-    # set slave knobs according to jac
-    if jac is not None:
-        assert jac_master_mask is not None, "jac_master_mask is not provided"
-        dr = r2nr(para,r_mask = pos_mask)
-        dr = nrselr(dr,jac_master_mask)
-        # print(dr)
-        d_slave_r = np.dot(jac,dr)
-        # print(d_slave_r)
-        jac_slave_mask = 1-np.array(jac_master_mask)
-        para_nr_move = nraddr(para_nr_move,d_slave_r,jac_slave_mask)
-        # print(para_nr_move)
+                  jac_master_mask=None,
+                  debug=False,
+                  **kwargs):
 
+    para_nr_move = compose_para(para, pos_mask, zero, jac, jac_master_mask,debug=debug,**kwargs)
     #
-    goal_position_list  = r2nd(list(para_nr_move))
-    # print(goal_position_list)
-    servos.set_angle(goal_position_list)
-    #
-    data_cache = []
-    for m in range(2):
-        # data = ADS1115_fiber.value
-        data = MCP3424_fiber.convert_and_read()
-        data_cache.append(data)
-    z = float(np.mean(np.array(data)))
-    print(para,z)
-    return tuple(para),z
+    if not debug:
+        goal_position_list  = r2nd(list(para_nr_move))
+        # print(goal_position_list)
+        servos.set_angle(goal_position_list)
+        #
+        data_cache = []
+        for m in range(2):
+            # data = ADS1115_fiber.value
+            data = MCP3424_fiber.convert_and_read()
+            data_cache.append(data)
+        z = float(np.mean(np.array(data)))
+        # print(para,z)
+        return tuple(para),z
 
 cf0 = lambda para: callback_func(para, pos_mask=POS_ALL_MASK)
-print(cf0([0,0,0,0,0,0,0,0]))
+cf0([0,0,0,0,0,0,0,0])
 
-jac_assume = np.array(np.load('/home/rydpiservo/servodata/jac_pm_50.npy',allow_pickle=True))
+jac_assume = np.array(np.load('/home/rydpiservo/servodata/jac_pm_250.npy',allow_pickle=True))
 print(jac_assume)
 
 def cord_pm_offset(N,normd,i):
     # choose a position in offset to be +-30, each sample 5 times
     j = i%4
     pm = 1 if i//4%2==0 else -1
-    normd = N
     offset = np.zeros(4)
     offset[j] = pm*normd
     return offset
+
+def random_pm_offset(N,normd):
+    # offset with arbitrary direction with norm=normd
+    offset = np.random.randn(4)
+    offset = offset/np.linalg.norm(offset)*normd
+    return offset
 #
-N=40
-normd = 100
+N=12
+normd = 360
 #
 for i in range(N):
-    filename='/home/rydpiservo/servodata/jacobian_pm_{:d}.npy'.format(normd)
+    filename='/home/rydpiservo/servodata/jacobian_rand_{:d}.npy'.format(normd)
     if not os.path.exists(filename):
         dataset = defaultdict(list)
         np.save(filename,dataset)
@@ -91,22 +85,19 @@ for i in range(N):
 
     #
     zero = np.array([0,0,0,0,0,0,0,0],dtype=float)
-    offset = cord_pm_offset(N,normd,i)
+    # offset = cord_pm_offset(N,normd,i)
+    offset = random_pm_offset(N,normd)
     offset_mask = A_POS_ALL_MASK
-    zero = nraddr(zero,offset,offset_mask)
-    logging.info(f"Zero = {zero}")
+    zero = compose_para(para=offset,pos_mask = offset_mask, zero=zero,jac=jac_assume,jac_master_mask=A_POS_ALL_MASK)
+    logging.info(f"Offset = {offset}, Zero = {zero}")
     #
-
+    #
     try:
         logging.info(f"Start optimization with zero = {zero}")
-        # print(jac_assume)
-        # print(np.array(offset))
-        p0 = np.dot(jac_assume,np.array(offset))
-        logging.info(f"p0 = {p0}")
-        # zero = step_optimize(servos,callback_func,pos_mask = B_X_Y_MASK,zero=zero,bounds_single = (-200,200),p0=p0)
-        # zero = step_optimize(servos,callback_func,pos_mask = B_X_XDOT_MASK,zero=zero)
-        # zero = step_optimize(servos,callback_func,pos_mask = B_Y_YDOT_MASK,zero=zero)
-        # zero = step_optimize(servos,callback_func,pos_mask = B_POS_ALL_MASK,zero=zero,method='L-BFGS-B')
+        zero = step_optimize(servos,callback_func,pos_mask = B_X_Y_MASK,zero=zero,bounds_single = (-200,200))
+        zero = step_optimize(servos,callback_func,pos_mask = B_X_XDOT_MASK,zero=zero)
+        zero = step_optimize(servos,callback_func,pos_mask = B_Y_YDOT_MASK,zero=zero)
+        zero = step_optimize(servos,callback_func,pos_mask = B_POS_ALL_MASK,zero=zero,method='L-BFGS-B')
         #
         _,I = callback_func(zero,pos_mask=POS_ALL_MASK)
         print(I)

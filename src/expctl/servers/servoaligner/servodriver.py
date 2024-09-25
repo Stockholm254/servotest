@@ -65,7 +65,7 @@ class sts3032:
         except:
             logging.error(self.message + 'Read not sucessful!')
             return 1
-    
+
     def set_acc(self,set_acc):
         # Write SCServo acc
         self.SCS_MOVING_ACC=set_acc
@@ -86,7 +86,7 @@ class sts3032:
         elif scs_error != 0:
             logging.error(self.message+"%s" % self.packetHandler.getRxPacketError(scs_error))
         logging.info(self.message+'SCServo speed set!')
-        
+
     def set_angle(self, goal_position):
 
         if goal_position>=0:
@@ -113,7 +113,7 @@ class sts3032:
 
         i=0
         while i<5000:
-            # Read SCServo present position 
+            # Read SCServo present position
             scs_present_position_speed, scs_comm_result, scs_error = self.packetHandler.read4ByteTxRx(self.portHandler, self.SCS_ID, ADDR_SCS_PRESENT_POSITION)
             if scs_comm_result != COMM_SUCCESS:
                 logging.info("%s" % self.packetHandler.getTxRxResult(scs_comm_result))
@@ -139,7 +139,7 @@ class sts3032:
             if (abs(goal_position - self.angle_current) ==0) and (scs_present_status==0):
                 print(i,scs_present_status,self.raw_angle_current, self.angle_current, goal_position)
                 break
-    
+
     def home(self):
         self.set_angle(2048)
 
@@ -165,8 +165,8 @@ class Servoset:
         # Get methods and members of PortHandlerLinux or PortHandlerWindows
         #
         self.SCS_MOVING_STATUS_THRESHOLD = 0               # SCServo moving status threshold
-        self.MAX_ITERATION_NUM = 300     
-                          
+        self.MAX_ITERATION_NUM = 500
+
         self.board_id=board_id
         self.servo_channel_list = servo_channel_list
 
@@ -179,7 +179,7 @@ class Servoset:
         for channel in self.servo_channel_list:
             servo = sts3032(channel, self.portHandler, self.packetHandler)
             servo.set_acc(255)
-            servo.set_speed(6000)
+            servo.set_speed(3000)
             servo.torque_enable()
             self.servo_list.append(servo)
 
@@ -195,10 +195,10 @@ class Servoset:
 
         # make sure the current position gets saved to disk when the programm exits
         atexit.register(self.save)
-    
+
     def set_precision(self, precision):
         self.SCS_MOVING_STATUS_THRESHOLD = abs(int(precision))
-    
+
     def set_max_iter(self, max_iter):
         self.MAX_ITERATION_NUM = abs(int(max_iter))
 
@@ -239,7 +239,7 @@ class Servoset:
 
     def save(self):
         # persist encoder position to file when programm is closed
-        dct = {'turns': self.turn_num, 'angles': self.multi_position_list, 'angles_deg': list((np.array(self.multi_position_list)+np.array(self.turn_num)*4096-2048)*360/4096)}
+        dct = {'turns': [int(x) for x in self.turn_num], 'angles': self.multi_position_list, 'angles_deg': list((np.array(self.multi_position_list)-2048)*360/4096)}
         self.file.write_text(json.dumps(dct))
         # with self.file.open("a") as f:
         #     f.write(json.dumps(dct))
@@ -262,7 +262,9 @@ class Servoset:
         else:
             logging.info("No position data found on disk")
             self.turn_num = list(np.zeros(len(self.SCS_ID_list)))
-            self.multi_position_list = list(np.zeros(len(self.SCS_ID_list)))
+            self.multi_position_list = list(np.ones(len(self.SCS_ID_list))*2048)
+            # create new file
+            self.save()
 
 
     # def __del__(self):
@@ -280,6 +282,7 @@ class Servoset:
                 iteration+=1
         #Set turn number to be zero when we set zero on all the motors.
         self.turn_num=list(np.zeros(len(self.SCS_ID_list)))
+        self.multi_position_list=list(np.ones(len(self.SCS_ID_list))*2048)
         self.save()
 
 
@@ -297,12 +300,45 @@ class Servoset:
             goal_position_list.append(2048)
         self.set_angle(goal_position_list)
 
+    def create_group_sync_read(self, start_address, data_length):
+        # Initialize GroupSyncRead instace
+        groupSyncRead = GroupSyncRead(self.portHandler, self.packetHandler, start_address, data_length)
+        # Add parameter
+        for SCS_ID in self.SCS_ID_list:
+            scs_addparam_result = groupSyncRead.addParam(SCS_ID)
+            if scs_addparam_result != True:
+                logging.error("[ID:%03d] groupSyncRead addparam failed" % SCS_ID)
+                quit()
+        return groupSyncRead
+
+    def group_sync_read(self, groupSyncRead,start_address, data_length):
+        #Pre-read
+        scs_comm_result = groupSyncRead.txRxPacket()
+        if scs_comm_result != COMM_SUCCESS:
+            logging.info("%s" % self.packetHandler.getTxRxResult(scs_comm_result))
+
+        datas = []
+
+        for SCS_ID in self.SCS_ID_list:
+            scs_getdata_result = groupSyncRead.isAvailable(SCS_ID, start_address, data_length)
+            if scs_getdata_result == True:
+                datas.append(groupSyncRead.getData(SCS_ID, start_address, data_length))
+            else:
+                logging.error("[ID:%03d] groupSyncRead getdata failed" % SCS_ID)
+                datas.append(0)
+
+        return datas
+
+    def get_scs_loword(self, datas):
+        return [SCS_LOWORD(data) for data in datas]
+
     def set_angle(self, goal_position_list):
 
         ADDR_STS_GOAL_ACC          = 41
         ADDR_STS_GOAL_POSITION     = 42
         ADDR_STS_GOAL_SPEED        = 46
         ADDR_STS_PRESENT_POSITION  = 56
+        ADDR_STS_MOVING_STATUS     = 66
 
         scs_goal_position=[]
         for goal_position in goal_position_list:
@@ -319,14 +355,10 @@ class Servoset:
         groupSyncWrite = GroupSyncWrite(self.portHandler, self.packetHandler, ADDR_STS_GOAL_POSITION, 2)
 
         # Initialize GroupSyncRead instace for Present Position
-        groupSyncRead = GroupSyncRead(self.portHandler, self.packetHandler, ADDR_STS_PRESENT_POSITION, 4)
-
-        # Add parameter storage for SCServo present position value
-        for SCS_ID in self.SCS_ID_list:
-            scs_addparam_result = groupSyncRead.addParam(SCS_ID)
-            if scs_addparam_result != True:
-                logging.error("[ID:%03d] groupSyncRead addparam failed" % SCS_ID)
-                quit()
+        groupSyncRead = self.create_group_sync_read(ADDR_STS_PRESENT_POSITION, 4)
+        # groupSyncRead = self.create_group_sync_read(ADDR_STS_PRESENT_POSITION, 2)
+        # Tim
+        groupSyncReadStatus = self.create_group_sync_read(ADDR_STS_MOVING_STATUS, 1)
 
         # Allocate goal position value into byte array
         # Add SCServo goal position values to the Syncwrite parameter storage
@@ -347,32 +379,15 @@ class Servoset:
         # Clear syncwrite parameter storage
         groupSyncWrite.clearParam()
 
-        #Pre-read
-        scs_comm_result = groupSyncRead.txRxPacket()
-        if scs_comm_result != COMM_SUCCESS:
-            logging.info("%s" % self.packetHandler.getTxRxResult(scs_comm_result))
 
-        scs_present_position_speed = []
-
-        for SCS_ID in self.SCS_ID_list:
-            scs_getdata_result = groupSyncRead.isAvailable(SCS_ID, ADDR_STS_PRESENT_POSITION, 4)
-            if scs_getdata_result == True:
-                scs_present_position_speed.append(groupSyncRead.getData(SCS_ID, ADDR_STS_PRESENT_POSITION, 4))
-            else:
-                logging.error("[ID:%03d] groupSyncRead getdata failed" % SCS_ID)
-                scs_present_position_speed.append(0)
-
+        scs_present_position_speed = self.group_sync_read(groupSyncRead,ADDR_STS_PRESENT_POSITION, 4)
         status_string='Start Position: '+'\t'
-        scs_present_position_list=[]
+        scs_present_position_list=self.get_scs_loword(scs_present_position_speed)
+        # scs_present_position_list = self.group_sync_read(groupSyncRead, ADDR_STS_PRESENT_POSITION, 2)
 
-        index=0
-        for SCS_ID in self.SCS_ID_list:
-            scs_present_position = SCS_LOWORD(scs_present_position_speed[index])
-            scs_present_position_list.append(scs_present_position)
-            index+=1
 
         self.multi_position_list=[]
-        for index in range(len(self.SCS_ID_list)): 
+        for index in range(len(self.SCS_ID_list)):
             self.multi_position_list.append(int(scs_present_position_list[index]+self.turn_num[index]*4096))
             status_string+='[ID:'+f'{self.SCS_ID_list[index]:03d}'+'] Goal:'+f'{goal_position_list[index]:03d}'+' Pres:'+f'{self.multi_position_list[index]:03d}'+'\t'
 
@@ -381,36 +396,14 @@ class Servoset:
 
         iteration=0
         while iteration<self.MAX_ITERATION_NUM:
-            # Syncread present single turn position
-            scs_comm_result = groupSyncRead.txRxPacket()
-            if scs_comm_result != COMM_SUCCESS:
-                logging.info("%s" % self.packetHandler.getTxRxResult(scs_comm_result))
-
-            scs_present_position_speed = []
-
-            for SCS_ID in self.SCS_ID_list:
-                # Check if groupsyncread data of SCServo is available
-                scs_getdata_result = groupSyncRead.isAvailable(SCS_ID, ADDR_STS_PRESENT_POSITION, 4)
-                if scs_getdata_result == True:
-                    # Get SCServo#1 present position value
-                    scs_present_position_speed.append(groupSyncRead.getData(SCS_ID, ADDR_STS_PRESENT_POSITION, 4))
-                else:
-                    logging.error("[ID:%03d] groupSyncRead getdata failed" % SCS_ID)
-                    scs_present_position_speed.append(0)
-            
+            scs_present_position_speed = self.group_sync_read(groupSyncRead,ADDR_STS_PRESENT_POSITION, 4)
             status_string='Iteration: '+str(iteration)+'\t'
-            # Printing current status
-            scs_present_position_list=[]
-
-            index=0
-            for SCS_ID in self.SCS_ID_list:
-                scs_present_position = SCS_LOWORD(scs_present_position_speed[index])
-                scs_present_position_list.append(scs_present_position)
-                index+=1
+            scs_present_position_list=self.get_scs_loword(scs_present_position_speed)
+            # scs_present_position_list = self.group_sync_read(groupSyncRead, ADDR_STS_PRESENT_POSITION, 2)
 
             self.multi_position_list=[]
             #determine whether turn number has been changed
-            for index in range(len(self.SCS_ID_list)): 
+            for index in range(len(self.SCS_ID_list)):
                 if abs(scs_present_position_list[index]-scs_present_position_list_cache[index])>3500:
                     if scs_present_position_list[index]-scs_present_position_list_cache[index]>0:
                         self.turn_num[index]=self.turn_num[index]-1
@@ -423,12 +416,16 @@ class Servoset:
 
             scs_present_position_list_cache=scs_present_position_list.copy()
 
+            # Tim
+            sts_moving_status = self.group_sync_read(groupSyncReadStatus,ADDR_STS_MOVING_STATUS, 1)
+
             if iteration%100==0:
                 logging.debug(status_string)
-            
+                logging.debug(sts_moving_status)
+
             #count how many motors have finished moving
             is_done=0
-            for i in range(len(self.SCS_ID_list)): 
+            for i in range(len(self.SCS_ID_list)):
                 if abs(goal_position_list[i] - self.multi_position_list[i]) <= self.SCS_MOVING_STATUS_THRESHOLD:
                     is_done+=1
 
@@ -440,7 +437,7 @@ class Servoset:
         self.save()
         # Clear syncread parameter storage
         groupSyncRead.clearParam()
-    
+
     def random_play(self):
         self.set_precision(10)
         time.sleep(5)
