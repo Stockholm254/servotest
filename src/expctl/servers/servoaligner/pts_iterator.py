@@ -5,6 +5,7 @@ import logging
 import numpy as np
 from spiral import SpiralPath
 
+
 def pts_iterator(
     N_var:int,
     callback_func: Callable,

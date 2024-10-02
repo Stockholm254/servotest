@@ -1,4 +1,5 @@
-from servo_util import compose_para
+from servo_util import compose_para, r2nd
+import numpy as np
 
 def callback_func(para,
                   pos_mask,
@@ -13,7 +14,7 @@ def callback_func(para,
     if not debug:
         goal_position_list  = r2nd(list(para_nr_move))
         # print(goal_position_list)
-        servos.set_angle(goal_position_list)
+        servos.set_position(goal_position_list)
         #
         data_cache = []
         for m in range(2):
@@ -23,3 +24,6 @@ def callback_func(para,
         z = float(np.mean(np.array(data)))
         # print(para,z)
         return tuple(para),z
+    
+# cf0 = lambda para: callback_func(para, pos_mask=POS_ALL_MASK)
+# cf0([0,0,0,0,0,0,0,0])
