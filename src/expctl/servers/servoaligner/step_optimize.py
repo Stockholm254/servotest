@@ -1,16 +1,15 @@
 import numpy as np
-from pts_iterator import pts_iterator
+from .pts_iterator import pts_iterator
 import logging
-from servo_util import create_zigzag_X, format_para,a2p,r2nd,r2nr,ndmodr,nrselr,nrmodr,nraddr
-from servo_const import *
+from .servo_util import create_zigzag_X, format_para,a2p,r2nd,r2nr,ndmodr,nrselr,nrmodr,nraddr
 
 #
 spiral_params = {
     'I_meaningful': 0.005,
-    'D': 2,
-    'SPIRAL_RESOLUTION': 15,
-    'SPIRAL_SPAN': 7,
-    'SINGLE_SPIRAL_SPAN': 3.5,
+    'D': 2.4,
+    'SPIRAL_RESOLUTION': 13,
+    'SPIRAL_SPAN': 6,
+    'SINGLE_SPIRAL_SPAN': 3,
     'N_LOOPS_BEFORE_RESET_ORIGIN': 0.5,
     'MAX_X0Y0_DISPLACEMENT': 10,
     'COEF_I_RESET_ORIGIN': 1.4,
@@ -31,10 +30,10 @@ def step_optimize(servos,
                   )->np.ndarray:
     #
     if method == 'L-BFGS-B':
-        servos.set_precision(1)
+        # servos.set_precision(1)
         options = BFGS_params
     elif method == 'spiral':
-        servos.set_precision(5)
+        # servos.set_precision(5)
         options = spiral_params
     #
     N_var = np.sum(pos_mask)

@@ -3,7 +3,7 @@ import scipy
 import matplotlib.pyplot as plt
 import logging
 import numpy as np
-from spiral import SpiralPath
+from .spiral import SpiralPath
 
 
 def pts_iterator(

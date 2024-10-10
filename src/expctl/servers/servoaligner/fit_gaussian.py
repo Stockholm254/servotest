@@ -2,6 +2,7 @@
 from scipy.optimize import curve_fit
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.special import erfc
 
 
 def gaussian_2d(x: float, y: float, mu, cov) -> float:
@@ -12,13 +13,15 @@ def gaussian_2d(x: float, y: float, mu, cov) -> float:
     coeff = 1 / (2 * np.pi * np.sqrt(det_cov))
     return coeff * z
 
-def gaussian_2d_smooth_heaviside(x: float, y: float, mu, cov, transition_width) -> float:
+def gaussian_2d_smooth_heaviside(x: float, y: float,mu, cov,  amp ,transition_width) -> float:
     inv_cov = np.linalg.inv(cov)
     r = np.array([x, y]) - mu
     quadratic_form = r.T @ inv_cov @ r
 
     # Define a smooth transition using a sigmoid-like function
-    smooth_transition = 1 / (1 + np.exp((quadratic_form - 1) / transition_width))
+    # smooth_transition = 1 / (1 + np.exp((quadratic_form - 1) / transition_width))
+    # using scipy.erfc
+    smooth_transition = amp * erfc((quadratic_form - 1) / transition_width)
 
     return smooth_transition
 
@@ -53,6 +56,10 @@ def statistics_for_gaussian2d(xdata, ydata, Idata):
 
     return mu, cov
 
+def popt_get_mu_cov(popt):
+    mu = popt[:2]
+    cov = np.array([[popt[2], popt[3]], [popt[3], popt[4]]])
+    return mu, cov
 
 def fit_gaussian_2d(X,Y,Z,p0=None):
     X = np.array(X)
@@ -60,8 +67,7 @@ def fit_gaussian_2d(X,Y,Z,p0=None):
     Z = np.array(Z)
     # fit to gaussian_2d_cov using least square
     def _residuals(p, x, y, z):
-        mu = p[:2]
-        cov = np.array([[p[2], p[3]], [p[3], p[4]]])
+        mu, cov = popt_get_mu_cov(p)
         z_fit = np.array([gaussian_2d(x_, y_, mu, cov) for x_, y_ in zip(x, y)])
         return z - z_fit
 
@@ -86,9 +92,8 @@ def fit_gaussian_2d_smooth_heaviside(X,Y,Z,p0=None):
     Z = np.array(Z)
     # fit to gaussian_2d_cov using least square
     def _residuals(p, x, y, z):
-        mu = p[:2]
-        cov = np.array([[p[2], p[3]], [p[3], p[4]]])
-        z_fit = np.array([gaussian_2d_smooth_heaviside(x_, y_, mu, cov, p[5]) for x_, y_ in zip(x, y)])
+        mu, cov = popt_get_mu_cov(p)
+        z_fit = np.array([gaussian_2d_smooth_heaviside(x_, y_, mu, cov, p[5], p[6]) for x_, y_ in zip(x, y)])
         return z - z_fit
 
     xdata = np.array(X).flatten()
@@ -97,7 +102,7 @@ def fit_gaussian_2d_smooth_heaviside(X,Y,Z,p0=None):
 
     if p0 is None:
         mu, cov = statistics_for_gaussian2d(X, Y, Z)
-        p0 = np.array([mu[0], mu[1], cov[0, 0], cov[0, 1], cov[1, 1], 0.1])
+        p0 = np.array([mu[0], mu[1], cov[0, 0], cov[0, 1], cov[1, 1], np.max(Z)/2, 0.1])
         print("Initial guess for p0: ", p0)
 
     from scipy.optimize import least_squares
@@ -107,31 +112,54 @@ def fit_gaussian_2d_smooth_heaviside(X,Y,Z,p0=None):
     return popt
 
 
-def fit_and_plot(X,Y,Z,p0=None):
+def fit_and_plot(X,Y,Z,p0=None,ax=None):
     popt = fit_gaussian_2d(X,Y,Z,p0=p0)
     bounds_x = (np.min(X),np.max(X))
     bounds_y = (np.min(Y),np.max(Y))
     X_new = np.linspace(*bounds_x,100)
     Y_new = np.linspace(*bounds_y,100)
     X_new,Y_new = np.meshgrid(X_new,Y_new)
-    Z_new = np.array([gaussian_2d(x_,y_,popt[:2],np.array([[popt[2],popt[3]],[popt[3],popt[4]]]) ) for x_,y_ in zip(X_new.ravel(),Y_new.ravel())])
+    mu, cov = popt_get_mu_cov(popt)
+    Z_new = np.array([gaussian_2d(x_,y_,mu,cov) for x_,y_ in zip(X_new.ravel(),Y_new.ravel())])
     #
-    plt.imshow(Z.reshape(X.shape)/np.max(Z),origin="lower",extent=[bounds_x[0],bounds_x[1],bounds_y[0],bounds_y[1]])
-    plt.contour(X_new,Y_new,Z_new.reshape(X_new.shape),cmap="jet")
+    if ax is None:
+        fig, ax = plt.subplots()
+    ax.imshow(Z.reshape(X.shape)/np.max(Z),origin="lower",extent=[bounds_x[0],bounds_x[1],bounds_y[0],bounds_y[1]])
+    ax.contour(X_new,Y_new,Z_new.reshape(X_new.shape),cmap="jet")
     return popt
 
-def fit_and_plot_smooth_heaviside(X,Y,Z,p0=None):
+def fit_and_plot_smooth_heaviside(X,Y,Z,p0=None,ax=None):
     popt = fit_gaussian_2d_smooth_heaviside(X,Y,Z,p0=p0)
     bounds_x = (np.min(X),np.max(X))
     bounds_y = (np.min(Y),np.max(Y))
     X_new = np.linspace(*bounds_x,100)
     Y_new = np.linspace(*bounds_y,100)
     X_new,Y_new = np.meshgrid(X_new,Y_new)
-    Z_new = np.array([gaussian_2d_smooth_heaviside(x_,y_,popt[:2],np.array([[popt[2],popt[3]],[popt[3],popt[4]]]), popt[5]) for x_,y_ in zip(X_new.ravel(),Y_new.ravel())])
+    mu, cov = popt_get_mu_cov(popt)
+    Z_new = np.array([gaussian_2d_smooth_heaviside(x_,y_,mu,cov, popt[5], popt[6]) for x_,y_ in zip(X_new.ravel(),Y_new.ravel())])
     #
-    plt.imshow(Z.reshape(X.shape)/np.max(Z),origin="lower",extent=[bounds_x[0],bounds_x[1],bounds_y[0],bounds_y[1]])
-    plt.contour(X_new,Y_new,Z_new.reshape(X_new.shape),cmap="jet")
+    if ax is None:
+        fig, ax = plt.subplots()
+    ax.imshow(Z.reshape(X.shape)/np.max(Z),origin="lower",extent=[bounds_x[0],bounds_x[1],bounds_y[0],bounds_y[1]])
+    ax.contour(X_new,Y_new,Z_new.reshape(X_new.shape),cmap="jet")
     return popt
+
+def ZX(X0,Z_row):
+    """ average X with weights Z_row """
+    return np.dot(X0,Z_row)/np.sum(Z_row)
+
+def ZZX(X0,Z_row):
+    """ average (X0-mu)^2 with weights Z_row """
+    mu = ZX(X0,Z_row)
+    return np.dot((X0-mu)**2,Z_row)/np.sum(Z_row)
+
+def ZZZX(X0,Z_row):
+    """ average (X0-mu)^3 with weights Z_row """
+    mu = ZX(X0,Z_row)
+    return np.dot((X0-mu)**3,Z_row)/np.sum(Z_row)
+
+def statistics_skewness(X0,Z_row):
+    return ZZZX(X0,Z_row)/ZZX(X0,Z_row)**1.5
 
 if __name__ == "__main__":
     # test

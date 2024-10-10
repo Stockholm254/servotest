@@ -240,6 +240,7 @@ class SpiralPath:
         self.x0, self.y0 = x0
         self.bounds=bounds
         self.load_options(options)
+        self.I_max = self.callback_function((self.x, self.y))
         #
         with tqdm.tqdm(total=self.SPIRAL_RESOLUTION*self.SPIRAL_SPAN) as pbar:
             while self.n_iter < self.SPIRAL_RESOLUTION*self.SPIRAL_SPAN:

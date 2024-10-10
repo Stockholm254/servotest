@@ -95,6 +95,7 @@ def compose_para(para,
                  zero=None,
                  jac=None,
                  jac_master_mask=None,
+                 jac_x0=None,
                  debug=False):
     # default para is zero
     if para is None:
@@ -109,6 +110,8 @@ def compose_para(para,
         dr = r2nr(para,r_mask = pos_mask)
         dr = nrselr(dr,jac_master_mask)
         d_slave_r = np.dot(jac,dr)
+        if jac_x0 is not None:
+            d_slave_r = d_slave_r + jac_x0
         jac_slave_mask = 1-np.array(jac_master_mask)
         para_nr_move = nraddr(para_nr_move,d_slave_r,jac_slave_mask)
         if debug:

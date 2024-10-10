@@ -17,7 +17,6 @@ class STSServer(Server):
 		self.servo_channel_list=servo_channel_list
 		self.servos=Servoset(board_id,servo_channel_list)
 		self.servos.torques_enable()
-		#self.servos.set_zero()
 		#Here we probably don't need serial number for servo motors
 
 	def __del__(self):
@@ -66,6 +65,18 @@ class STSServer(Server):
 
 	def plotdata(self):
 		return [0,], [0,]
+	
+	def set_zero_args(self):
+		self.servos.set_zero()
+
+	def home_args(self,args):
+		self.servos.home()
+
+	def set_angle_args(self, args):
+		self.servos.set_angle(args.angle)
+
+	def set_single_args(self, args):
+		self.servos.set_single(args.index, args.angle)
 
 
 if __name__ == '__main__':
@@ -80,22 +91,25 @@ if __name__ == '__main__':
 	# Create a servozero subcommand
 	parser = argparse.ArgumentParser()
 	subparsers = parser.add_subparsers()
+	DE_HYSTERESIS = True
+	server.servos.de_hysterisis = DE_HYSTERESIS
 
 	# set_zero
 	parser_zero = subparsers.add_parser('set_zero', help='Set the current position as zero')
-	parser_zero.set_defaults(func=server.servos.set_zero_args)
+	parser_zero.set_defaults(func=server.set_zero_args)
 	# go home
 	parser_home = subparsers.add_parser('home', help='Move to the home position')
-	parser_home.set_defaults(func=server.servos.home_args)
+	parser_home.set_defaults(func=server.home_args)
 	# set_angle
 	parser_angle = subparsers.add_parser('set_angle', help='Move to the specified angle')
 	parser_angle.add_argument('angle', nargs='+', type=float, help='Angle to move to')
-	parser_angle.set_defaults(func=server.servos.set_angle_args)
+	parser_angle.set_defaults(func=server.set_angle_args)
 	# set single angle
 	parser_single = subparsers.add_parser('set_single', help='Move a single servo to the specified angle')
 	parser_single.add_argument('index', type=int, help='Channel to move')
 	parser_single.add_argument('angle', type=float,help='Angle to move to')
-	parser_single.set_defaults(func=server.servos.set_single_args)
+	parser_single.set_defaults(func=server.set_single_args)
+
 
 	# if len(sys.argv) <= 1:
 	# 	sys.argv.append('--help')

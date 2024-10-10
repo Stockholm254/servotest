@@ -12,9 +12,7 @@ def callback_func(para,
     para_nr_move = compose_para(para, pos_mask, zero, jac, jac_master_mask,debug=debug,**kwargs)
     #
     if not debug:
-        goal_position_list  = r2nd(list(para_nr_move))
-        # print(goal_position_list)
-        servos.set_position(goal_position_list)
+        servos.set_angle(list(para_nr_move))
         #
         data_cache = []
         for m in range(2):

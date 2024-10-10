@@ -6,6 +6,7 @@ from smbus2 import SMBus,i2c_msg
 from .scservo_sdk import *                    # Uses SCServo SDK library
 import MCP342x
 import logging
+from copy import deepcopy
 
 import json
 from pathlib import Path
@@ -162,7 +163,8 @@ class Servoset:
     def __init__(self,board_id=0,servo_channel_list=[]):
         self.board_id=board_id
         self.servo_channel_list = servo_channel_list
-        self.timeout = 5
+        self.timeout = 1
+        self.de_hysterisis = True
 
         self.refresh()
 
@@ -172,8 +174,8 @@ class Servoset:
 
         for channel in self.servo_channel_list:
             servo = sts3032(channel, self.portHandler, self.packetHandler)
-            servo.set_acc(100)
-            servo.set_speed(3000)
+            servo.set_acc(60)
+            servo.set_speed(1000)
             servo.torque_enable()
             self.servo_list.append(servo)
 
@@ -275,12 +277,9 @@ class Servoset:
                     break
                 iteration+=1
         #Set turn number to be zero when we set zero on all the motors.
-        self.turn_num=list(np.zeros(len(self.SCS_ID_list)))
-        self.multi_position_list=list(np.ones(len(self.SCS_ID_list))*2048)
+        self.turn_num=[0]*len(self.SCS_ID_list)
+        self.multi_position_list=[2048]*len(self.SCS_ID_list)
         self.save()
-
-    def set_zero_args(self, args):
-        self.set_zero()
 
 
     def torques_enable(self):
@@ -295,9 +294,6 @@ class Servoset:
         logging.info('going home')
         goal_position_list=np.ones(len(self.SCS_ID_list))*2048
         self.set_position(goal_position_list)
-
-    def home_args(self, args):
-        self.home()
 
     def set_group_sync_read(self, groupSyncRead):
         # Add parameter
@@ -345,6 +341,8 @@ class Servoset:
 
     def get_position(self):
         scs_present_position_list = self.group_sync_read(self.groupSyncRead_position, ADDR_STS_PRESENT_POSITION, 2)
+        self.multi_position_list = list(scs_present_position_list)
+        self.save()
         return scs_present_position_list
 
     def get_angle(self):
@@ -355,14 +353,37 @@ class Servoset:
         sts_moving_status = self.group_sync_read(self.groupSyncRead_status,ADDR_STS_MOVING_STATUS, 1)
         return sts_moving_status
 
+
     def set_position(self, goal_position_list, pos_mask=None):
+        self.get_position()
+        #
         if len(goal_position_list)!=len(self.SCS_ID_list):
             logging.error('Goal position list length {} does not match the number of motors {}'.format(len(goal_position_list),len(self.SCS_ID_list)))
             return
         if pos_mask is not None:
             goal_position_list = [goal_position_list[i] if pos_mask[i] else self.multi_position_list[i] for i in range(len(goal_position_list))]
         goal_position_list = [int(goal_position) for goal_position in list(goal_position_list)]
+        #
+        POS_THRESHOLD = 2
+        # always go to plus direction, if goes to negative, then first go to more negative, then go to positive
+        de_hysterisis_mask = [0]* len(self.SCS_ID_list)
+        for i in range(len(self.SCS_ID_list)):
+            d_pos = goal_position_list[i] - self.multi_position_list[i]
+            if (d_pos<0) and (abs(d_pos)>POS_THRESHOLD):
+                de_hysterisis_mask[i] = 1
+        #
+        if (not self.de_hysterisis) or (np.sum(de_hysterisis_mask)==0):
+            self._set_position(goal_position_list)
+        else:
+            # print(de_hysterisis_mask,goal_position_list)
+            goal_position_list_deh = [x-100 if de_hysterisis_mask[i] else x for i,x in enumerate(goal_position_list)]
+            logging.debug('De-hysterisis On')
+            logging.debug("First go to {} and then go to {}".format(goal_position_list_deh,goal_position_list))
+            self._set_position(goal_position_list_deh)
+            self._set_position(goal_position_list)
 
+
+    def _set_position(self, goal_position_list):
         scs_goal_position=[]
         for goal_position in goal_position_list:
             if goal_position>=0:
@@ -407,8 +428,7 @@ class Servoset:
                 break
             iteration+=1
 
-        self.multi_position_list=self.get_position()
-        self.save()
+        self.get_position()
         # Clear syncread parameter storage
         # self.groupSyncRead_position.clearParam()
 
@@ -422,10 +442,8 @@ class Servoset:
 
     def set_angle(self, goal_angle_list,pos_mask=None):
         goal_position_list = self.angle_to_position(goal_angle_list)
-        self.set_position(goal_position_list,pos_mask=None)
+        self.set_position(goal_position_list,pos_mask=pos_mask)
 
-    def set_angle_args(self, args):
-        self.set_angle(args.angle)
 
     def set_single(self, index, angle):
         pos_mask = [0 for i in range(len(self.servo_list))]
@@ -433,10 +451,6 @@ class Servoset:
         angle_list = [0 for i in range(len(self.servo_list))]
         angle_list[index] = angle
         self.set_angle(angle_list, pos_mask)
-    
-    def set_single_args(self, args):
-        # print(args.index, args.angle)
-        self.set_single(args.index, args.angle)
 
     def random_play(self):
         # self.set_precision(10)
