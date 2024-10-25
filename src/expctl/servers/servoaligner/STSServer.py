@@ -77,6 +77,15 @@ class STSServer(Server):
 
 	def set_single_args(self, args):
 		self.servos.set_single(args.index, args.angle)
+	
+	def set_dehys_args(self, args):
+		print(args.dehys_state)
+		if int(args.dehys_state) == 0:
+			logger.info("Dehysterisis is turned off")
+			self.servos.de_hysterisis = False
+		elif int(args.dehys_state) == 1:
+			logger.info("Dehysterisis is turned on")
+			self.servos.de_hysterisis = True
 
 
 if __name__ == '__main__':
@@ -109,6 +118,10 @@ if __name__ == '__main__':
 	parser_single.add_argument('index', type=int, help='Channel to move')
 	parser_single.add_argument('angle', type=float,help='Angle to move to')
 	parser_single.set_defaults(func=server.set_single_args)
+	# set dehyisteresis
+	parser_dehys = subparsers.add_parser('dehys', help='Set the dehysterisis')
+	parser_dehys.add_argument('dehys_state', type=int, help='Dehysterisis, 0 or 1')
+	parser_dehys.set_defaults(func=server.set_dehys_args)
 
 
 	# if len(sys.argv) <= 1:

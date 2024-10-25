@@ -174,7 +174,7 @@ class Servoset:
 
         for channel in self.servo_channel_list:
             servo = sts3032(channel, self.portHandler, self.packetHandler)
-            servo.set_acc(60)
+            servo.set_acc(90)
             servo.set_speed(1000)
             servo.torque_enable()
             self.servo_list.append(servo)
