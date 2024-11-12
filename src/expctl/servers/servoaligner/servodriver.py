@@ -23,7 +23,8 @@ ADDR_STS_PRESENT_POSITION  = 56
 ADDR_STS_MOVING_STATUS     = 66
 
 # Default setting
-BAUDRATE                    = 115200           # SCServo default baudrate : 1000000
+BAUDRATE                    = 1000000           # SCServo default baudrate : 1000000
+HOME_FOLDER                 = "/home/rydpiservo/expctl/src/expctl/servers/servoaligner/"
 DEVICENAME_LIST             = ['/dev/ttyUSB0','/dev/ttyUSB1','/dev/ttyUSB2']     # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
 # dmesg | grep tty
@@ -184,7 +185,7 @@ class Servoset:
         for servo in self.servo_list:
             self.SCS_ID_list.append(servo.SCS_ID)
         #
-        self.file = Path("/home/rydpiservo/expctl/src/expctl/servers/servoaligner/servos_{:s}.json".format(str(self.board_id)))
+        self.file = Path(HOME_FOLDER+"/servos_{:s}.json".format(str(self.board_id)))
         self.load()
         #
         # Initialize GroupSyncRead instace for Present Position
@@ -210,14 +211,16 @@ class Servoset:
                 self.packetHandler = PacketHandler(protocol_end)
 
                 # Open port
-                if self.portHandler.openPort():
-                    logging.info("Succeeded to open the port")
-                else:
-                    logging.error("Failed to open the port")
-                    logging.error("Press any key to terminate...")
-                    getch() # type: ignore
-                    quit()
-
+                try:
+                    if self.portHandler.openPort():
+                        logging.info("Succeeded to open the port")
+                    else:
+                        logging.error("Failed to open the port")
+                        logging.error("Press any key to terminate...")
+                        getch() # type: ignore
+                        quit()
+                except Exception as e:
+                    print(e)
                 # Set port baudrate
                 if self.portHandler.setBaudRate(BAUDRATE):
                     logging.info("Succeeded to change the baudrate")
@@ -467,6 +470,8 @@ class Servoset:
 
 if __name__ == '__main__':
     servos = Servoset(1,[0,1,2,3,4,5,6,7])
-    # servos.random_play()
+    servos.random_play()
     # servos.set_angle([50,-50])
+    # servos.set_angle([30])
+    # servos.set_angle([0])
     servos.home()

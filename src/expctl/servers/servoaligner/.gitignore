@@ -177,3 +177,4 @@ dmypy.json
 ./servos_0.json
 /servos_*.json
 !/servos_template.json
+./customize.py
