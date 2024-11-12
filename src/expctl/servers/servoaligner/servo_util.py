@@ -95,6 +95,7 @@ def compose_para(para,
                  zero=None,
                  jac=None,
                  jac_master_mask=None,
+                 jac_master_offset=None,
                  jac_x0=None,
                  debug=False):
     # default para is zero
@@ -103,11 +104,19 @@ def compose_para(para,
     # start from zero point, step para
     if zero is None:
         zero = np.zeros(len(pos_mask))
+    # dB=J(dA-jac_master_offset)
+    if jac_master_offset is None:
+        jac_master_offset = np.zeros(len(pos_mask))
+    else:
+        jac_master_offset = r2nr(jac_master_offset,jac_master_mask)
+        # print("jac_master_offset",jac_master_offset)
+    #
+    #
     para_nr_move = nraddr(zero,para,pos_mask)
     # set slave knobs according to jac
     if jac is not None:
         assert jac_master_mask is not None, "jac_master_mask is not provided"
-        dr = r2nr(para,r_mask = pos_mask)
+        dr = r2nr(para,r_mask = pos_mask) - jac_master_offset
         dr = nrselr(dr,jac_master_mask)
         d_slave_r = np.dot(jac,dr)
         if jac_x0 is not None:

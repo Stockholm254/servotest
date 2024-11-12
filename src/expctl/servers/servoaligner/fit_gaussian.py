@@ -13,6 +13,9 @@ def gaussian_2d(x: float, y: float, mu, cov) -> float:
     coeff = 1 / (2 * np.pi * np.sqrt(det_cov))
     return coeff * z
 
+def gaussian_2d_offset(x: float, y: float, mu, cov, scale, offset) -> float:
+    return gaussian_2d(x, y, mu, cov) * scale + offset
+
 def gaussian_2d_smooth_heaviside(x: float, y: float,mu, cov,  amp ,transition_width) -> float:
     inv_cov = np.linalg.inv(cov)
     r = np.array([x, y]) - mu
@@ -24,7 +27,6 @@ def gaussian_2d_smooth_heaviside(x: float, y: float,mu, cov,  amp ,transition_wi
     smooth_transition = amp * erfc((quadratic_form - 1) / transition_width)
 
     return smooth_transition
-
 
 
 def statistics_for_gaussian2d(xdata, ydata, Idata):
@@ -61,15 +63,22 @@ def popt_get_mu_cov(popt):
     cov = np.array([[popt[2], popt[3]], [popt[3], popt[4]]])
     return mu, cov
 
-def fit_gaussian_2d(X,Y,Z,p0=None):
+def fit_gaussian_2d(X,Y,Z,p0=None,offset=False):
     X = np.array(X)
     Y = np.array(Y)
     Z = np.array(Z)
-    # fit to gaussian_2d_cov using least square
-    def _residuals(p, x, y, z):
-        mu, cov = popt_get_mu_cov(p)
-        z_fit = np.array([gaussian_2d(x_, y_, mu, cov) for x_, y_ in zip(x, y)])
-        return z - z_fit
+
+    if offset == False:
+        # fit to gaussian_2d_cov using least square
+        def _residuals(p, x, y, z):
+            mu, cov = popt_get_mu_cov(p)
+            z_fit = np.array([gaussian_2d(x_, y_, mu, cov) for x_, y_ in zip(x, y)])
+            return z - z_fit
+    else:
+        def _residuals(p, x, y, z):
+            mu, cov = popt_get_mu_cov(p)
+            z_fit = np.array([gaussian_2d_offset(x_, y_, mu, cov, p[5], p[6]) for x_, y_ in zip(x, y)])
+            return z - z_fit
 
     xdata = np.array(X).flatten()
     ydata = np.array(Y).flatten()
@@ -77,7 +86,21 @@ def fit_gaussian_2d(X,Y,Z,p0=None):
 
     if p0 is None:
         mu, cov = statistics_for_gaussian2d(X, Y, Z)
-        p0 = np.array([mu[0], mu[1], cov[0, 0], cov[0, 1], cov[1, 1]])
+        if offset == False:
+            p0 = np.array([mu[0], mu[1], cov[0, 0], cov[0, 1], cov[1, 1]])
+        else:
+            # get the value at (mu[0],mu[1])
+            xidx = np.unravel_index(np.argmin(np.abs(X-mu[0])),X.shape)[0]
+            yidx = np.unravel_index(np.argmin(np.abs(Y-mu[1])),Y.shape)[1]
+            Z_center = Z[xidx,yidx]
+            print("X,Y,Z_center: ",X[xidx,yidx],Y[xidx,yidx],Z_center)
+            if np.abs(Z_center-np.min(Z))>np.abs(Z_center-np.max(Z)):
+                scale = +(np.max(Z)-np.min(Z))
+                offset = np.min(Z)
+            else:
+                scale = -(np.max(Z)-np.min(Z))
+                offset = np.max(Z)
+            p0 = np.array([mu[0], mu[1], cov[0, 0], cov[0, 1], cov[1, 1], scale, offset])
         print("Initial guess for p0: ", p0)
 
     from scipy.optimize import least_squares
@@ -112,8 +135,8 @@ def fit_gaussian_2d_smooth_heaviside(X,Y,Z,p0=None):
     return popt
 
 
-def fit_and_plot(X,Y,Z,p0=None,ax=None):
-    popt = fit_gaussian_2d(X,Y,Z,p0=p0)
+def fit_and_plot(X,Y,Z,p0=None,ax=None,offset=False):
+    popt = fit_gaussian_2d(X,Y,Z,p0=p0,offset=offset)
     bounds_x = (np.min(X),np.max(X))
     bounds_y = (np.min(Y),np.max(Y))
     X_new = np.linspace(*bounds_x,100)

@@ -49,12 +49,12 @@ def callback_func(para,
 cf0 = lambda para: callback_func(para, pos_mask=POS_ALL_MASK)
 print(cf0([0,0,0,0,0,0,0,0]))
 
-# jac_assume_x0 = np.load('/home/rydpiservo/servodata/servosetup2/jac_pm_10.npz',allow_pickle=True)
-# jac_assume = np.array(jac_assume_x0['jac'])
+jac_assume_x0 = np.load('/home/rydpiservo/servodata/servosetup2/jac_pm10+rand10.npz',allow_pickle=True)
+jac_assume = np.array(jac_assume_x0['jac'])
 # jac_x0 = np.array(jac_assume_x0['x0'])
-# print(jac_assume)
+print(jac_assume)
 # print(jac_x0)
-jac_assume = None
+# jac_assume = None
 jac_x0 = None
 
 def cord_pm_offset(N,normd,i):
@@ -80,7 +80,7 @@ def lin_comb_offset(N,normd, vecs,i):
     return offset
 
 #
-N=1
+N=0
 normd = 10
 offset_type = 'zero' # 'pm' or 'rand' or 'lin'
 MASTER = "A"
@@ -108,7 +108,7 @@ for i in range(N):
     elif offset_type == 'zero':
         offset = np.zeros(np.sum(offset_mask))
     elif offset_type == 'spec':
-        offset = np.array([5.7,-2.9,0,0])
+        offset = np.array([0,-13,0,0])
     #
     zero = compose_para(para=offset,pos_mask = offset_mask, zero=zero,jac=jac_assume,jac_master_mask=A_POS_ALL_MASK,jac_x0=jac_x0)
     logging.info(f"Offset = {offset}, Zero = {zero}")
@@ -116,9 +116,9 @@ for i in range(N):
     #
     try:
         logging.info(f"Start optimization with zero = {zero}")
-        # zero = step_optimize(servos,callback_func,pos_mask = B_X_Y_MASK if MASTER == "A" else A_X_Y_MASK,zero=zero,bounds_single = (-100,100))
-        # zero = step_optimize(servos,callback_func,pos_mask = B_X_XDOT_MASK if MASTER == "A" else A_X_XDOT_MASK,zero=zero)
-        # zero = step_optimize(servos,callback_func,pos_mask = B_Y_YDOT_MASK if MASTER == "A" else A_Y_YDOT_MASK,zero=zero)
+        zero = step_optimize(servos,callback_func,pos_mask = B_X_Y_MASK if MASTER == "A" else A_X_Y_MASK,zero=zero,bounds_single = (-100,100))
+        zero = step_optimize(servos,callback_func,pos_mask = B_X_XDOT_MASK if MASTER == "A" else A_X_XDOT_MASK,zero=zero)
+        zero = step_optimize(servos,callback_func,pos_mask = B_Y_YDOT_MASK if MASTER == "A" else A_Y_YDOT_MASK,zero=zero)
         zero = step_optimize(servos,callback_func,pos_mask = B_POS_ALL_MASK if MASTER == "A" else A_POS_ALL_MASK,zero=zero,method='L-BFGS-B')
         #
         _,I = callback_func(zero,pos_mask=POS_ALL_MASK)
