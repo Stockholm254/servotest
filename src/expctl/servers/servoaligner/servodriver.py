@@ -11,7 +11,7 @@ from copy import deepcopy
 import json
 from pathlib import Path
 import atexit
-
+from .customize import *
 
 
 # Control table address
@@ -23,14 +23,9 @@ ADDR_STS_PRESENT_POSITION  = 56
 ADDR_STS_MOVING_STATUS     = 66
 
 # Default setting
-BAUDRATE                    = 1000000           # SCServo default baudrate : 1000000
-HOME_FOLDER                 = "/home/rydpiservo/expctl/src/expctl/servers/servoaligner/"
-DEVICENAME_LIST             = ['/dev/ttyUSB0','/dev/ttyUSB1','/dev/ttyUSB2']     # Check which port is being used on your controller
-                                                # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
 # dmesg | grep tty
 protocol_end                = 0           # SCServo bit end(STS/SMS=0, SCS=1)
 
-sts3032_dict={0:[3,'1x'], 1:[4,'1y'], 2:[1,'2x'], 3:[2,'2y'], 4:[5,'3x'], 5:[6,'3y'], 6:[7,'4x'],7:[8,'4y']} # dict {index:[ID, servo name]}
 
 class sts3032:
 
@@ -164,7 +159,7 @@ class Servoset:
     def __init__(self,board_id=0,servo_channel_list=[]):
         self.board_id=board_id
         self.servo_channel_list = servo_channel_list
-        self.timeout = 1
+        self.timeout = 10
         self.de_hysterisis = True
 
         self.refresh()
@@ -175,8 +170,8 @@ class Servoset:
 
         for channel in self.servo_channel_list:
             servo = sts3032(channel, self.portHandler, self.packetHandler)
-            servo.set_acc(90)
-            servo.set_speed(1000)
+            servo.set_acc(SERVO_ACC)
+            servo.set_speed(SERVO_SPEED)
             servo.torque_enable()
             self.servo_list.append(servo)
 
@@ -185,7 +180,7 @@ class Servoset:
         for servo in self.servo_list:
             self.SCS_ID_list.append(servo.SCS_ID)
         #
-        self.file = Path(HOME_FOLDER+"/servos_{:s}.json".format(str(self.board_id)))
+        self.file = Path(HOME_FOLDER+"servos_{:s}.json".format(str(self.board_id)))
         self.load()
         #
         # Initialize GroupSyncRead instace for Present Position
@@ -239,7 +234,7 @@ class Servoset:
 
     def save(self):
         # persist encoder position to file when programm is closed
-        dct = {'position': self.multi_position_list, 'angles_deg': list((np.array(self.multi_position_list)-2048)*360/4096)}
+        dct = {'position': self.multi_position_list, 'angles_deg': list(self.position_to_angle(self.multi_position_list))}
         self.file.write_text(json.dumps(dct))
         # with self.file.open("a") as f:
         #     f.write(json.dumps(dct))
@@ -457,9 +452,13 @@ class Servoset:
 
     def random_play(self):
         # self.set_precision(10)
-        time.sleep(10)
+        TIME_TO_WAIT = 2
+        print('Random play starting in {} seconds'.format(TIME_TO_WAIT))
+        time.sleep(TIME_TO_WAIT)
+        print('Random play starting')
         for i in range(len(self.servo_list)):
-            self.set_single(i,10)
+            print('Servo ',i)
+            self.set_single(i,30)
             self.set_single(i,0)
             time.sleep(1)
 
@@ -469,7 +468,7 @@ class Servoset:
         self.portHandler.closePort()
 
 if __name__ == '__main__':
-    servos = Servoset(1,[0,1,2,3,4,5,6,7])
+    servos = Servoset(1,[0])
     servos.random_play()
     # servos.set_angle([50,-50])
     # servos.set_angle([30])
