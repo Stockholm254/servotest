@@ -8,7 +8,7 @@ import multiprocessing
 import os
 from tqdm import tqdm
 
-from expctl.servers.servoaligner.solver_plotter import Optical_system_solver, Mirror, Lens
+from expctl.servers.servoaligner.solver_plotter_np import Optical_system_solver, Mirror, Lens
 
 import numpy as np
 import matplotlib.pyplot as plt

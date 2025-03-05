@@ -33,9 +33,8 @@ class Opelements:
         theta = tl + tl0 + tl_last
         return np.array([[1,-u,-v],[0,1,0],[0,0,1]])@np.array([[1,0,0],[0,np.cos(theta),np.sin(theta)],[0,-np.sin(theta),np.cos(theta)]])@elem@np.array([[1,0,0],[0,np.cos(-theta),np.sin(-theta)],[0,-np.sin(-theta),np.cos(-theta)]])@np.array([[1,u,v],[0,1,0],[0,0,1]])
 
-    def elem_solve(self):
-        self.elem_mat=partial(self._ElemTR, elem=self.RTM, tl0=self.tl0, tl_last=self.tl_last, u=self.pos_x, v=self.pos_y)
-        return self.elem_mat
+    def elem_solve(self, tl):
+        return self._ElemTR(self.RTM, tl, self.tl0, self.tl_last, self.pos_x, self.pos_y)
 
     def elem(self):
         self.elem_mat=self._ElemTR(self.RTM, self.tl, self.tl0, self.tl_last, self.pos_x, self.pos_y)
@@ -66,17 +65,17 @@ class Opelements:
         if tl+self.tl_ref()==0:
             return np.array([[-self.pos_x],[1],[0]])
         tl_elem=tl+self.tl_ref()
-        return np.array([[self.pos_y-np.tan(pi/2-tl_elem)*self.pos_x],[np.tan(pi/2-tl_elem)],[-1]])
+        return np.array([[self.pos_y-np.tan(np.pi/2-tl_elem)*self.pos_x],[np.tan(np.pi/2-tl_elem)],[-1]])
 
     def elem_ray(self):
         if self.tl_elem()==0:
             return np.array([[-self.pos_x],[1],[0]])
-        return np.array([[self.pos_y-np.tan(pi/2-self.tl_elem())*self.pos_x],[np.tan(pi/2-self.tl_elem())],[-1]])
+        return np.array([[self.pos_y-np.tan(np.pi/2-self.tl_elem())*self.pos_x],[np.tan(np.pi/2-self.tl_elem())],[-1]])
 
     def elem_ref_ray(self):
         if self.tl_ref()==0:
             return np.array([[-self.pos_x],[1],[0]])
-        return np.array([[self.pos_y-np.tan(pi/2-self.tl_ref())*self.pos_x],[np.tan(pi/2-self.tl_ref())],[-1]])
+        return np.array([[self.pos_y-np.tan(np.pi/2-self.tl_ref())*self.pos_x],[np.tan(np.pi/2-self.tl_ref())],[-1]])
 
 class Mirror(Opelements):
     """Class of defining a mirror"""
@@ -152,62 +151,14 @@ class Optical_system_solver:
         self.init_ray_length=0.5
         self.plot_size=(10,10)
 
-    #here the elem should be a class of Opelements
-    def add_element(self, elem):
-        if type(elem) is list:
-            self.elem_list=self.elem_list+elem
-        elif isinstance(elem, Opelements):
-            self.elem_list.append(elem)
-        else:
-            raise ValueError("The element or list of elements should be a class of Opelements")
-
-    def add_input_ray(self, ray_in):
-        self.ray_in=np.array(ray_in.copy())
-        self.ray_list=[self.ray_in]
-        self.ray_list_ref=[self.ray_in]
-
-    def _ray_colinear_solver_scipy(self, rayf1, rayf2, tl1, tl2):
-        try:
-            eqn1 = rayf1[1][0]*rayf2[2][0] - rayf2[1][0]*rayf1[2][0]
-            eqn2 = rayf1[0][0]*rayf2[2][0] - rayf2[0][0]*rayf1[2][0]
-            f = lambda vars: [fb1(vars[0], vars[1]), fb2(vars[0], vars[1])]
-            bounds = ([-np.pi/8, -np.pi/8], [np.pi/8, np.pi/8])
-            result = least_squares(f, [1e-3, 1e-3], bounds=bounds).x
-        except Exception:
-            eqn1 = rayf1[1][0]*rayf2[0][0] - rayf2[1][0]*rayf1[0][0]
-            eqn2 = rayf1[2][0]*rayf2[0][0] - rayf2[2][0]*rayf1[0][0]
-            f = lambda vars: [fb1(vars[0], vars[1]), fb2(vars[0], vars[1])]
-            bounds = ([-np.pi/8, -np.pi/8], [np.pi/8, np.pi/8])
-            result = least_squares(f, [1e-3, 1e-3], bounds=bounds).x
-        return result
-
-    def _intersection_solver_symbol(self, ray_cache1, ray_cache2):
-        a1=ray_cache1[1]
-        a2=ray_cache2[1]
-        b1=ray_cache1[2]
-        b2=ray_cache2[2]
-        c1=ray_cache1[0]
-        c2=ray_cache2[0]
-        x_solve=(b2*c1-b1*c2)/(a2*b1-a1*b2)
-        y_solve=(a1*c2-a2*c1)/(a2*b1-a1*b2)
-        return x_solve, y_solve
-
-    def _intersection_solver(self, ray_cache1, ray_cache2):
-        a1=float(ray_cache1[1])
-        a2=float(ray_cache2[1])
-        b1=float(ray_cache1[2])
-        b2=float(ray_cache2[2])
-        c1=float(ray_cache1[0])
-        c2=float(ray_cache2[0])
-        x_solve=(b2*c1-b1*c2)/(a2*b1-a1*b2)
-        y_solve=(a1*c2-a2*c1)/(a2*b1-a1*b2)
-        return x_solve, y_solve
-
     def default_setup_solver(self, params=dict(), tl_list=[0,0,0,0], comp_list=[0,0,0,0], plot_switch=0):
         #default setup should be integrated with angle solver which provides the constraint
         #comp_list is the list of compensation x angle for each mirror that is coupled to y angle
         #definition of parameters
-        tl1, tl2, tl3, tl4 = symbols('tl1 tl2 tl3 tl4')
+        tl1 = 0
+        tl2 = 0
+        tl3 = 0
+        tl4 = 0
         
         x1=params['x1']
         x2=params['x2']
@@ -262,26 +213,21 @@ class Optical_system_solver:
 
         #angle solver
         raymiddleref=np.array([[Cav_pos_x*MOT_pos_y-MOT_pos_x*Cav_pos_y],[Cav_pos_y-MOT_pos_y],[MOT_pos_x-Cav_pos_x]])
-        raymiddle = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Ml1])[0]
-        result = self._ray_colinear_solver_scipy(raymiddle, raymiddleref, tl1, tl2)
+        result = self._solve_ray_alignment([Mrr1, Mrr2, Ml1], self.ray_in, raymiddleref)
 
         Mrr1.tl=result[0]
         Mrr2.tl=result[1]
-        #update the element matrix
         Mrr1.elem()
         Mrr2.elem()
-        raymiddle = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Ml1])[0]
 
-        rayfinal = self._ray_propagator(raymiddle, [Ml2, Ml3, Mrr3, Mrr4])[0]
-        rayfinalref = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Ml1, Ml2, Ml3, Mrr3, Mrr4])[1]
-        result=self._ray_colinear_solver_scipy(rayfinal, rayfinalref, tl3, tl4)
+        raymiddle = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Ml1])
+        rayfinalref = self._ray_propagator_ref(self.ray_in, [Mrr1, Mrr2, Ml1, Ml2, Ml3, Mrr3, Mrr4])
+        result = self._solve_ray_alignment([Ml2, Ml3, Mrr3, Mrr4], raymiddle, rayfinalref)
 
         Mrr3.tl=result[0]
         Mrr4.tl=result[1]
-        #update the element matrix
         Mrr3.elem()
         Mrr4.elem()
-        rayfinal = self._ray_propagator(raymiddle, [Ml2, Ml3, Mrr3, Mrr4])[0]
 
         self.elem_list=[Mrr1, Mrr2, Ml1, Ml2, Ml3, Mrr3, Mrr4]
         if plot_switch==1:
@@ -293,7 +239,10 @@ class Optical_system_solver:
         #default setup should be integrated with angle solver which provides the constraint
         #comp_list is the list of compensation x angle for each mirror that is coupled to y angle
         #definition of parameters
-        tl1, tl2, tl3, tl4 = symbols('tl1 tl2 tl3 tl4')
+        tl1 = 0
+        tl2 = 0
+        tl3 = 0
+        tl4 = 0
 
         x1=params['x1']
         x2=params['x2']
@@ -346,27 +295,23 @@ class Optical_system_solver:
 
         self.ray_in=np.array(ray_in.copy())
 
-        elem_list=[Mrr1, Mrr2, Ml1, Ml2, Ml3, Mrr3, Mrr4]
         #angle solver
         raymiddleref=np.array([[Cav_pos_x*MOT_pos_y-MOT_pos_x*Cav_pos_y],[Cav_pos_y-MOT_pos_y],[MOT_pos_x-Cav_pos_x]])
-        raymiddle = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Ml1])[0]
-        result = self._ray_colinear_solver_scipy(raymiddle, raymiddleref, tl1, tl2)
+        result = self._solve_ray_alignment([Mrr1, Mrr2, Ml1], self.ray_in, raymiddleref)
 
         Mrr1.tl=result[0]
         Mrr2.tl=result[1]
         Mrr1.elem()
         Mrr2.elem()
-        raymiddle = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Ml1])[0]
 
-        rayfinal = self._ray_propagator(raymiddle, [Ml2, Ml3, Mrr3, Mrr4])[0]
-        rayfinalref = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Ml1, Ml2, Ml3, Mrr3, Mrr4])[1]
-        result = self._ray_colinear_solver_scipy(rayfinal, rayfinalref, tl3, tl4)
+        raymiddle = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Ml1])
+        rayfinalref = self._ray_propagator_ref(self.ray_in, [Mrr1, Mrr2, Ml1, Ml2, Ml3, Mrr3, Mrr4])
+        result = self._solve_ray_alignment([Ml2, Ml3, Mrr3, Mrr4], raymiddle, rayfinalref)
 
         Mrr3.tl=result[0]
         Mrr4.tl=result[1]
         Mrr3.elem()
         Mrr4.elem()
-        rayfinal = self._ray_propagator(raymiddle, [Ml2, Ml3, Mrr3, Mrr4])[0]
 
         self.elem_list=[Mrr1, Mrr2, Ml1, Ml2, Ml3, Mrr3, Mrr4]
         if plot_switch==1:
@@ -559,28 +504,101 @@ class Optical_system_solver:
 
         return Mrr1, Mrr2, Mrr3, Mrr4
 
+    #here the elem should be a class of Opelements
+    def add_element(self, elem):
+        if type(elem) is list:
+            self.elem_list=self.elem_list+elem
+        elif isinstance(elem, Opelements):
+            self.elem_list.append(elem)
+        else:
+            raise ValueError("The element or list of elements should be a class of Opelements")
+
+    def add_input_ray(self, ray_in):
+        self.ray_in=np.array(ray_in.copy())
+        self.ray_list=[self.ray_in]
+        self.ray_list_ref=[self.ray_in]
+
+    def _intersection_solver(self, r1, r2):
+        a1, c1, b1 = r1[1][0], r1[0][0], r1[2][0]
+        a2, c2, b2 = r2[1][0], r2[0][0], r2[2][0]
+        denom = a2 * b1 - a1 * b2
+        x = (b2 * c1 - b1 * c2) / denom
+        y = (a1 * c2 - a2 * c1) / denom
+        return x, y
+
+    def _solve_ray_alignment(self, elem_list, ray_in, ray_align):
+        # Create a partial function that propagates the ray with given tl1 and tl2.
+        ray_func = partial(self._ray_propagator_cache, ray_in=ray_in, elem_list=elem_list)
+
+        # Define the objective function: returns two equations that should be zero when rays are colinear.
+        def objective_a(vars):
+            ray_sol = ray_func(tl1=vars[0], tl2=vars[1])
+            eq1 = ray_sol[1][0] * ray_align[2][0] - ray_align[1][0] * ray_sol[2][0]
+            eq2 = ray_sol[0][0] * ray_align[2][0] - ray_align[0][0] * ray_sol[2][0]
+            return [eq1, eq2]
+
+        def objective_b(vars):
+            ray_sol = ray_func(tl1=vars[0], tl2=vars[1])
+            eq1 = ray_sol[1][0] * ray_align[0][0] - ray_align[1][0] * ray_sol[0][0]
+            eq2 = ray_sol[2][0] * ray_align[0][0] - ray_align[2][0] * ray_sol[0][0]
+            return [eq1, eq2]
+
+        # Solve for tl1 and tl2 using least_squares with a reasonable bound.
+        bounds = ([-np.pi / 8, -np.pi / 8], [np.pi / 8, np.pi / 8])
+        try:
+            result = least_squares(objective_a, [1e-3, 1e-3], bounds=bounds).x
+        except Exception:
+            result = least_squares(objective_b, [1e-3, 1e-3], bounds=bounds).x
+        return result
+
+    def _ray_propagator_cache(self, ray_in, elem_list, tl1, tl2):
+        ray = ray_in
+        mirror_tls = [tl1, tl2]
+        mirror_idx = 0
+        for elem in elem_list:
+            if elem.elem_type == 'Mirror':
+                tl = mirror_tls[mirror_idx] if mirror_idx < len(mirror_tls) else 0
+                ray = elem.elem_solve(tl=tl) @ ray
+                if elem.is_y == 1:
+                    x_solve, y_solve = self._intersection_solver(elem.elem_ray_solve(tl=tl), ray)
+                    slope = -ray[1, 0] / ray[2, 0]
+                    ray = np.array([[-(y_solve + slope * x_solve)],
+                                    [slope],
+                                    [1]])
+                mirror_idx += 1
+            else:
+                ray = elem.elem_mat @ ray
+        return ray
+
     def _ray_propagator(self, ray_in, elem_list):
-        '''Propagate the ray through the optical elements, input ray should be a sympy matrix'''
-        ray_list=[ray_in]
-        ray_list_ref=[ray_in]
-        for i in range(len(elem_list)):
-            ray_cache=elem_list[i].elem_mat*ray_list[-1]
-            ray_ref_cache=elem_list[i].elem_ref_mat*ray_list_ref[-1]
-            ray_list.append(ray_cache)
-            ray_list_ref.append(ray_ref_cache)
-            #deal with y mirrors
-            if elem_list[i].elem_type=='Mirror' and elem_list[i].is_y==1:
-                x_solve, y_solve=self._intersection_solver_symbol(elem_list[i].elem_ray(), ray_list[-1])
-                x_solve_ref, y_solve_ref=self._intersection_solver_symbol(elem_list[i].elem_ref_ray(), ray_list_ref[-1])
+        ray = ray_in
+        for elem in elem_list:
+            if elem.elem_type == 'Mirror':
+                ray = elem.elem_mat @ ray
+                if elem.is_y == 1:
+                    x_solve, y_solve = self._intersection_solver(elem.elem_ray(), ray)
+                    slope = -ray[1, 0] / ray[2, 0]
+                    ray = np.array([[-(y_solve + slope * x_solve)],
+                                    [slope],
+                                    [1]])
+            else:
+                ray = elem.elem_mat @ ray
+        return ray
 
-                sign=1
-                sign_ref=1
-                slope=-ray_list[-1][1]/ray_list[-1][2]
-                slope_ref=-ray_list_ref[-1][1]/ray_list_ref[-1][2]
-                ray_list[-1]=np.array([[-(y_solve+slope*x_solve)*sign],[slope*sign],[sign]])
-                ray_list_ref[-1]=np.array([[-(y_solve_ref+slope_ref*x_solve_ref)*sign_ref],[slope_ref*sign_ref],[sign_ref]])
-
-        return [ray_list[-1], ray_list_ref[-1]]
+    def _ray_propagator_ref(self, ray_in, elem_list):
+        ray = ray_in
+        for elem in elem_list:
+            if elem.elem_type == 'Mirror':
+                ray = elem.elem_ref_mat @ ray
+                if elem.is_y == 1:
+                    x_solve, y_solve = self._intersection_solver(elem.elem_ref_ray(), ray)
+                    slope = -ray[1, 0] / ray[2, 0]
+                    ray = np.array([[-(y_solve + slope * x_solve)],
+                                    [slope],
+                                    [1]])
+            else:
+                ray = elem.elem_ref_mat @ ray
+        return ray
 
     def ray_in(self, ray_in):
         self.ray_in=np.array(ray_in.copy())
@@ -593,13 +611,13 @@ class Optical_system_solver:
         self.ray_list=[self.ray_in]
         self.ray_list_ref=[self.ray_in]
 
-        start_vec=np.array([self.ray_in[2], -self.ray_in[1]])/np.sqrt(float(self.ray_in[1]**2+self.ray_in[2]**2))
+        start_vec=np.array([self.ray_in[2][0], -self.ray_in[1][0]])/np.sqrt(float(self.ray_in[1][0]**2+self.ray_in[2][0]**2))
 
         xy_solve=[]
         xy_solve_ref=[]
         for i in range(len(self.elem_list)):
-            ray_cache=self.elem_list[i].elem_mat*self.ray_list[-1]
-            ray_ref_cache=self.elem_list[i].elem_ref_mat*self.ray_list_ref[-1]
+            ray_cache=self.elem_list[i].elem_mat@self.ray_list[-1]
+            ray_ref_cache=self.elem_list[i].elem_ref_mat@self.ray_list_ref[-1]
             self.ray_list.append(ray_cache)
             self.ray_list_ref.append(ray_ref_cache)
             x_solve, y_solve=self._intersection_solver(self.elem_list[i].elem_ray(), self.ray_list[-1])
@@ -624,8 +642,8 @@ class Optical_system_solver:
         #Solve the output ray
         ray_out=self.ray_list[-1]
         ray_out_ref=self.ray_list_ref[-1]
-        end_vec=np.array([ray_out[2], -ray_out[1]])/np.sqrt(float(ray_out[1]**2+ray_out[2]**2))
-        end_vec_ref=np.array([ray_out_ref[2], -ray_out_ref[1]])/np.sqrt(float(ray_out_ref[1]**2+ray_out_ref[2]**2))
+        end_vec=np.array([ray_out[2][0], -ray_out[1][0]])/np.sqrt(float(ray_out[1][0]**2+ray_out[2][0]**2))
+        end_vec_ref=np.array([ray_out_ref[2][0], -ray_out_ref[1][0]])/np.sqrt(float(ray_out_ref[1][0]**2+ray_out_ref[2][0]**2))
 
         xy_solve.append(list(np.array([x_solve,y_solve])+self.init_ray_length*end_vec))
         xy_solve_ref.append(list(np.array([x_solve_ref,y_solve_ref])+self.init_ray_length*end_vec_ref))

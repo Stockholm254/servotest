@@ -11,10 +11,10 @@ fl1 = 0.1925
 fl2 = 0.15
 fl3 = 1
 #MOT and Cavity
-MOT_pos_1=0
+MOT_pos_1=2e-4
 Cav_pos_1=0
 
-MOT_pos_2=0
+MOT_pos_2=2e-4
 Cav_pos_2=0
 
 MOT_pos_rel = 0.2

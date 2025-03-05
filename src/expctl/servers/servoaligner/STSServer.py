@@ -112,17 +112,7 @@ class STSServer(Server):
     def __del__(self):
         self.servos.close()
 
-    def plan_angle_model(self):
-        angles = {}
-        for chan in self.seq.allChannels:
-            try:
-                val = chan._TransValues[0][1]  # find the first value
-                for attr, config in self.config.items():
-                    if config['channel_id'] == chan.chanid:
-                        angles[attr] = float(val)
-                        break
-            except (AttributeError, IndexError):
-                logger.exception(f"Error parsing channel {chan.chanid}")
+    def plan_angle_model(self, angles):
 
         params.update(angles)
         params['MOT_pos_1']=params['MOT_pos_1']*1e-6
@@ -130,36 +120,41 @@ class STSServer(Server):
         params['Cav_pos_1']=params['Cav_pos_1']*1e-6
         params['Cav_pos_2']=params['Cav_pos_2']*1e-6
         params['MOT_pos_rel']=params['MOT_pos_rel']*1e-3
+
         value_list=angle_calc_single(params)
 
         return value_list
 
     def plan_angle_single(self):
-        value_list=[]
+        
         pos_mask = [0 for i in range(len(self.servo_channel_list))]
+        value_list= [0,]*len(self.servo_channel_list)
 
-        for i in range(len(self.servo_channel_list)):
-            chan = self.seq.allChannels[i]
-            if chan is not None:
-                pos_mask[i] = 1
-                set_val = chan._TransValues[0]
-                val = set_val[1] # find the first value
-                value_list.append(float(val))
-                if set_val[3] != val: # Check for non-identical values
-                    logger.warning('Servoalinger given multiple settings in same sequence, but only takes the first!!')
-            else:
-                value_list.append(0)
+        #turn _eps channels into servo angles
+        for prop, ch in self.config.items():
+            ch_id = ch['channel_id']
+            if ch_id in self.servo_channel_list:
+                val = getattr(self.settings, prop)
+                pos_mask[self.servo_channel_list.index(ch_id)] = 1
+                value_list[ch_id] = val
+
+        logger.debug(f"Servo angles: {value_list}, mask: {pos_mask}")
         
         return value_list
-
 
     def set_angle(self, value_list):
         self.servos.set_angle(value_list)
 
-    def update(self, settings: VLATSettings):
+    def update(self, settings: VLATSettings, angles):
         if self.settings is None or settings != self.settings:
             logger.info(f"Updating settings to {settings}")
             self.settings = settings
+
+            list_1=self.plan_angle_single()
+            list_2=self.plan_angle_model(angles)
+            list_final=list(np.array(list_1)+np.array(list_2))
+            logger.info(f"Servo angles: {list_final}")
+            self.set_angle(list_final)
 
     def cmd_seq(self, data):
         self.seq = data # unpack the sequence
@@ -185,11 +180,7 @@ class STSServer(Server):
         
         if len(angles) == 13:
             settings = VLATSettings(**angles)
-            self.update(settings)
-            list_1=self.plan_angle_single()
-            list_2=self.plan_angle_model()
-            list_final=list(np.array(list_1)+np.array(list_2))
-            self.set_angle(list_final)
+            self.update(settings, angles)
         else:
             logger.error("Not all angles specified in the sequence")
 
