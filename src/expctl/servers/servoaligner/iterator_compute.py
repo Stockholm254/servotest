@@ -41,6 +41,13 @@ MOT_Cav_dist = -0.044
 
 params={'x1':x1, 'x2':x2, 'x3': x3, 'x4':x4, 'dy0':dy0, 'dy1':dy1, 'fl1': fl1, 'fl2': fl2, 'fl3': fl3, 'MOT_pos_rel': MOT_pos_rel, 'MOT_Cav_dist': MOT_Cav_dist, 'MOT_pos_1': MOT_pos_1, 'Cav_pos_1': Cav_pos_1, 'MOT_pos_2': MOT_pos_2, 'Cav_pos_2': Cav_pos_2}
 
+def angle_calc_single(params=dict()):
+    solver_0=Optical_system_solver()
+    Mrr1_y, Mrr2_y, Mrr3_y, Mrr4_y = solver_0.default_setup_solver_y(params=params, tl_list=[0, 0, 0, 0], comp_list=[0, 0, 0, 0], plot_switch=0)
+    Mrr1_x, Mrr2_x, Mrr3_x, Mrr4_x = solver_0.default_setup_solver(params=params, tl_list=[0, 0, 0, 0], comp_list=[Mrr1_y.tl, Mrr2_y.tl, Mrr3_y.tl, Mrr4_y.tl], plot_switch=0)
+    knob_deg_list=[Mrr1_x.knob_deg(), Mrr1_y.knob_deg(), Mrr2_x.knob_deg(), Mrr2_y.knob_deg(), Mrr3_x.knob_deg(), Mrr3_y.knob_deg(), Mrr4_x.knob_deg(), Mrr4_y.knob_deg()]
+    return knob_deg_list
+
 def angle_calc_multi(args, **kwargs):
     var_list=args[0]
     solver_0=kwargs.pop('solver')
