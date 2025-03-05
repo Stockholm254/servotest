@@ -1,11 +1,12 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-import sympy
-from sympy import symbols, sin, cos, tan, Add
-from sympy import Matrix, nsolve, nsimplify, solve, pi
-from sympy.parsing.sympy_parser import parse_expr
+# import sympy
+# from sympy import symbols, sin, cos, tan, Add
+# from sympy import Matrix, nsolve, nsimplify, solve, pi
+# from sympy.parsing.sympy_parser import parse_expr
 from itertools import product
+from functools import reduce
 
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 
@@ -31,7 +32,7 @@ class Opelements:
         self.element_length=element_length
 
     def _ElemTR(self,elem,theta,u,v):
-        return Matrix([[1,-u,-v],[0,1,0],[0,0,1]])*Matrix([[1,0,0],[0,cos(theta),sin(theta)],[0,-sin(theta),cos(theta)]])*elem*Matrix([[1,0,0],[0,cos(-theta),sin(-theta)],[0,-sin(-theta),cos(-theta)]])*Matrix([[1,u,v],[0,1,0],[0,0,1]])
+        return np.array([[1,-u,-v],[0,1,0],[0,0,1]])@np.array([[1,0,0],[0,cos(theta),sin(theta)],[0,-sin(theta),cos(theta)]])@elem@np.array([[1,0,0],[0,cos(-theta),sin(-theta)],[0,-sin(-theta),cos(-theta)]])@np.array([[1,u,v],[0,1,0],[0,0,1]])
 
     def elem(self):
         self.elem_mat=self._ElemTR(self.RTM, self.tl0 + self.tl + self.tl_last, self.pos_x, self.pos_y)
