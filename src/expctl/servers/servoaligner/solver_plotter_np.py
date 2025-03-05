@@ -1,12 +1,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-# import sympy
-# from sympy import symbols, sin, cos, tan, Add
-# from sympy import Matrix, nsolve, nsimplify, solve, pi
-# from sympy.parsing.sympy_parser import parse_expr
 from itertools import product
-from functools import reduce
+from functools import partial
 
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 
@@ -20,6 +16,8 @@ from scipy.optimize import fsolve, least_squares
 # the whole idea is to make a more general version of existing raytracing code
 # adding constraint is equal to adding a point that a light ray must pass through
 
+#in this numpy version we limit our problem to only solving the tilting angle of each element.
+
 class Opelements:
     """Class of definitng single optical elements"""
     def __init__(self, tl0=0, tl=0, tl_last=0, u=0, v=0, RTM=None, element_length=25.4e-3):
@@ -31,15 +29,20 @@ class Opelements:
         self.RTM=RTM
         self.element_length=element_length
 
-    def _ElemTR(self,elem,theta,u,v):
-        return np.array([[1,-u,-v],[0,1,0],[0,0,1]])@np.array([[1,0,0],[0,cos(theta),sin(theta)],[0,-sin(theta),cos(theta)]])@elem@np.array([[1,0,0],[0,cos(-theta),sin(-theta)],[0,-sin(-theta),cos(-theta)]])@np.array([[1,u,v],[0,1,0],[0,0,1]])
+    def _ElemTR(self, elem, tl, tl0, tl_last, u, v):
+        theta = tl + tl0 + tl_last
+        return np.array([[1,-u,-v],[0,1,0],[0,0,1]])@np.array([[1,0,0],[0,np.cos(theta),np.sin(theta)],[0,-np.sin(theta),np.cos(theta)]])@elem@np.array([[1,0,0],[0,np.cos(-theta),np.sin(-theta)],[0,-np.sin(-theta),np.cos(-theta)]])@np.array([[1,u,v],[0,1,0],[0,0,1]])
+
+    def elem_solve(self):
+        self.elem_mat=partial(self._ElemTR, elem=self.RTM, tl0=self.tl0, tl_last=self.tl_last, u=self.pos_x, v=self.pos_y)
+        return self.elem_mat
 
     def elem(self):
-        self.elem_mat=self._ElemTR(self.RTM, self.tl0 + self.tl + self.tl_last, self.pos_x, self.pos_y)
+        self.elem_mat=self._ElemTR(self.RTM, self.tl, self.tl0, self.tl_last, self.pos_x, self.pos_y)
         return self.elem_mat
 
     def elem_ref(self):
-        self.elem_ref_mat=self._ElemTR(self.RTM, self.tl0 + self.tl_last, self.pos_x, self.pos_y)
+        self.elem_ref_mat=self._ElemTR(self.RTM, 0, self.tl0, self.tl_last, self.pos_x, self.pos_y)
         return self.elem_ref_mat
 
     def change_RTM(self, RTM):
@@ -59,20 +62,26 @@ class Opelements:
         """Return the total angle of the element reference in rad"""
         return self.tl0 + self.tl_last
 
+    def elem_ray_solve(self, tl):
+        if tl+self.tl_ref()==0:
+            return np.array([[-self.pos_x],[1],[0]])
+        tl_elem=tl+self.tl_ref()
+        return np.array([[self.pos_y-np.tan(pi/2-tl_elem)*self.pos_x],[np.tan(pi/2-tl_elem)],[-1]])
+
     def elem_ray(self):
         if self.tl_elem()==0:
-            return Matrix([[-self.pos_x],[1],[0]])
-        return Matrix([[self.pos_y-tan(pi/2-self.tl_elem())*self.pos_x],[tan(pi/2-self.tl_elem())],[-1]])
+            return np.array([[-self.pos_x],[1],[0]])
+        return np.array([[self.pos_y-np.tan(pi/2-self.tl_elem())*self.pos_x],[np.tan(pi/2-self.tl_elem())],[-1]])
 
     def elem_ref_ray(self):
         if self.tl_ref()==0:
-            return Matrix([[-self.pos_x],[1],[0]])
-        return Matrix([[self.pos_y-tan(pi/2-self.tl_ref())*self.pos_x],[tan(pi/2-self.tl_ref())],[-1]])
+            return np.array([[-self.pos_x],[1],[0]])
+        return np.array([[self.pos_y-np.tan(pi/2-self.tl_ref())*self.pos_x],[np.tan(pi/2-self.tl_ref())],[-1]])
 
 class Mirror(Opelements):
     """Class of defining a mirror"""
     def __init__(self, tl0=0, tl_last=0, tl=0, u=0, v=0, chirality= 'Left', dist=0, comp=0, tpi=100, is_y=0, is_fixed=0):
-        self.RTM=Matrix([[-1,0,0],[0,1,0],[0,0,-1]])
+        self.RTM=np.array([[-1,0,0],[0,1,0],[0,0,-1]])
         super().__init__(tl0=tl0, tl=tl, tl_last=tl_last, u=u, v=v, RTM=self.RTM)
         self.elem_type='Mirror'
         if chirality=='Left':
@@ -112,7 +121,7 @@ class Mirror(Opelements):
 class Lens(Opelements):
     """Class of defining a lens"""
     def __init__(self, tl0=0, tl_last=0, tl=0, u=0, v=0, f=1):
-        self.RTM=Matrix([[1,0,0],[-1/f,1,0],[0,0,1]])
+        self.RTM=np.array([[1,0,0],[-1/f,1,0],[0,0,1]])
         super().__init__(tl0=tl0, tl=tl, tl_last=tl_last, u=u, v=v, RTM=self.RTM)
         self.elem_type='Lens'
         self.elem()
@@ -135,7 +144,7 @@ class Optical_system_solver:
         else:
             self.elem_list=[init_elem]
         if ray_in is not None:
-            self.ray_in=Matrix(ray_in.copy())
+            self.ray_in=np.array(ray_in.copy())
         self.xy=xy
         self.ray_list=[self.ray_in]
         self.ray_list_ref=[self.ray_in]
@@ -153,35 +162,20 @@ class Optical_system_solver:
             raise ValueError("The element or list of elements should be a class of Opelements")
 
     def add_input_ray(self, ray_in):
-        self.ray_in=Matrix(ray_in.copy())
+        self.ray_in=np.array(ray_in.copy())
         self.ray_list=[self.ray_in]
         self.ray_list_ref=[self.ray_in]
 
-    def _ray_colinear_solver(self, ray1, ray2, x1, x2):
+    def _ray_colinear_solver_scipy(self, rayf1, rayf2, tl1, tl2):
         try:
-            eqn1 = (ray1[1]*ray2[0] - ray2[1]*ray1[0])
-            eqn2 = (ray1[2]*ray2[0] - ray2[2]*ray1[0])
-            result=nsolve((eqn1,eqn2),(x1,x2),(1e-3,1e-3), prec=10)
-        except:
-            eqn1 = (ray1[1]*ray2[2] - ray2[1]*ray1[2])
-            eqn2 = (ray1[0]*ray2[2] - ray2[0]*ray1[2])
-            result=nsolve((eqn1,eqn2),(x1,x2),(1e-3,1e-3), prec=10)
-        return result
-
-    def _ray_colinear_solver_scipy(self, ray1, ray2, x1, x2):
-        try:
-            eqn1 = ray1[1]*ray2[2] - ray2[1]*ray1[2]
-            eqn2 = ray1[0]*ray2[2] - ray2[0]*ray1[2]
-            fb1 = sympy.lambdify((x1, x2), eqn1, 'numpy')
-            fb2 = sympy.lambdify((x1, x2), eqn2, 'numpy')
+            eqn1 = rayf1[1][0]*rayf2[2][0] - rayf2[1][0]*rayf1[2][0]
+            eqn2 = rayf1[0][0]*rayf2[2][0] - rayf2[0][0]*rayf1[2][0]
             f = lambda vars: [fb1(vars[0], vars[1]), fb2(vars[0], vars[1])]
             bounds = ([-np.pi/8, -np.pi/8], [np.pi/8, np.pi/8])
             result = least_squares(f, [1e-3, 1e-3], bounds=bounds).x
         except Exception:
-            eqn1 = ray1[1]*ray2[0] - ray2[1]*ray1[0]
-            eqn2 = ray1[2]*ray2[0] - ray2[2]*ray1[0]
-            fb1 = sympy.lambdify((x1, x2), eqn1, 'numpy')
-            fb2 = sympy.lambdify((x1, x2), eqn2, 'numpy')
+            eqn1 = rayf1[1][0]*rayf2[0][0] - rayf2[1][0]*rayf1[0][0]
+            eqn2 = rayf1[2][0]*rayf2[0][0] - rayf2[2][0]*rayf1[0][0]
             f = lambda vars: [fb1(vars[0], vars[1]), fb2(vars[0], vars[1])]
             bounds = ([-np.pi/8, -np.pi/8], [np.pi/8, np.pi/8])
             result = least_squares(f, [1e-3, 1e-3], bounds=bounds).x
@@ -264,10 +258,10 @@ class Optical_system_solver:
 
         ray_in=[[0],[1],[0]]
 
-        self.ray_in=Matrix(ray_in.copy())
+        self.ray_in=np.array(ray_in.copy())
 
         #angle solver
-        raymiddleref=Matrix([[Cav_pos_x*MOT_pos_y-MOT_pos_x*Cav_pos_y],[Cav_pos_y-MOT_pos_y],[MOT_pos_x-Cav_pos_x]])
+        raymiddleref=np.array([[Cav_pos_x*MOT_pos_y-MOT_pos_x*Cav_pos_y],[Cav_pos_y-MOT_pos_y],[MOT_pos_x-Cav_pos_x]])
         raymiddle = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Ml1])[0]
         result = self._ray_colinear_solver_scipy(raymiddle, raymiddleref, tl1, tl2)
 
@@ -350,11 +344,11 @@ class Optical_system_solver:
 
         ray_in=[[0],[0],[1]]
 
-        self.ray_in=Matrix(ray_in.copy())
+        self.ray_in=np.array(ray_in.copy())
 
         elem_list=[Mrr1, Mrr2, Ml1, Ml2, Ml3, Mrr3, Mrr4]
         #angle solver
-        raymiddleref=Matrix([[Cav_pos_x*MOT_pos_y-MOT_pos_x*Cav_pos_y],[Cav_pos_y-MOT_pos_y],[MOT_pos_x-Cav_pos_x]])
+        raymiddleref=np.array([[Cav_pos_x*MOT_pos_y-MOT_pos_x*Cav_pos_y],[Cav_pos_y-MOT_pos_y],[MOT_pos_x-Cav_pos_x]])
         raymiddle = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Ml1])[0]
         result = self._ray_colinear_solver_scipy(raymiddle, raymiddleref, tl1, tl2)
 
@@ -442,11 +436,11 @@ class Optical_system_solver:
 
         ray_in=[[0],[0],[1]]
 
-        self.ray_in=Matrix(ray_in.copy())
+        self.ray_in=np.array(ray_in.copy())
 
         elem_list=[Mrr1, Mrr2, Mrra, Ml1, Ml2, Mrrb, Ml3, Mrr3, Mrr4]
         #angle solver
-        raymiddleref=Matrix([[Cav_pos_x*MOT_pos_y-MOT_pos_x*Cav_pos_y],[Cav_pos_y-MOT_pos_y],[MOT_pos_x-Cav_pos_x]])
+        raymiddleref=np.array([[Cav_pos_x*MOT_pos_y-MOT_pos_x*Cav_pos_y],[Cav_pos_y-MOT_pos_y],[MOT_pos_x-Cav_pos_x]])
         raymiddle = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Mrra, Ml1])[0]
         result = self._ray_colinear_solver(raymiddle, raymiddleref, tl1, tl2)
 
@@ -526,7 +520,7 @@ class Optical_system_solver:
         Mrr2=Mirror(tl0=-np.pi, tl=tl2, tl_last=tl_list[1], u=Mrr2_pos_x, v=Mrr2_pos_y, chirality='Left', dist=33.02e-3, comp=comp_list[1], is_y=1)
         Mrra=Mirror(tl0=np.pi/4, u=Mrra_pos_x, v=Mrra_pos_y, is_y=0, is_fixed=1)
         Mrrb=Mirror(tl0=np.pi/2, u=Mrrb_pos_x, v=Mrrb_pos_y, is_y=0, is_fixed=1)
-        Mrrb.change_RTM(Matrix([[1,0,0],[0,1,0],[0,0,1]]))
+        Mrrb.change_RTM(np.array([[1,0,0],[0,1,0],[0,0,1]]))
         Mrr3=Mirror(tl0=-np.pi/4, tl=tl3, tl_last=tl_list[2], u=Mrr3_pos_x, v=Mrr3_pos_y, chirality='Left', dist=33.02e-3, comp=comp_list[2], is_y=0)
         Mrr4=Mirror(tl0=-np.pi/4, tl=tl4, tl_last=tl_list[3], u=Mrr4_pos_x, v=Mrr4_pos_y, chirality='Left', dist=33.02e-3, comp=comp_list[3], is_y=0)
         Ml1=Lens(tl0=np.pi/2, tl=0, u=Ml1_pos_x, v=Ml1_pos_y, f=fl1)
@@ -535,11 +529,11 @@ class Optical_system_solver:
 
         ray_in=[[0],[0],[-1]]
 
-        self.ray_in=Matrix(ray_in.copy())
+        self.ray_in=np.array(ray_in.copy())
 
         elem_list=[Mrr1, Mrr2, Mrra, Ml1, Ml2, Mrrb, Ml3, Mrr3, Mrr4]
         #angle solver
-        raymiddleref=Matrix([[Cav_pos_x*MOT_pos_y-MOT_pos_x*Cav_pos_y],[Cav_pos_y-MOT_pos_y],[MOT_pos_x-Cav_pos_x]])
+        raymiddleref=np.array([[Cav_pos_x*MOT_pos_y-MOT_pos_x*Cav_pos_y],[Cav_pos_y-MOT_pos_y],[MOT_pos_x-Cav_pos_x]])
         raymiddle = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Mrra, Ml1])[0]
         result = self._ray_colinear_solver(raymiddle, raymiddleref, tl1, tl2)
 
@@ -583,13 +577,13 @@ class Optical_system_solver:
                 sign_ref=1
                 slope=-ray_list[-1][1]/ray_list[-1][2]
                 slope_ref=-ray_list_ref[-1][1]/ray_list_ref[-1][2]
-                ray_list[-1]=Matrix([[-(y_solve+slope*x_solve)*sign],[slope*sign],[sign]])
-                ray_list_ref[-1]=Matrix([[-(y_solve_ref+slope_ref*x_solve_ref)*sign_ref],[slope_ref*sign_ref],[sign_ref]])
+                ray_list[-1]=np.array([[-(y_solve+slope*x_solve)*sign],[slope*sign],[sign]])
+                ray_list_ref[-1]=np.array([[-(y_solve_ref+slope_ref*x_solve_ref)*sign_ref],[slope_ref*sign_ref],[sign_ref]])
 
         return [ray_list[-1], ray_list_ref[-1]]
 
     def ray_in(self, ray_in):
-        self.ray_in=Matrix(ray_in.copy())
+        self.ray_in=np.array(ray_in.copy())
 
     def clear_element(self):
         self.elem_list=[]
@@ -624,8 +618,8 @@ class Optical_system_solver:
                 sign_ref=np.sign(self.ray_list_ref[-2][2])
                 slope=-self.ray_list[-1][1]/self.ray_list[-1][2]
                 slope_ref=-self.ray_list_ref[-1][1]/self.ray_list_ref[-1][2]
-                self.ray_list[-1]=Matrix([[-(y_solve+slope*x_solve)*sign],[slope*sign],[sign]])
-                self.ray_list_ref[-1]=Matrix([[-(y_solve_ref+slope_ref*x_solve_ref)*sign_ref],[slope_ref*sign_ref],[sign_ref]])
+                self.ray_list[-1]=np.array([[-(y_solve+slope*x_solve)*sign],[slope*sign],[sign]])
+                self.ray_list_ref[-1]=np.array([[-(y_solve_ref+slope_ref*x_solve_ref)*sign_ref],[slope_ref*sign_ref],[sign_ref]])
 
         #Solve the output ray
         ray_out=self.ray_list[-1]
