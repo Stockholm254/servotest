@@ -7,9 +7,9 @@ from .servo_util import create_zigzag_X, format_para,a2p,r2nd,r2nr,ndmodr,nrselr
 spiral_params = {
     'I_meaningful': 0.005,
     'D': 2.4,
-    'SPIRAL_RESOLUTION': 13,
+    'SPIRAL_RESOLUTION': 14,
     'SPIRAL_SPAN': 6,
-    'SINGLE_SPIRAL_SPAN': 3,
+    'SINGLE_SPIRAL_SPAN': 3.5,
     'N_LOOPS_BEFORE_RESET_ORIGIN': 0.5,
     'MAX_X0Y0_DISPLACEMENT': 10,
     'COEF_I_RESET_ORIGIN': 1.4,
@@ -50,7 +50,7 @@ def step_optimize(servos,
     Inow = cf(para)[1]
     logging.info(f"Best position: {format_para(para)}, now I: {Inow}")
     #
-    if Inow/Ibst > 0.8:
+    if Inow/Ibst > 0.7:
         logging.info(f"New Origin set to be {format_para(para)}")
         zero_fullnd = nraddr(zero,para,pos_mask)
     else:

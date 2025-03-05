@@ -2,17 +2,14 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-from smbus2 import SMBus,i2c_msg
 from .scservo_sdk import *                    # Uses SCServo SDK library
-import MCP342x
 import logging
 from copy import deepcopy
 
 import json
 from pathlib import Path
 import atexit
-from .customize import *
-
+from .customize_raspberry import *
 
 # Control table address
 ADDR_STS_TORQUE_ENABLE     = 40
@@ -442,7 +439,6 @@ class Servoset:
         goal_position_list = self.angle_to_position(goal_angle_list)
         self.set_position(goal_position_list,pos_mask=pos_mask)
 
-
     def set_single(self, index, angle):
         pos_mask = [0 for i in range(len(self.servo_list))]
         pos_mask[index] = 1
@@ -452,7 +448,7 @@ class Servoset:
 
     def random_play(self):
         # self.set_precision(10)
-        TIME_TO_WAIT = 2
+        TIME_TO_WAIT = 8
         print('Random play starting in {} seconds'.format(TIME_TO_WAIT))
         time.sleep(TIME_TO_WAIT)
         print('Random play starting')
@@ -468,9 +464,10 @@ class Servoset:
         self.portHandler.closePort()
 
 if __name__ == '__main__':
-    servos = Servoset(1,[0])
-    servos.random_play()
+    servos = Servoset(0,[0,1,2,3,4,5,6,7])
+    # servos.random_play()
     # servos.set_angle([50,-50])
     # servos.set_angle([30])
     # servos.set_angle([0])
-    servos.home()
+    # servos.home()
+    print(servos.get_angle())
