@@ -543,12 +543,14 @@ class Optical_system_solver:
             eq2 = ray_sol[2][0] * ray_align[0][0] - ray_align[2][0] * ray_sol[0][0]
             return [eq1, eq2]
 
+        # Define options to increase precision
+        least_squares_options = {'ftol': 1e-12, 'xtol': 1e-12, 'gtol': 1e-12, 'max_nfev': 10000}
         # Solve for tl1 and tl2 using least_squares with a reasonable bound.
         bounds = ([-np.pi / 8, -np.pi / 8], [np.pi / 8, np.pi / 8])
-        try:
-            result = least_squares(objective_a, [0, 0], bounds=bounds).x
-        except Exception:
-            result = least_squares(objective_b, [0, 0], bounds=bounds).x
+        if abs(ray_align[1][0]/ray_align[2][0]) < 1e2:
+            result = least_squares(objective_a, [0, 0], bounds=bounds, **least_squares_options).x
+        else:
+            result = least_squares(objective_b, [0, 0], bounds=bounds, **least_squares_options).x
         return result
 
     def _ray_propagator_cache(self, ray_in, elem_list, tl1, tl2):
@@ -632,10 +634,10 @@ class Optical_system_solver:
             #deal with y mirrors
             if self.elem_list[i].elem_type=='Mirror' and self.elem_list[i].is_y==1:
                 #keep the same direction as before
-                sign=np.sign(self.ray_list[-2][2])
-                sign_ref=np.sign(self.ray_list_ref[-2][2])
-                slope=-self.ray_list[-1][1]/self.ray_list[-1][2]
-                slope_ref=-self.ray_list_ref[-1][1]/self.ray_list_ref[-1][2]
+                sign=np.sign(self.ray_list[-2][2][0])
+                sign_ref=np.sign(self.ray_list_ref[-2][2][0])
+                slope=-self.ray_list[-1][1][0]/self.ray_list[-1][2][0]
+                slope_ref=-self.ray_list_ref[-1][1][0]/self.ray_list_ref[-1][2][0]
                 self.ray_list[-1]=np.array([[-(y_solve+slope*x_solve)*sign],[slope*sign],[sign]])
                 self.ray_list_ref[-1]=np.array([[-(y_solve_ref+slope_ref*x_solve_ref)*sign_ref],[slope_ref*sign_ref],[sign_ref]])
 
