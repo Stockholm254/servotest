@@ -120,7 +120,7 @@ class STSServer(Server):
         params['Cav_pos_1']=params['Cav_pos_1']*1e-6
         params['Cav_pos_2']=params['Cav_pos_2']*1e-6
         params['MOT_pos_rel']=params['MOT_pos_rel']*1e-3
-
+        print(params)
         value_list=angle_calc_single(params)
 
         return value_list
@@ -129,7 +129,7 @@ class STSServer(Server):
         
         pos_mask = [0 for i in range(len(self.servo_channel_list))]
         value_list= [0,]*len(self.servo_channel_list)
-
+        
         #turn _eps channels into servo angles
         for prop, ch in self.config.items():
             ch_id = ch['channel_id']

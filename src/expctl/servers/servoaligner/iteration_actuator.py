@@ -68,6 +68,6 @@ if __name__=="__main__":
     MCP3424_fiber=MCP342x.MCP342x(i2cbus, 0x68, device='MCP3424', channel=0, gain=1, resolution=12, continuous_mode=False, scale_factor=1.0, offset=0.0)
     servos.home()
     print(MCP3424_fiber.convert_and_read())
-    scan_xr=xr.open_dataarray("//home//rydpi5//expctl//servers//servoaligner//angles0304_3.nc")
+    scan_xr=xr.open_dataarray("..//src//expctl//servers//servoaligner//angles0304_4.nc")
     ds=iteration_actuator(servos, MCP3424_fiber, scan_xr)
-    ds.to_netcdf("data0304_2.nc")
+    ds.to_netcdf("data0304_3.nc")

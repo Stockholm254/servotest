@@ -175,7 +175,7 @@ class Optical_system_solver:
             fb2 = sympy.lambdify((x1, x2), eqn2, 'numpy')
             f = lambda vars: [fb1(vars[0], vars[1]), fb2(vars[0], vars[1])]
             bounds = ([-np.pi/8, -np.pi/8], [np.pi/8, np.pi/8])
-            result = least_squares(f, [1e-3, 1e-3], bounds=bounds).x
+            result = least_squares(f, [0, 0], bounds=bounds).x
         except Exception:
             eqn1 = ray1[1]*ray2[0] - ray2[1]*ray1[0]
             eqn2 = ray1[2]*ray2[0] - ray2[2]*ray1[0]
@@ -183,7 +183,7 @@ class Optical_system_solver:
             fb2 = sympy.lambdify((x1, x2), eqn2, 'numpy')
             f = lambda vars: [fb1(vars[0], vars[1]), fb2(vars[0], vars[1])]
             bounds = ([-np.pi/8, -np.pi/8], [np.pi/8, np.pi/8])
-            result = least_squares(f, [1e-3, 1e-3], bounds=bounds).x
+            result = least_squares(f, [0, 0], bounds=bounds).x
         return result
 
     def _intersection_solver_symbol(self, ray_cache1, ray_cache2):
@@ -264,7 +264,7 @@ class Optical_system_solver:
         ray_in=[[0],[1],[0]]
 
         self.ray_in=Matrix(ray_in.copy())
-
+        print(Cav_pos_x, Cav_pos_y, MOT_pos_x, MOT_pos_y)
         #angle solver
         raymiddleref=Matrix([[Cav_pos_x*MOT_pos_y-MOT_pos_x*Cav_pos_y],[Cav_pos_y-MOT_pos_y],[MOT_pos_x-Cav_pos_x]])
         raymiddle = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Ml1])[0]
