@@ -546,9 +546,9 @@ class Optical_system_solver:
         # Solve for tl1 and tl2 using least_squares with a reasonable bound.
         bounds = ([-np.pi / 8, -np.pi / 8], [np.pi / 8, np.pi / 8])
         try:
-            result = least_squares(objective_a, [1e-3, 1e-3], bounds=bounds).x
+            result = least_squares(objective_a, [0, 0], bounds=bounds).x
         except Exception:
-            result = least_squares(objective_b, [1e-3, 1e-3], bounds=bounds).x
+            result = least_squares(objective_b, [0, 0], bounds=bounds).x
         return result
 
     def _ray_propagator_cache(self, ray_in, elem_list, tl1, tl2):
