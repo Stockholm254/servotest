@@ -267,7 +267,6 @@ class Optical_system_solver:
         self.ray_in=Matrix(ray_in.copy())
         #angle solver
         raymiddleref=Matrix([[Cav_pos_x*MOT_pos_y-MOT_pos_x*Cav_pos_y],[Cav_pos_y-MOT_pos_y],[MOT_pos_x-Cav_pos_x]])
-        print(raymiddleref[1]/raymiddleref[2])
         raymiddle = self._ray_propagator(self.ray_in, [Mrr1, Mrr2, Ml1])[0]
         result = self._ray_colinear_solver_scipy(raymiddle, raymiddleref, tl1, tl2)
 

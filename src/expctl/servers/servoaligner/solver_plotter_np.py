@@ -547,8 +547,11 @@ class Optical_system_solver:
         least_squares_options = {'ftol': 1e-12, 'xtol': 1e-12, 'gtol': 1e-12, 'max_nfev': 10000}
         # Solve for tl1 and tl2 using least_squares with a reasonable bound.
         bounds = ([-np.pi / 8, -np.pi / 8], [np.pi / 8, np.pi / 8])
-        if abs(ray_align[1][0]/ray_align[2][0]) < 1e2:
-            result = least_squares(objective_a, [0, 0], bounds=bounds, **least_squares_options).x
+        if ray_align[2][0] !=0:
+            if abs(ray_align[1][0]/ray_align[2][0]) < 1e2:
+                result = least_squares(objective_a, [0, 0], bounds=bounds, **least_squares_options).x
+            else:
+                result = least_squares(objective_b, [0, 0], bounds=bounds, **least_squares_options).x
         else:
             result = least_squares(objective_b, [0, 0], bounds=bounds, **least_squares_options).x
         return result

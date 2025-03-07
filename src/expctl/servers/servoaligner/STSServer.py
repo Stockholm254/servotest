@@ -29,7 +29,6 @@ class VLATSettings:
     Cav_pos_2: float
     MOT_pos_rel: float
 
-
 class STSServer(Server):
 
     def __init__(self, name, port, message,board_id=0, servo_channel_list=[]):
@@ -120,7 +119,6 @@ class STSServer(Server):
         params['Cav_pos_1']=params['Cav_pos_1']*1e-6
         params['Cav_pos_2']=params['Cav_pos_2']*1e-6
         params['MOT_pos_rel']=params['MOT_pos_rel']*1e-3
-        print(params)
         value_list=angle_calc_single(params)
 
         return value_list
@@ -251,7 +249,6 @@ if __name__ == '__main__':
     parser_dehys = subparsers.add_parser('dehys', help='Set the dehysterisis')
     parser_dehys.add_argument('dehys_state', type=int, help='Dehysterisis, 0 or 1')
     parser_dehys.set_defaults(func=server.set_dehys_args)
-
 
     # if len(sys.argv) <= 1:
     # 	sys.argv.append('--help')
