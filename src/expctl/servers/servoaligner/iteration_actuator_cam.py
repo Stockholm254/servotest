@@ -24,6 +24,52 @@ from expctl.servers.servoaligner.servodriver import Servoset
 import xarray as xr
 
 from scipy.optimize import minimize
+import scipy.optimize as optimize
+
+
+def gaussian(height, center_x, center_y, width_x, width_y):
+    """Returns a gaussian function with the given parameters"""
+    width_x = float(width_x)
+    width_y = float(width_y)
+    return lambda x,y: height*np.exp(
+                -(((center_x-x)/width_x)**2+((center_y-y)/width_y)**2)/2)
+
+def moments(data):
+    """Returns (height, x, y, width_x, width_y)
+    the gaussian parameters of a 2D distribution by calculating its
+    moments """
+    total = data.sum()
+    X, Y = np.indices(data.shape)
+    x = (X*data).sum()/total
+    y = (Y*data).sum()/total
+    col = data[:, int(y)]
+    width_x = np.sqrt(np.abs((np.arange(col.size)-x)**2*col).sum()/col.sum())
+    row = data[int(x), :]
+    width_y = np.sqrt(np.abs((np.arange(row.size)-y)**2*row).sum()/row.sum())
+    height = data.max()
+    return height, x, y, width_x, width_y
+
+def fitgaussian(data):
+    """Returns (height, x, y, width_x, width_y)
+    the gaussian parameters of a 2D distribution found by a fit"""
+    params = moments(data)
+    errorfunction = lambda p: np.ravel(gaussian(*p)(*np.indices(data.shape)) -
+                                 data)
+    p, success = optimize.leastsq(errorfunction, params)
+    return p
+
+def fit_gauss_2d(data):
+    data = data[..., :3] @ [0.2989, 0.5870, 0.1140]
+    data = data - np.median(data)
+    params_g = fitgaussian(data)
+    (height, x_cen, y_cen, width_x, width_y) = params_g
+    return x_cen, y_cen
+
+def max_arg(data):
+    data = data[..., :3] @ [0.2989, 0.5870, 0.1140]
+    data = data - np.median(data)
+    y_c,x_c=np.unravel_index(data.argmax(), data.shape)
+    return x_c, y_c
 
 def centroid(data):
     data = data[..., :3] @ [0.2989, 0.5870, 0.1140]
@@ -69,9 +115,19 @@ def iteration_actuator(servos, picam2, scan_xr):
     data_list_y=[]
 
     for knob_deg_list in tqdm(flattened):
+        pos_x_list=[]
+        pos_y_list=[]
         servos.set_angle(knob_deg_list)
-        data=picam2.capture_array()
-        x_c, y_c = centroid(data)
+        for i in range(5):
+            data=picam2.capture_array()
+            try:
+                x_c, y_c = fit_gauss_2d(data)
+                pos_x_list.append(x_c)
+                pos_y_list.append(y_c)
+            except Exception:
+                continue
+        x_c=np.mean(pos_x_list)
+        y_c=np.mean(pos_y_list)
         data_list_x.append(x_c)
         data_list_y.append(y_c)
 
