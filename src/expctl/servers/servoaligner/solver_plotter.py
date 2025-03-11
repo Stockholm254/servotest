@@ -386,7 +386,7 @@ class Optical_system_solver:
         tl1, tl2, tl3, tl4 = symbols('tl1 tl2 tl3 tl4')
         
         x1=params['x1']
-        x2=params['x2']
+        x2=params['x2']        
         x3=params['x3']
         x4=params['x4']
         dy0=params['dy0']
@@ -399,6 +399,7 @@ class Optical_system_solver:
         MOT_Cav_dist=params['MOT_Cav_dist']
         MOT_pos=params['MOT_pos_1']
         Cav_pos=params['Cav_pos_1']
+        MOT_pos_rel=params['MOT_pos_rel']
 
         Mrr1_pos_x=0
         Mrr1_pos_y=0
@@ -420,10 +421,10 @@ class Optical_system_solver:
         Mrr4_pos_y=Mrrb_pos_y
 
         MOT_pos_x= Ml1_pos_x + MOT_pos
-        MOT_pos_y= Ml1_pos_y - fl1
+        MOT_pos_y= Ml1_pos_y - MOT_pos_rel
 
         Cav_pos_x= Ml1_pos_x + Cav_pos
-        Cav_pos_y= Ml1_pos_y - fl1 + MOT_Cav_dist
+        Cav_pos_y= Ml1_pos_y - MOT_pos_rel + MOT_Cav_dist
         MOT_point=Point(u=MOT_pos_x, v=MOT_pos_y, name='MOT')
         Cav_point=Point(u=Cav_pos_x, v=Cav_pos_y, name='Cavity', marker='x')
 
@@ -491,6 +492,7 @@ class Optical_system_solver:
         MOT_Cav_dist=params['MOT_Cav_dist']
         MOT_pos=params['MOT_pos_2']
         Cav_pos=params['Cav_pos_2']
+        MOT_pos_rel=params['MOT_pos_rel']
 
         Mrr1_pos_x=0
         Mrr1_pos_y=0
@@ -512,10 +514,10 @@ class Optical_system_solver:
         Mrr4_pos_y=Mrr3_pos_y
 
         MOT_pos_x= Ml1_pos_x + MOT_pos
-        MOT_pos_y= Ml1_pos_y - fl1
+        MOT_pos_y= Ml1_pos_y - MOT_pos_rel
 
         Cav_pos_x= Ml1_pos_x + Cav_pos
-        Cav_pos_y= Ml1_pos_y - fl1 + MOT_Cav_dist
+        Cav_pos_y= Ml1_pos_y - MOT_pos_rel + MOT_Cav_dist
         MOT_point=Point(u=MOT_pos_x, v=MOT_pos_y, name='MOT')
         Cav_point=Point(u=Cav_pos_x, v=Cav_pos_y, name='Cavity', marker='x')
         
